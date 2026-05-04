@@ -1,0 +1,17 @@
+# Website and demos (hosted separately on ctrlk.dev)
+website/
+docs/
+
+# Tests
+test/
+
+# Build tooling
+build.js
+
+# Git
+.gitignore
+.github/
+
+# Editor
+.vscode/
+.idea/

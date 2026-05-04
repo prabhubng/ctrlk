@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CtrlK Demo — Patient Record (Vue 3)</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.13/vue.global.prod.min.js"></script>
+<style>
+:root{--bg:#f8f9fb;--surface:#fff;--border:#e2e6ed;--text:#1a1d26;--dim:#6c7589;--accent:#2563eb;--accent-bg:#eff6ff;--accent-border:#bfdbfe;--green:#16a34a;--green-bg:#dcfce7;--yellow:#ca8a04;--yellow-bg:#fef9c3;--red:#dc2626;--red-bg:#fee2e2;--orange:#ea580c;--pin-color:#7c3aed;--dirty-color:#ca8a04;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;line-height:1.5;}
+
+.app{display:flex;height:100vh;overflow:hidden;}
+.sidebar{width:280px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto;}
+.sb-header{padding:16px 20px;border-bottom:1px solid var(--border);}
+.sb-header h1{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;}
+.sb-patient{padding:16px 20px;border-bottom:1px solid var(--border);}
+.sb-avatar{width:56px;height:56px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;margin-bottom:10px;}
+.sb-name{font-size:18px;font-weight:700;}
+.sb-meta{font-size:12px;color:var(--dim);margin-top:4px;}
+.sb-sections{padding:8px 12px;flex:1;}
+.sb-section{padding:8px 10px;border-radius:6px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:space-between;transition:background 0.15s;margin-bottom:2px;}
+.sb-section:hover{background:var(--bg);}
+.sb-section.active{background:var(--accent-bg);color:var(--accent);font-weight:600;}
+.sb-section .sb-badge{font-family:'IBM Plex Mono',monospace;font-size:10px;padding:1px 6px;border-radius:8px;background:var(--bg);color:var(--dim);}
+.sb-section.active .sb-badge{background:var(--accent);color:#fff;}
+.sb-stats{padding:12px 20px;border-top:1px solid var(--border);font-size:12px;color:var(--dim);}
+.sb-progress{height:6px;background:#e5e7eb;border-radius:3px;margin-top:6px;overflow:hidden;}
+.sb-progress-fill{height:100%;background:var(--green);border-radius:3px;transition:width 0.5s;}
+.sb-footer{padding:12px 20px;border-top:1px solid var(--border);}
+.sb-btn{width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;background:var(--surface);font-family:inherit;font-size:12px;cursor:pointer;text-align:center;margin-bottom:6px;transition:all 0.15s;}
+.sb-btn:hover{border-color:var(--accent);color:var(--accent);}
+.sb-btn.primary{background:var(--accent);color:#fff;border-color:var(--accent);}
+.sb-btn.primary:hover{background:#1d4ed8;}
+
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.top-bar{padding:10px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface);flex-shrink:0;}
+.top-bar-left{display:flex;align-items:center;gap:12px;}
+.patient-nav{display:flex;gap:4px;}
+.nav-btn{width:32px;height:32px;border:1px solid var(--border);border-radius:6px;background:var(--surface);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all 0.15s;}
+.nav-btn:hover{border-color:var(--accent);color:var(--accent);}
+.top-bar-right{display:flex;align-items:center;gap:8px;}
+.btn{padding:6px 14px;border:1px solid var(--border);background:var(--surface);border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit;color:var(--text);transition:all 0.15s;display:flex;align-items:center;gap:4px;}
+.btn:hover{border-color:var(--accent);color:var(--accent);}
+.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent);}
+.btn.primary:hover{background:#1d4ed8;}
+.btn.warn{border-color:var(--dirty-color);color:var(--dirty-color);}
+.btn kbd{font-family:'IBM Plex Mono',monospace;font-size:9px;opacity:0.7;}
+
+/* ─── Pinned Fields Bar ─── */
+.pinned-bar{padding:8px 24px;background:#faf5ff;border-bottom:1px solid #e9d5ff;display:none;gap:12px;align-items:center;flex-wrap:wrap;flex-shrink:0;}
+.pinned-bar.show{display:flex;}
+.pinned-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--pin-color);}
+.pinned-item{display:flex;align-items:center;gap:6px;font-size:12px;padding:3px 10px;background:#f5f3ff;border:1px solid #e9d5ff;border-radius:4px;}
+.pinned-item .pi-label{color:var(--dim);font-size:11px;}
+.pinned-item .pi-value{font-weight:600;color:var(--text);}
+.pinned-item button{background:none;border:none;cursor:pointer;color:var(--dim);font-size:13px;padding:0 2px;line-height:1;}
+.pinned-item button:hover{color:var(--red);}
+
+.content{flex:1;overflow-y:auto;padding:24px;}
+.section{margin-bottom:24px;background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+.section.active-section{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent);}
+.section-header{padding:12px 16px;background:var(--bg);border-bottom:1px solid var(--border);font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:space-between;cursor:pointer;}
+.section-header .sh-count{font-size:11px;font-weight:400;color:var(--dim);font-family:'IBM Plex Mono',monospace;}
+.section-body{padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px 24px;}
+
+.field{position:relative;}
+.field-label{font-size:11px;font-weight:600;color:var(--dim);margin-bottom:3px;display:flex;align-items:center;gap:4px;}
+.field-label .required{color:var(--red);}
+.field-label .pin-icon{cursor:pointer;font-size:12px;opacity:0;transition:opacity 0.15s;}
+.field:hover .pin-icon{opacity:0.5;}
+.pin-icon.pinned{opacity:1 !important;color:var(--pin-color);}
+.field-input{width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:5px;font-family:inherit;font-size:13px;color:var(--text);transition:border-color 0.2s;background:var(--surface);}
+.field-input:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 2px var(--accent-bg);}
+.field-input.dirty{border-color:var(--dirty-color);background:var(--yellow-bg);}
+.field-input.empty{border-style:dashed;}
+.field-input[readonly]{background:var(--bg);color:var(--dim);cursor:default;}
+.field.highlighted .field-input{animation:field-flash 1.5s ease-out;}
+.field.highlighted .field-label{color:var(--accent);font-weight:700;}
+@keyframes field-flash{0%{box-shadow:0 0 0 3px var(--accent-bg);border-color:var(--accent);}100%{box-shadow:none;}}
+.field-input.select{appearance:auto;}
+
+/* ─── Dirty Diff Modal ─── */
+.diff-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:99996;display:none;}
+.diff-overlay.show{display:block;}
+.diff-panel{position:fixed;top:10%;left:50%;transform:translateX(-50%);width:min(560px,92vw);max-height:70vh;background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:0 20px 50px rgba(0,0,0,.12);z-index:99997;display:none;flex-direction:column;overflow:hidden;font-family:'Plus Jakarta Sans',sans-serif;}
+.diff-panel.show{display:flex;}
+.diff-header{padding:14px 20px;border-bottom:1px solid var(--border);font-weight:700;display:flex;justify-content:space-between;align-items:center;}
+.diff-body{flex:1;overflow-y:auto;padding:12px 20px;}
+.diff-item{display:grid;grid-template-columns:140px 1fr 20px 1fr;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid #f3f4f6;font-size:13px;}
+.diff-label{font-weight:600;color:var(--dim);font-size:12px;}
+.diff-old{background:var(--red-bg);padding:4px 8px;border-radius:4px;color:var(--red);text-decoration:line-through;font-size:12px;}
+.diff-arrow{text-align:center;color:var(--dim);}
+.diff-new{background:var(--green-bg);padding:4px 8px;border-radius:4px;color:var(--green);font-size:12px;font-weight:600;}
+.diff-footer{padding:10px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
+.diff-empty{padding:40px 20px;text-align:center;color:var(--dim);font-size:14px;}
+
+/* ─── Field Search (Ctrl+G) ─── */
+.fs-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:99998;display:none;}
+.fs-overlay.show{display:block;}
+.fs-panel{position:fixed;top:14%;left:50%;transform:translateX(-50%);width:min(480px,92vw);max-height:440px;background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:0 20px 50px rgba(0,0,0,.12);z-index:99999;display:none;flex-direction:column;overflow:hidden;font-family:'Plus Jakarta Sans',sans-serif;}
+.fs-panel.show{display:flex;}
+.fs-header{padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--dim);}
+.fs-panel input{width:100%;background:0;border:0;outline:0;font-size:15px;padding:12px 16px;font-family:inherit;border-bottom:1px solid var(--border);color:var(--text);}
+.fs-panel input::placeholder{color:#aaa;}
+.fs-results{flex:1;overflow-y:auto;padding:4px 0;}
+.fs-item{display:flex;align-items:center;padding:7px 16px;cursor:pointer;gap:8px;font-size:13px;transition:background 0.1s;}
+.fs-item:hover,.fs-item.active{background:var(--accent-bg);}
+.fs-item .fi-section{font-size:9px;text-transform:uppercase;letter-spacing:0.5px;color:var(--dim);background:var(--bg);padding:1px 6px;border-radius:3px;min-width:60px;text-align:center;}
+.fs-item .fi-name{flex:1;font-weight:500;}
+.fs-item .fi-pin{color:var(--pin-color);font-size:12px;}
+.fs-item .fi-empty{font-size:10px;color:var(--red);font-style:italic;}
+.fs-item .fi-dirty{font-size:10px;color:var(--dirty-color);font-weight:600;}
+.fs-footer{padding:6px 16px;border-top:1px solid var(--border);font-size:10px;color:var(--dim);display:flex;gap:12px;}
+.fs-footer kbd{font-family:'IBM Plex Mono',monospace;padding:1px 5px;background:var(--bg);border:1px solid var(--border);border-radius:2px;font-size:9px;}
+
+/* ─── Command Palette ─── */
+.cp-o{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:100000;display:none;}.cp-o.v{display:block;}
+.cp-p{position:fixed;top:14%;left:50%;transform:translateX(-50%);width:min(520px,92vw);max-height:420px;background:#fff;border:1px solid #e2e6ed;border-radius:12px;box-shadow:0 20px 50px rgba(0,0,0,.12);z-index:100001;display:none;flex-direction:column;overflow:hidden;font-family:'Plus Jakarta Sans',sans-serif;}.cp-p.v{display:flex;}
+.cp-i{width:100%;background:0;border:0;outline:0;font-size:15px;padding:14px 18px;font-family:inherit;border-bottom:1px solid #e2e6ed;color:#1a1d26;}.cp-i::placeholder{color:#aaa;}
+.cp-r{flex:1;overflow-y:auto;padding:4px 0;}
+.cp-c{padding:6px 16px 3px;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:#9ca3af;}
+.cp-x{display:flex;align-items:center;padding:7px 16px;cursor:pointer;gap:8px;font-size:13px;transition:background .1s;}.cp-x:hover,.cp-x.s{background:#eff6ff;}
+.cp-x-i{width:18px;text-align:center;font-size:13px;}.cp-x-t{flex:1;}.cp-x-k{font-family:'IBM Plex Mono',monospace;font-size:10px;color:#9ca3af;padding:2px 6px;background:#f9fafb;border:1px solid #e2e6ed;border-radius:3px;}
+
+.toast{position:fixed;bottom:20px;right:20px;background:var(--text);color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;z-index:200000;opacity:0;transform:translateY(8px);transition:all .3s;pointer-events:none;}.toast.show{opacity:1;transform:translateY(0);}
+.status-bar{position:fixed;bottom:0;left:0;right:0;height:28px;background:var(--surface);border-top:1px solid var(--border);padding:0 24px;display:flex;align-items:center;justify-content:space-between;font-size:10px;color:var(--dim);font-family:'IBM Plex Mono',monospace;z-index:50;flex-shrink:0;}
+@media(max-width:768px){.sidebar{display:none;}.section-body{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="toast" id="toast"></div>
+
+<!-- Field Search Overlay -->
+<div class="fs-overlay" id="fsOverlay"></div>
+<div class="fs-panel" id="fsPanel">
+  <div class="fs-header"><span style="font-size:15px">🔎</span> Jump to Field <span style="margin-left:auto;font-weight:400;text-transform:none">Ctrl+G</span></div>
+  <input id="fsInput" placeholder="Search fields by name..." autocomplete="off" spellcheck="false"/>
+  <div class="fs-results" id="fsList"></div>
+  <div class="fs-footer"><span><kbd>↑↓</kbd> navigate</span><span><kbd>↵</kbd> jump & focus</span><span><kbd>Alt+N</kbd> next empty</span><span><kbd>Esc</kbd> close</span></div>
+</div>
+
+<!-- Dirty Diff Modal -->
+<div class="diff-overlay" id="diffOverlay"></div>
+<div class="diff-panel" id="diffPanel">
+  <div class="diff-header"><span>📋 Unsaved Changes</span><button class="btn" onclick="closeDiff()">Close</button></div>
+  <div class="diff-body" id="diffBody"></div>
+  <div class="diff-footer"><button class="btn" onclick="revertAll();closeDiff()">↩ Revert All</button><button class="btn primary" onclick="saveAll();closeDiff()">💾 Save Changes</button></div>
+</div>
+
+<!-- Command Palette -->
+<div class="cp-o" id="cpOverlay"></div>
+<div class="cp-p" id="cpPanel">
+  <input class="cp-i" id="cpInput" placeholder="Search commands..." autocomplete="off" spellcheck="false"/>
+  <div class="cp-r" id="cpList"></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+// PATIENT DATA — 52 fields across 7 sections
+// ═══════════════════════════════════════════════
+const PATIENT = {
+  // Demographics (8 fields)
+  firstName:'Margaret', lastName:'Chen', dob:'1958-03-14', gender:'Female', mrn:'MRN-2847103',
+  ssn:'***-**-4821', maritalStatus:'Married', language:'English',
+  // Contact (6 fields)
+  phone:'(415) 555-0147', mobile:'(415) 555-0298', email:'m.chen@email.com',
+  address:'2847 Pacific Heights Blvd', city:'San Francisco', zipCode:'94115',
+  // Insurance (6 fields)
+  insuranceProvider:'Blue Cross Blue Shield', policyNumber:'BCBS-KX7291045', groupNumber:'GRP-8842',
+  copay:'$30', policyHolder:'Self', insurancePhone:'(800) 555-0100',
+  // Vitals (8 fields)
+  bloodPressure:'138/86', heartRate:'78', temperature:'98.4°F', weight:'156 lbs',
+  height:'5\'4"', bmi:'26.8', oxygenSat:'97%', respiratoryRate:'16',
+  // Medications (6 fields)
+  medication1:'Lisinopril 10mg — Daily', medication2:'Metformin 500mg — 2x Daily',
+  medication3:'Atorvastatin 20mg — Bedtime', medication4:'',
+  medication5:'', medication6:'',
+  // Allergies & Conditions (8 fields)
+  allergy1:'Penicillin — Severe (anaphylaxis)', allergy2:'Sulfa drugs — Moderate (rash)',
+  allergy3:'', condition1:'Type 2 Diabetes — Diagnosed 2015',
+  condition2:'Hypertension — Diagnosed 2018', condition3:'Hyperlipidemia — Diagnosed 2019',
+  condition4:'', emergencyContact:'Robert Chen — (415) 555-0301 — Spouse',
+  // Clinical Notes (10 fields)
+  chiefComplaint:'Follow-up for diabetes management', lastVisit:'2025-11-20',
+  nextAppointment:'', referralTo:'', referralReason:'',
+  labOrderPending:'HbA1c, Lipid Panel, CMP', imagingPending:'',
+  procedureNotes:'', followUpInstructions:'', additionalNotes:'',
+};
+
+const SECTIONS = [
+  { id:'demographics', title:'Demographics', icon:'👤', fields:['firstName','lastName','dob','gender','mrn','ssn','maritalStatus','language'] },
+  { id:'contact', title:'Contact Information', icon:'📞', fields:['phone','mobile','email','address','city','zipCode'] },
+  { id:'insurance', title:'Insurance', icon:'🏥', fields:['insuranceProvider','policyNumber','groupNumber','copay','policyHolder','insurancePhone'] },
+  { id:'vitals', title:'Vitals', icon:'❤️', fields:['bloodPressure','heartRate','temperature','weight','height','bmi','oxygenSat','respiratoryRate'] },
+  { id:'medications', title:'Medications', icon:'💊', fields:['medication1','medication2','medication3','medication4','medication5','medication6'] },
+  { id:'allergies', title:'Allergies & Conditions', icon:'⚠️', fields:['allergy1','allergy2','allergy3','condition1','condition2','condition3','condition4','emergencyContact'] },
+  { id:'notes', title:'Clinical Notes', icon:'📝', fields:['chiefComplaint','lastVisit','nextAppointment','referralTo','referralReason','labOrderPending','imagingPending','procedureNotes','followUpInstructions','additionalNotes'] },
+];
+
+const LABELS = {firstName:'First Name',lastName:'Last Name',dob:'Date of Birth',gender:'Gender',mrn:'MRN',ssn:'SSN',maritalStatus:'Marital Status',language:'Preferred Language',phone:'Phone',mobile:'Mobile',email:'Email',address:'Address',city:'City',zipCode:'ZIP Code',insuranceProvider:'Insurance Provider',policyNumber:'Policy Number',groupNumber:'Group Number',copay:'Copay',policyHolder:'Policy Holder',insurancePhone:'Insurance Phone',bloodPressure:'Blood Pressure',heartRate:'Heart Rate (bpm)',temperature:'Temperature',weight:'Weight',height:'Height',bmi:'BMI',oxygenSat:'Oxygen Saturation',respiratoryRate:'Respiratory Rate',medication1:'Medication 1',medication2:'Medication 2',medication3:'Medication 3',medication4:'Medication 4',medication5:'Medication 5',medication6:'Medication 6',allergy1:'Allergy 1',allergy2:'Allergy 2',allergy3:'Allergy 3',condition1:'Condition 1',condition2:'Condition 2',condition3:'Condition 3',condition4:'Condition 4',emergencyContact:'Emergency Contact',chiefComplaint:'Chief Complaint',lastVisit:'Last Visit',nextAppointment:'Next Appointment',referralTo:'Referral To',referralReason:'Referral Reason',labOrderPending:'Lab Orders Pending',imagingPending:'Imaging Pending',procedureNotes:'Procedure Notes',followUpInstructions:'Follow-up Instructions',additionalNotes:'Additional Notes'};
+const READONLY = new Set(['mrn','ssn','bmi']);
+const REQUIRED = new Set(['firstName','lastName','dob','gender','mrn','phone','insuranceProvider','policyNumber','bloodPressure','emergencyContact','chiefComplaint']);
+
+// ═══════════════════════════════════════════════
+// VUE APP
+// ═══════════════════════════════════════════════
+const { createApp, ref, computed, onMounted, nextTick } = Vue;
+
+const app = createApp({
+  setup() {
+    const data = ref({...PATIENT});
+    const original = ref({...PATIENT});
+    const activeSection = ref('demographics');
+    const pinnedFields = ref(new Set());
+    const highlightedField = ref(null);
+
+    // Computed
+    const dirtyFields = computed(() => {
+      const d = [];
+      for (const [k,v] of Object.entries(data.value)) {
+        if (v !== original.value[k]) d.push({ field: k, label: LABELS[k], old: original.value[k], new: v, section: SECTIONS.find(s=>s.fields.includes(k))?.title });
+      }
+      return d;
+    });
+
+    const emptyFields = computed(() => {
+      const e = [];
+      for (const s of SECTIONS) for (const f of s.fields) {
+        if (!READONLY.has(f) && (!data.value[f] || data.value[f].trim() === '')) e.push({ field: f, label: LABELS[f], section: s.title });
+      }
+      return e;
+    });
+
+    const completeness = computed(() => {
+      const total = Object.keys(PATIENT).length;
+      const filled = Object.values(data.value).filter(v => v && String(v).trim() !== '').length;
+      return { total, filled, empty: total - filled, percent: Math.round((filled/total)*100) };
+    });
+
+    const sectionStats = computed(() => {
+      const stats = {};
+      for (const s of SECTIONS) {
+        const total = s.fields.length;
+        const filled = s.fields.filter(f => data.value[f] && String(data.value[f]).trim() !== '').length;
+        const dirty = s.fields.filter(f => data.value[f] !== original.value[f]).length;
+        stats[s.id] = { total, filled, dirty };
+      }
+      return stats;
+    });
+
+    // Methods
+    function scrollToField(fieldId) {
+      highlightedField.value = fieldId;
+      const section = SECTIONS.find(s => s.fields.includes(fieldId));
+      if (section) activeSection.value = section.id;
+      nextTick(() => {
+        const el = document.querySelector(`[data-field="${fieldId}"]`);
+        if (el) { el.scrollIntoView({ behavior:'smooth', block:'center' }); const input = el.querySelector('input,select,textarea'); if(input && !READONLY.has(fieldId)) input.focus(); }
+        setTimeout(() => { highlightedField.value = null; }, 2000);
+      });
+    }
+
+    function nextEmpty() {
+      const empties = emptyFields.value;
+      if (!empties.length) { toast('All fields are filled!'); return; }
+      scrollToField(empties[0].field);
+      toast(`Empty field: ${empties[0].label} (${empties[0].section})`);
+    }
+
+    function togglePin(fieldId) {
+      const p = new Set(pinnedFields.value);
+      p.has(fieldId) ? p.delete(fieldId) : p.add(fieldId);
+      pinnedFields.value = p;
+    }
+
+    function revertAll() { data.value = {...original.value}; toast('All changes reverted'); }
+    function saveAll() { original.value = {...data.value}; toast('Changes saved successfully'); }
+    window.revertAll = revertAll;
+    window.saveAll = saveAll;
+
+    function isDirty(f) { return data.value[f] !== original.value[f]; }
+    function isEmpty(f) { return !READONLY.has(f) && (!data.value[f] || String(data.value[f]).trim() === ''); }
+
+    // Expose for external use
+    window._vueApp = { data, original, scrollToField, nextEmpty, dirtyFields, emptyFields, completeness, pinnedFields, togglePin, revertAll, saveAll, SECTIONS, LABELS, READONLY, isDirty, isEmpty, activeSection };
+
+    return { data, original, activeSection, pinnedFields, highlightedField, dirtyFields, emptyFields, completeness, sectionStats, scrollToField, nextEmpty, togglePin, isDirty, isEmpty, revertAll, saveAll, SECTIONS, LABELS, READONLY, REQUIRED };
+  },
+  template: `
+    <div class="app">
+      <div class="sidebar">
+        <div class="sb-header"><h1>🏥 MedChart EHR</h1></div>
+        <div class="sb-patient">
+          <div class="sb-avatar">MC</div>
+          <div class="sb-name">Margaret Chen</div>
+          <div class="sb-meta">DOB: March 14, 1958 · Female · MRN-2847103</div>
+        </div>
+        <div class="sb-sections">
+          <div v-for="s in SECTIONS" :key="s.id" class="sb-section" :class="{active: activeSection===s.id}"
+            @click="activeSection=s.id; document.getElementById(s.id)?.scrollIntoView({behavior:'smooth'})">
+            <span>{{s.icon}} {{s.title}}</span>
+            <span class="sb-badge" :style="sectionStats[s.id]?.dirty ? 'background:var(--yellow-bg);color:var(--yellow)' : ''">
+              {{sectionStats[s.id]?.filled}}/{{sectionStats[s.id]?.total}}
+              <template v-if="sectionStats[s.id]?.dirty"> ●</template>
+            </span>
+          </div>
+        </div>
+        <div class="sb-stats">
+          <div style="display:flex;justify-content:space-between;">
+            <span>Completeness</span>
+            <span style="font-weight:600;color:var(--green)">{{completeness.percent}}%</span>
+          </div>
+          <div class="sb-progress"><div class="sb-progress-fill" :style="{width: completeness.percent+'%'}"></div></div>
+          <div style="margin-top:4px;">{{completeness.filled}} / {{completeness.total}} fields · {{dirtyFields.length}} unsaved · {{emptyFields.length}} empty</div>
+        </div>
+        <div class="sb-footer">
+          <div class="sb-btn" onclick="palShow()">⚡ Ctrl+K — Commands</div>
+          <div class="sb-btn" onclick="fsShow()">🔎 Ctrl+G — Jump to Field</div>
+          <div class="sb-btn" onclick="window._vueApp.nextEmpty()">⏭ Alt+N — Next Empty</div>
+        </div>
+      </div>
+
+      <div class="main">
+        <div class="top-bar">
+          <div class="top-bar-left">
+            <div class="patient-nav"><button class="nav-btn" title="Previous patient">◀</button><button class="nav-btn" title="Next patient">▶</button></div>
+            <span style="font-size:12px;color:var(--dim)">Patient 3 of 28 · Batch Review</span>
+          </div>
+          <div class="top-bar-right">
+            <button v-if="dirtyFields.length" class="btn warn" onclick="showDiff()">📋 {{dirtyFields.length}} unsaved <kbd>Ctrl+Shift+D</kbd></button>
+            <button class="btn" onclick="palShow()">⚡ Ctrl+K</button>
+            <button class="btn primary" @click="saveAll()">💾 Save <kbd>Ctrl+S</kbd></button>
+          </div>
+        </div>
+
+        <div class="pinned-bar" :class="{show: pinnedFields.size>0}">
+          <span class="pinned-label">📌 Pinned</span>
+          <div v-for="f in [...pinnedFields]" :key="f" class="pinned-item">
+            <span class="pi-label">{{LABELS[f]}}</span>
+            <span class="pi-value">{{data[f] || '—'}}</span>
+            <button @click="togglePin(f)">×</button>
+          </div>
+        </div>
+
+        <div class="content">
+          <div v-for="s in SECTIONS" :key="s.id" :id="s.id" class="section" :class="{'active-section': activeSection===s.id}">
+            <div class="section-header" @click="activeSection=s.id">
+              <span>{{s.icon}} {{s.title}}</span>
+              <span class="sh-count">{{sectionStats[s.id]?.filled}}/{{sectionStats[s.id]?.total}} filled
+                <template v-if="sectionStats[s.id]?.dirty"> · {{sectionStats[s.id].dirty}} changed</template>
+              </span>
+            </div>
+            <div class="section-body">
+              <div v-for="f in s.fields" :key="f" class="field" :class="{highlighted: highlightedField===f}" :data-field="f">
+                <label class="field-label">
+                  {{LABELS[f]}}
+                  <span v-if="REQUIRED.has(f)" class="required">*</span>
+                  <span class="pin-icon" :class="{pinned: pinnedFields.has(f)}" @click.stop="togglePin(f)" :title="pinnedFields.has(f)?'Unpin':'Pin for comparison'">📌</span>
+                </label>
+                <input v-if="!READONLY.has(f)"
+                  class="field-input" :class="{dirty: isDirty(f), empty: isEmpty(f)}"
+                  v-model="data[f]" :placeholder="isEmpty(f) ? 'Empty — press Alt+N to navigate' : ''"
+                />
+                <input v-else class="field-input" :value="data[f]" readonly />
+              </div>
+            </div>
+          </div>
+          <div style="height:60px"></div>
+        </div>
+
+        <div class="status-bar">
+          <span>{{completeness.filled}}/{{completeness.total}} fields · {{dirtyFields.length}} dirty · {{emptyFields.length}} empty · {{pinnedFields.size}} pinned</span>
+          <span>⚡ CtrlK IOUX · Vue 3 Demo</span>
+        </div>
+      </div>
+    </div>
+  `
+});
+app.mount('#app');
+
+// ═══════════════════════════════════════════════
+// FIELD SEARCH (Ctrl+G)
+// ═══════════════════════════════════════════════
+let fsOpen=false, fsIdx=0, fsResults=[];
+const fsOvl=document.getElementById('fsOverlay'), fsPnl=document.getElementById('fsPanel'), fsInp=document.getElementById('fsInput'), fsLst=document.getElementById('fsList');
+
+function fsShow(){fsOpen=true;fsIdx=0;fsInp.value='';fsOvl.classList.add('show');fsPnl.classList.add('show');requestAnimationFrame(()=>{fsInp.focus();fsRender();});}
+function fsHide(){fsOpen=false;fsOvl.classList.remove('show');fsPnl.classList.remove('show');}
+fsOvl.addEventListener('click',fsHide);
+
+function fsRender(){
+  const q=(fsInp.value||'').toLowerCase().trim();
+  const v=window._vueApp;
+  const allFields=[];
+  for(const s of SECTIONS)for(const f of s.fields)allFields.push({field:f,label:LABELS[f],section:s.title,sectionId:s.id,pinned:v.pinnedFields.value.has(f),dirty:v.isDirty(f),empty:v.isEmpty(f)});
+  fsResults=q?allFields.filter(f=>f.label.toLowerCase().includes(q)||f.field.toLowerCase().includes(q)||f.section.toLowerCase().includes(q)):allFields;
+  if(!fsResults.length){fsLst.innerHTML='<div style="padding:20px;text-align:center;color:var(--dim);">No fields found</div>';return;}
+  fsLst.innerHTML=fsResults.map((f,i)=>`<div class="fs-item ${i===fsIdx?'active':''}" data-fi="${i}">
+    <span class="fi-section">${f.section.split(' ')[0]}</span>
+    ${f.pinned?'<span class="fi-pin">📌</span>':''}
+    <span class="fi-name">${f.label}</span>
+    ${f.empty?'<span class="fi-empty">empty</span>':''}
+    ${f.dirty?'<span class="fi-dirty">modified</span>':''}
+  </div>`).join('');
+  fsLst.querySelectorAll('.fs-item').forEach(el=>{
+    el.addEventListener('click',()=>{fsHide();window._vueApp.scrollToField(fsResults[+el.dataset.fi].field);});
+    el.addEventListener('mouseenter',()=>{fsIdx=+el.dataset.fi;fsHilite();});
+  });
+}
+function fsHilite(){fsLst.querySelectorAll('.fs-item').forEach((el,i)=>el.classList.toggle('active',i===fsIdx));const a=fsLst.querySelector('.fs-item.active');if(a)a.scrollIntoView({block:'nearest'});}
+fsInp.addEventListener('input',()=>{fsIdx=0;fsRender();});
+fsPnl.addEventListener('keydown',e=>{
+  if(e.key==='ArrowDown'){e.preventDefault();fsIdx=Math.min(fsIdx+1,fsResults.length-1);fsHilite();}
+  else if(e.key==='ArrowUp'){e.preventDefault();fsIdx=Math.max(fsIdx-1,0);fsHilite();}
+  else if(e.key==='Enter'){e.preventDefault();if(fsResults[fsIdx]){fsHide();window._vueApp.scrollToField(fsResults[fsIdx].field);}}
+  else if(e.key==='Escape'){e.preventDefault();e.stopPropagation();fsHide();}
+});
+
+// ═══════════════════════════════════════════════
+// DIRTY DIFF (Ctrl+Shift+D)
+// ═══════════════════════════════════════════════
+function showDiff(){
+  const d=window._vueApp.dirtyFields.value;
+  const overlay=document.getElementById('diffOverlay'),panel=document.getElementById('diffPanel'),body=document.getElementById('diffBody');
+  if(!d.length){body.innerHTML='<div class="diff-empty">No unsaved changes</div>';}
+  else{body.innerHTML=d.map(f=>`<div class="diff-item"><span class="diff-label">${f.label}</span><span class="diff-old">${f.old||'(empty)'}</span><span class="diff-arrow">→</span><span class="diff-new">${f.new||'(empty)'}</span></div>`).join('');}
+  overlay.classList.add('show');panel.classList.add('show');
+}
+function closeDiff(){document.getElementById('diffOverlay').classList.remove('show');document.getElementById('diffPanel').classList.remove('show');}
+document.getElementById('diffOverlay').addEventListener('click',closeDiff);
+
+// ═══════════════════════════════════════════════
+// COMMAND PALETTE
+// ═══════════════════════════════════════════════
+const cmds=[];
+function regCmd(d){cmds.push(d);}
+let palOpen=false,palIdx=0,palResults=[];
+const cpO=document.getElementById('cpOverlay'),cpP=document.getElementById('cpPanel'),cpI=document.getElementById('cpInput'),cpL=document.getElementById('cpList');
+function palShow(){palOpen=true;palIdx=0;cpI.value='';cpO.classList.add('v');cpP.classList.add('v');requestAnimationFrame(()=>{cpI.focus();palRender();});}
+function palHide(){palOpen=false;cpO.classList.remove('v');cpP.classList.remove('v');}
+cpO.addEventListener('click',palHide);
+function palRender(){
+  const q=(cpI.value||'').toLowerCase().trim();
+  palResults=q?cmds.filter(c=>c.title.toLowerCase().includes(q)):cmds;
+  if(!palResults.length){cpL.innerHTML='<div style="padding:20px;text-align:center;color:#aaa;font-size:13px">No commands</div>';return;}
+  const g=new Map();for(const c of palResults){const cat=c.category||'General';if(!g.has(cat))g.set(cat,[]);g.get(cat).push(c);}
+  let h='',gi=0;for(const[cat,items]of g){h+=`<div class="cp-c">${cat}</div>`;for(const c of items){h+=`<div class="cp-x${gi===palIdx?' s':''}" data-i="${gi}"><span class="cp-x-i">${c.icon||'›'}</span><span class="cp-x-t">${c.title}</span>${c.shortcut?`<span class="cp-x-k">${c.shortcut}</span>`:''}</div>`;gi++;}}
+  cpL.innerHTML=h;cpL.querySelectorAll('.cp-x').forEach(el=>{el.addEventListener('click',()=>{palHide();palResults[+el.dataset.i]?.execute?.();});el.addEventListener('mouseenter',()=>{palIdx=+el.dataset.i;palHilite();});});
+}
+function palHilite(){cpL.querySelectorAll('.cp-x').forEach((el,i)=>el.classList.toggle('s',i===palIdx));}
+cpI.addEventListener('input',()=>{palIdx=0;palRender();});
+cpP.addEventListener('keydown',e=>{
+  if(e.key==='ArrowDown'){e.preventDefault();palIdx=Math.min(palIdx+1,palResults.length-1);palHilite();}
+  else if(e.key==='ArrowUp'){e.preventDefault();palIdx=Math.max(palIdx-1,0);palHilite();}
+  else if(e.key==='Enter'){e.preventDefault();if(palResults[palIdx]){palHide();palResults[palIdx].execute?.();}}
+  else if(e.key==='Escape'){e.preventDefault();e.stopPropagation();palHide();}
+});
+
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+
+// Register commands
+regCmd({id:'palette',title:'Command Palette',category:'CtrlK',icon:'🔍',shortcut:'Ctrl+K',execute:palShow});
+regCmd({id:'field.search',title:'Jump to Field',category:'CtrlK',icon:'🔎',shortcut:'Ctrl+G',execute:fsShow});
+regCmd({id:'field.next-empty',title:'Next Empty Field',category:'CtrlK',icon:'⏭',shortcut:'Alt+N',execute:()=>window._vueApp.nextEmpty()});
+regCmd({id:'diff',title:'Show Unsaved Changes',category:'CtrlK',icon:'📋',shortcut:'Ctrl+Shift+D',execute:showDiff});
+regCmd({id:'save',title:'Save All Changes',category:'Actions',icon:'💾',shortcut:'Ctrl+S',execute:()=>window._vueApp.saveAll()});
+regCmd({id:'revert',title:'Revert All Changes',category:'Actions',icon:'↩',execute:()=>window._vueApp.revertAll()});
+
+for(const s of SECTIONS){regCmd({id:'nav.'+s.id,title:'Go to: '+s.title,category:'Sections',icon:s.icon,execute:()=>{window._vueApp.activeSection.value=s.id;document.getElementById(s.id)?.scrollIntoView({behavior:'smooth'});}});}
+
+const jumpFields=['bloodPressure','allergy1','medication1','chiefComplaint','insuranceProvider','emergencyContact'];
+for(const f of jumpFields){regCmd({id:'jump.'+f,title:'Jump to: '+LABELS[f],category:'Quick Jump',icon:'→',execute:()=>window._vueApp.scrollToField(f)});}
+
+regCmd({id:'pin.bp',title:'Pin Blood Pressure',category:'Pin Fields',icon:'📌',execute:()=>window._vueApp.togglePin('bloodPressure')});
+regCmd({id:'pin.allergy',title:'Pin Allergy 1',category:'Pin Fields',icon:'📌',execute:()=>window._vueApp.togglePin('allergy1')});
+regCmd({id:'pin.medication',title:'Pin Medication 1',category:'Pin Fields',icon:'📌',execute:()=>window._vueApp.togglePin('medication1')});
+
+// Share view
+function sharePatientView() {
+  const v = window._vueApp;
+  const state = {
+    activeSection: v.activeSection.value,
+    pinned: [...v.pinnedFields.value],
+    data: v.data.value,
+  };
+  const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(state)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  const link = window.location.href.split('#')[0] + '#ctrlk=' + encoded;
+  navigator.clipboard?.writeText(link);
+  toast('View link copied! Includes section, pinned fields, and field values.');
+}
+regCmd({id:'share',title:'Share Current View',category:'Share',icon:'🔗',shortcut:'Ctrl+Shift+S',execute:sharePatientView});
+
+// Read shared view from URL
+(function(){
+  const hash = window.location.hash?.slice(1) || '';
+  if (!hash.startsWith('ctrlk=')) return;
+  // Delay to let Vue mount
+  setTimeout(() => {
+    try {
+      const encoded = hash.slice(6);
+      const base64 = encoded.replace(/-/g, '+').replace(/_/g, '/');
+      const padded = base64 + '='.repeat((4 - base64.length % 4) % 4);
+      const json = decodeURIComponent(escape(atob(padded)));
+      const state = JSON.parse(json);
+      const v = window._vueApp;
+      if (state.activeSection) v.activeSection.value = state.activeSection;
+      if (state.pinned) { v.pinnedFields.value = new Set(state.pinned); }
+      if (state.data) { for (const [k, val] of Object.entries(state.data)) { v.data.value[k] = val; } }
+      if (window.history?.replaceState) window.history.replaceState(null, '', window.location.pathname);
+      toast('Shared view applied!');
+    } catch (e) { console.warn('[CtrlK] Failed to apply shared view:', e); }
+  }, 500);
+})();
+
+// Keyboard shortcuts
+document.addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();palOpen?palHide():palShow();}
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='g'&&!palOpen){e.preventDefault();fsOpen?fsHide():fsShow();}
+  if(e.altKey&&e.key.toLowerCase()==='n'&&!palOpen&&!fsOpen){e.preventDefault();window._vueApp.nextEmpty();}
+  if((e.ctrlKey||e.metaKey)&&e.shiftKey&&e.key.toLowerCase()==='d'){e.preventDefault();showDiff();}
+  if((e.ctrlKey||e.metaKey)&&e.shiftKey&&e.key.toLowerCase()==='s'){e.preventDefault();sharePatientView();}
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='s'&&!e.shiftKey){e.preventDefault();window._vueApp.saveAll();}
+  if(e.key==='Escape'&&!palOpen&&!fsOpen){closeDiff();}
+});
+
+console.log('%c⚡ CtrlK IOUX %cPatient Record (Vue 3) %c· Ctrl+K palette · Ctrl+G field search · Alt+N next empty', 'color:#2563eb;font-weight:bold;', 'color:#16a34a;', 'color:#6b7280;');
+</script>
+</body>
+</html>

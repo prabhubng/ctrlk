@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CtrlK Demo — Support Ticket Queue (React)</title>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<style>
+:root{--bg:#fafafa;--surface:#fff;--border:#e5e7eb;--text:#111827;--dim:#6b7280;--accent:#4f46e5;--accent-bg:#eef2ff;--accent-border:#c7d2fe;--green:#059669;--green-bg:#d1fae5;--yellow:#d97706;--yellow-bg:#fef3c7;--red:#dc2626;--red-bg:#fee2e2;--orange:#ea580c;--orange-bg:#ffedd5;--blue:#2563eb;--blue-bg:#dbeafe;--purple:#7c3aed;--row-h:var(--vlx-row-height,40px);--fs:var(--vlx-font-size,14px);--fs-sm:var(--vlx-font-size-sm,13px);--fs-xs:var(--vlx-font-size-xs,11px);--pad:var(--vlx-cell-padding,8px 12px);}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Geist',sans-serif;font-size:var(--fs);}
+
+.app{display:flex;height:100vh;}
+.sidebar{width:240px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;}
+.sidebar-header{padding:16px 20px;font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border);}
+.sidebar-nav{flex:1;overflow-y:auto;padding:8px;}
+.nav-section{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--dim);padding:12px 12px 6px;}
+.nav-item{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-radius:6px;cursor:pointer;font-size:var(--fs-sm);transition:background 0.15s;color:var(--text);}
+.nav-item:hover{background:var(--bg);}
+.nav-item.active{background:var(--accent-bg);color:var(--accent);font-weight:600;}
+.nav-count{font-family:'Geist Mono',monospace;font-size:11px;background:var(--bg);padding:1px 7px;border-radius:10px;color:var(--dim);}
+.nav-item.active .nav-count{background:var(--accent);color:#fff;}
+.sidebar-footer{padding:12px;border-top:1px solid var(--border);}
+.sidebar-footer .ctrlk-btn{width:100%;padding:8px;background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:6px;color:var(--accent);font-family:'Geist Mono',monospace;font-size:12px;cursor:pointer;text-align:center;transition:background 0.15s;}
+.sidebar-footer .ctrlk-btn:hover{background:var(--accent);color:#fff;}
+
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.top-bar{padding:12px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface);}
+.top-bar h2{font-size:18px;font-weight:700;}
+.top-actions{display:flex;gap:8px;align-items:center;}
+.btn{padding:var(--pad);border:1px solid var(--border);background:var(--surface);border-radius:6px;font-size:var(--fs-sm);cursor:pointer;font-family:inherit;color:var(--text);transition:all 0.15s;display:flex;align-items:center;gap:5px;}
+.btn:hover{border-color:var(--accent);color:var(--accent);}
+.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent);}
+.btn.primary:hover{background:#4338ca;}
+.btn.danger{color:var(--red);border-color:#fca5a5;}
+.btn.danger:hover{background:var(--red-bg);}
+.btn kbd{font-family:'Geist Mono',monospace;font-size:9px;color:var(--dim);opacity:0.7;}
+
+.progress-bar{padding:8px 24px;background:#f0fdf4;border-bottom:1px solid #bbf7d0;display:flex;align-items:center;gap:16px;font-size:13px;color:var(--green);}
+.progress-bar.hidden{display:none;}
+.progress-track{flex:1;max-width:200px;height:6px;background:#bbf7d0;border-radius:3px;overflow:hidden;}
+.progress-fill{height:100%;background:var(--green);border-radius:3px;transition:width 0.3s;}
+.progress-text{font-family:'Geist Mono',monospace;font-size:12px;font-weight:600;}
+
+.filter-strip{padding:6px 24px;background:#fafbfc;border-bottom:1px solid var(--border);display:none;gap:6px;align-items:center;flex-wrap:wrap;}
+.filter-strip.active{display:flex;}
+.f-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--dim);}
+.f-chip{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:4px;font-size:11px;color:var(--accent);font-weight:500;}
+.f-chip button{background:none;border:none;cursor:pointer;font-size:14px;color:var(--accent);line-height:1;padding:0 2px;}
+.f-chip button:hover{color:var(--red);}
+
+.ticket-list{flex:1;overflow-y:auto;padding:0;}
+.ticket-row{display:grid;grid-template-columns:40px 90px 1fr 140px 90px 90px 100px 130px 70px;align-items:center;padding:var(--pad);border-bottom:1px solid #f3f4f6;min-height:var(--row-h);font-size:var(--fs-sm);cursor:pointer;transition:background 0.1s;}
+.ticket-row:hover{background:var(--bg);}
+.ticket-row.selected{background:var(--accent-bg);}
+.ticket-row.reviewed{border-left:3px solid var(--green);}
+.ticket-header{display:grid;grid-template-columns:40px 90px 1fr 140px 90px 90px 100px 130px 70px;padding:var(--pad);font-size:var(--fs-xs);font-weight:600;text-transform:uppercase;letter-spacing:0.3px;color:var(--dim);background:var(--bg);border-bottom:2px solid var(--border);position:sticky;top:0;z-index:2;}
+.ticket-id{font-family:'Geist Mono',monospace;color:var(--accent);font-weight:500;font-size:12px;}
+.ticket-subject{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:12px;}
+.tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;}
+.tag-critical{background:var(--red-bg);color:var(--red);}
+.tag-high{background:var(--orange-bg);color:var(--orange);}
+.tag-medium{background:var(--yellow-bg);color:var(--yellow);}
+.tag-low{background:var(--blue-bg);color:var(--blue);}
+.tag-open{background:var(--green-bg);color:var(--green);}
+.tag-pending{background:var(--yellow-bg);color:var(--yellow);}
+.tag-escalated{background:var(--red-bg);color:var(--red);}
+.tag-resolved{background:#f3f4f6;color:var(--dim);}
+.sla-ok{color:var(--green);font-family:'Geist Mono',monospace;font-size:12px;}
+.sla-warn{color:var(--yellow);font-family:'Geist Mono',monospace;font-size:12px;font-weight:600;}
+.sla-breach{color:var(--red);font-family:'Geist Mono',monospace;font-size:12px;font-weight:700;}
+
+.status-bar{height:28px;background:var(--surface);border-top:1px solid var(--border);padding:0 24px;display:flex;align-items:center;justify-content:space-between;font-size:10px;color:var(--dim);font-family:'Geist Mono',monospace;flex-shrink:0;}
+
+.toast{position:fixed;bottom:40px;right:24px;background:var(--text);color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;z-index:200;opacity:0;transform:translateY(10px);transition:all 0.3s;pointer-events:none;}
+.toast.show{opacity:1;transform:translateY(0);}
+
+.macro-indicator{position:fixed;bottom:40px;left:24px;background:var(--red);color:#fff;padding:8px 16px;border-radius:8px;font-size:13px;font-family:'Geist Mono',monospace;z-index:200;display:none;align-items:center;gap:8px;animation:pulse 1.5s infinite;}
+.macro-indicator.show{display:flex;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.7;}}
+
+@media(max-width:768px){.sidebar{display:none;}.ticket-row,.ticket-header{grid-template-columns:40px 70px 1fr 100px 80px;}.ticket-row>:nth-child(n+6),.ticket-header>:nth-child(n+6){display:none;}}
+
+/* ─── Column Search (Ctrl+G) ─── */
+.csg-o{position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:99996;opacity:0;transition:opacity .15s;display:none;}
+.csg-o.v{display:block;opacity:1;}
+.csg-p{position:fixed;top:18%;left:50%;transform:translateX(-50%);width:min(420px,90vw);max-height:380px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;box-shadow:0 16px 40px rgba(0,0,0,.1);z-index:99997;display:none;flex-direction:column;overflow:hidden;font-family:Geist,sans-serif;}
+.csg-p.v{display:flex;}
+.csg-h{padding:10px 16px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;gap:8px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:#9ca3af;}
+.csg-h span:first-child{font-size:15px;}
+.csg-p input{width:100%;background:0;border:0;outline:0;color:#111;font-size:15px;padding:12px 16px;font-family:inherit;border-bottom:1px solid #e5e7eb;}
+.csg-p input::placeholder{color:#9ca3af;}
+.csg-r{flex:1;overflow-y:auto;padding:4px 0;}
+.csg-i{display:flex;align-items:center;padding:8px 16px;cursor:pointer;gap:10px;font-size:13px;transition:background .1s;}
+.csg-i:hover,.csg-i.a{background:#eef2ff;}
+.csg-i .ci-name{flex:1;font-weight:500;}
+.csg-i .ci-hint{font-size:10px;color:#9ca3af;font-family:"Geist Mono",monospace;}
+.csg-f{padding:6px 16px;border-top:1px solid #e5e7eb;font-size:10px;color:#9ca3af;display:flex;gap:12px;}
+.csg-f kbd{font-family:"Geist Mono",monospace;padding:1px 5px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:2px;font-size:9px;}
+
+/* Column highlight */
+.ticket-header>span.col-hl,.ticket-row>span.col-hl{background:#eef2ff;transition:background .5s;}
+</style>
+</head>
+<body>
+
+<div id="root"></div>
+<div class="toast" id="toast"></div>
+<div class="macro-indicator" id="macroIndicator">⏺ Recording macro...</div>
+
+<!-- Column Search Overlay -->
+<div class="csg-o" id="csgOverlay"></div>
+<div class="csg-p" id="csgPanel">
+  <div class="csg-h"><span>🔎</span> Jump to Column <span style="margin-left:auto;font-weight:400;text-transform:none;">Ctrl+G</span></div>
+  <input id="csgInput" placeholder="Search columns..." autocomplete="off" spellcheck="false"/>
+  <div class="csg-r" id="csgList"></div>
+  <div class="csg-f"><span><kbd>↑↓</kbd> navigate</span><span><kbd>↵</kbd> sort by column</span><span><kbd>Esc</kbd> close</span></div>
+</div>
+
+<script type="text/babel">
+// ═══════════════════════════════════════════════
+// MOCK DATA — 120 support tickets
+// ═══════════════════════════════════════════════
+const CATEGORIES = ['Billing','Technical','Account','Feature Request','Bug Report','Security','Integration','Performance','Data','Onboarding'];
+const PRIORITIES = ['Critical','High','Medium','Medium','Medium','Low','Low'];
+const STATUSES = ['Open','Open','Open','Pending','Pending','Escalated','Resolved','Resolved'];
+const AGENTS = ['Sarah Chen','Mike Torres','Priya Sharma','Alex Kim','Jordan Lee','Casey Brown','—'];
+const CUSTOMERS = ['Acme Corp','GlobalTech','HealthFirst','EduPro','FinServ','RetailMax','LogiFlow','MediaHub','FoodChain','AutoDrive','CloudSync','DataVault','SecureNet','GreenEnergy','TravelX','BuildRight','PayNow','ShipFast','HireWell','LegalEase'];
+const SUBJECTS = {
+  Billing: ['Invoice discrepancy for Q4','Double charge on subscription','Refund not processed','Upgrade pricing question','Trial extension request','Payment method update failed'],
+  Technical: ['API returning 500 errors','SSO integration broken','Dashboard not loading','Export timing out on large datasets','Webhook delivery failures','Mobile app crash on login'],
+  Account: ['User access permissions issue','Account merge request','Team member limit reached','Password reset not working','Two-factor authentication setup','Organization name change'],
+  'Feature Request': ['Bulk import from CSV','Custom report builder','Slack integration','Dark mode support','API rate limit increase','Scheduled reports'],
+  'Bug Report': ['Search results showing stale data','Pagination broken on Firefox','Date picker wrong timezone','Notification emails not sent','Chart rendering incorrect','File upload size limit wrong'],
+  Security: ['Suspicious login activity','Data export audit request','Compliance certificate needed','Vulnerability report','Access log review','IP whitelist configuration'],
+  Integration: ['Salesforce sync failing','Zapier webhook timeout','REST API documentation unclear','OAuth token expiring early','SAML configuration error','GraphQL schema mismatch'],
+  Performance: ['Page load time over 10s','Database queries timing out','Report generation slow','Real-time updates delayed','Memory usage increasing','CDN caching issues'],
+  Data: ['Missing records after migration','Duplicate entries found','Data export incomplete','Backup restoration needed','Field mapping incorrect','Historical data discrepancy'],
+  Onboarding: ['Initial setup guidance','Training session request','Best practices documentation','Migration from competitor','Sandbox environment access','Custom onboarding plan'],
+};
+
+function rnd(arr) { return arr[Math.floor(Math.random()*arr.length)]; }
+function rndMinsAgo() { return Math.floor(Math.random()*7200); }
+function minsToText(mins) { if(mins<60)return `${mins}m ago`; if(mins<1440)return `${Math.floor(mins/60)}h ago`; return `${Math.floor(mins/1440)}d ago`; }
+function slaStatus(priority, mins) {
+  const limits = { Critical: 60, High: 240, Medium: 480, Low: 1440 };
+  const limit = limits[priority];
+  const pct = mins / limit;
+  if (pct > 1) return { text: 'Breached', class: 'sla-breach' };
+  if (pct > 0.75) return { text: `${Math.floor((limit-mins)/60)}h left`, class: 'sla-warn' };
+  return { text: 'OK', class: 'sla-ok' };
+}
+
+const tickets = Array.from({length:120}, (_, i) => {
+  const cat = rnd(CATEGORIES);
+  const priority = rnd(PRIORITIES);
+  const status = rnd(STATUSES);
+  const minsAgo = rndMinsAgo();
+  return {
+    id: `TKT-${String(3000+i).slice(1)}`,
+    subject: rnd(SUBJECTS[cat]),
+    customer: rnd(CUSTOMERS),
+    category: cat,
+    priority,
+    status,
+    agent: status === 'Resolved' ? rnd(AGENTS.filter(a=>a!=='—')) : rnd(AGENTS),
+    createdAgo: minsAgo,
+    createdText: minsToText(minsAgo),
+    sla: slaStatus(priority, minsAgo),
+    replies: Math.floor(Math.random()*12),
+  };
+});
+
+// ═══════════════════════════════════════════════
+// CTRLK INLINE RUNTIME
+// ═══════════════════════════════════════════════
+const ctrlkBus = { _l:new Map(), on(e,h){if(!this._l.has(e))this._l.set(e,new Set());this._l.get(e).add(h);return()=>this._l.get(e)?.delete(h);}, emit(e,d){const l=this._l.get(e);if(l)for(const h of l)try{h(d,e)}catch(err){}}, off(){this._l.clear();} };
+const ctrlkCmds = new Map();
+const ctrlkRegister = (d) => { ctrlkCmds.set(d.id, d); };
+const ctrlkExecute = (id,...args) => { const c=ctrlkCmds.get(id); if(c?.execute){c.execute(...args);ctrlkBus.emit('command:executed',{id});} };
+const ctrlkSearch = (q) => { const ql=(q||'').toLowerCase().trim();const all=[...ctrlkCmds.values()];if(!ql)return all.slice(0,25);return all.filter(c=>(c.title||'').toLowerCase().includes(ql)||(c.id||'').toLowerCase().includes(ql)).slice(0,15);};
+
+// Palette CSS (light theme)
+const palStyle = document.createElement('style');
+palStyle.textContent = `.ck-o{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:99998;opacity:0;transition:opacity .15s;backdrop-filter:blur(3px);pointer-events:none}.ck-o.v{opacity:1;pointer-events:auto}.ck-p{position:fixed;top:16%;left:50%;transform:translateX(-50%) scale(.96);width:min(540px,92vw);max-height:440px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;box-shadow:0 20px 50px rgba(0,0,0,.12);z-index:99999;display:flex;flex-direction:column;overflow:hidden;font-family:Geist,sans-serif;opacity:0;transition:opacity .15s,transform .15s;pointer-events:none}.ck-p.v{opacity:1;transform:translateX(-50%) scale(1);pointer-events:auto}.ck-i{width:100%;background:0;border:0;outline:0;color:#111;font-size:15px;padding:14px 18px;font-family:inherit;border-bottom:1px solid #e5e7eb}.ck-i::placeholder{color:#9ca3af}.ck-r{flex:1;overflow-y:auto;padding:6px 0}.ck-c{padding:8px 16px 4px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:#9ca3af}.ck-x{display:flex;align-items:center;padding:8px 18px;cursor:pointer;gap:10px;transition:background .1s}.ck-x:hover,.ck-x.s{background:#eef2ff}.ck-x-i{width:20px;text-align:center;font-size:14px}.ck-x-t{font-size:13px;color:#111;flex:1}.ck-x-k{font-family:"Geist Mono",monospace;font-size:10px;color:#9ca3af;padding:2px 6px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:3px}`;
+document.head.appendChild(palStyle);
+const palOverlay=document.createElement('div');palOverlay.className='ck-o';
+const palRoot=document.createElement('div');palRoot.className='ck-p';
+palRoot.innerHTML='<input class="ck-i" placeholder="Search commands..." autocomplete="off" spellcheck="false"/><div class="ck-r"></div>';
+const palInput=palRoot.querySelector('.ck-i'),palList=palRoot.querySelector('.ck-r');
+document.body.appendChild(palOverlay);document.body.appendChild(palRoot);
+let palOpen=false,palIdx=0,palResults=[];
+function palShow(){if(palOpen)return;palOpen=true;palIdx=0;palInput.value='';palOverlay.classList.add('v');palRoot.classList.add('v');requestAnimationFrame(()=>{palInput.focus();palRender();});}
+function palHide(){if(!palOpen)return;palOpen=false;palOverlay.classList.remove('v');palRoot.classList.remove('v');}
+palOverlay.onclick=palHide;
+function palRender(){palResults=ctrlkSearch(palInput.value);if(!palResults.length){palList.innerHTML='<div style="padding:20px;text-align:center;color:#9ca3af;font-size:13px">No commands</div>';return;}
+  const g=new Map();for(const c of palResults){const cat=c.category||'General';if(!g.has(cat))g.set(cat,[]);g.get(cat).push(c);}
+  let h='',gi=0;for(const[cat,items]of g){h+=`<div class="ck-c">${cat}</div>`;for(const c of items){h+=`<div class="ck-x${gi===palIdx?' s':''}" data-i="${gi}"><div class="ck-x-i">${c.icon||'›'}</div><div class="ck-x-t">${c.title}</div>${c.shortcut?`<span class="ck-x-k">${c.shortcut}</span>`:''}</div>`;gi++;}}
+  palList.innerHTML=h;palList.querySelectorAll('.ck-x').forEach(el=>{el.addEventListener('click',()=>{const c=palResults[+el.dataset.i];palHide();if(c)ctrlkExecute(c.id);});el.addEventListener('mouseenter',()=>{palIdx=+el.dataset.i;palHilite();});});}
+function palHilite(){palList.querySelectorAll('.ck-x').forEach((el,i)=>el.classList.toggle('s',i===palIdx));}
+palInput.addEventListener('input',()=>{palIdx=0;palRender();});
+palRoot.addEventListener('keydown',e=>{if(e.key==='ArrowDown'){e.preventDefault();palIdx=Math.min(palIdx+1,palResults.length-1);palHilite();}else if(e.key==='ArrowUp'){e.preventDefault();palIdx=Math.max(palIdx-1,0);palHilite();}else if(e.key==='Enter'){e.preventDefault();if(palResults[palIdx]){const c=palResults[palIdx];palHide();ctrlkExecute(c.id);}}else if(e.key==='Escape'){e.preventDefault();e.stopPropagation();palHide();}});
+
+// Density
+const densityLevels=['compact','comfortable','spacious'];
+const densityVars={compact:{'--vlx-font-size':'12px','--vlx-font-size-sm':'11px','--vlx-font-size-xs':'10px','--vlx-cell-padding':'3px 10px','--vlx-row-height':'32px'},comfortable:{'--vlx-font-size':'14px','--vlx-font-size-sm':'13px','--vlx-font-size-xs':'11px','--vlx-cell-padding':'8px 12px','--vlx-row-height':'40px'},spacious:{'--vlx-font-size':'16px','--vlx-font-size-sm':'14px','--vlx-font-size-xs':'12px','--vlx-cell-padding':'12px 14px','--vlx-row-height':'50px'}};
+let curDensity=1;
+function cycleDensity(){curDensity=(curDensity+1)%3;const l=densityLevels[curDensity];for(const[p,v]of Object.entries(densityVars[l]))document.documentElement.style.setProperty(p,v);toast(`Density: ${l}`);}
+
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+
+// ─── Column Search (Ctrl+G) ───
+const TICKET_COLS = [
+  {id:'id',name:'Ticket ID',idx:1},{id:'subject',name:'Subject',idx:2},{id:'customer',name:'Customer',idx:3},
+  {id:'priority',name:'Priority',idx:4},{id:'status',name:'Status',idx:5},{id:'agent',name:'Agent',idx:6},
+  {id:'createdAgo',name:'Created',idx:7},{id:'sla',name:'SLA',idx:8},{id:'category',name:'Category (hidden)',idx:-1},
+];
+let csgOpen=false, csgIdx=0, csgResults=[];
+const csgOverlay=document.getElementById('csgOverlay');
+const csgPanel=document.getElementById('csgPanel');
+const csgInput=document.getElementById('csgInput');
+const csgList=document.getElementById('csgList');
+
+function csgShow(){if(csgOpen)return;csgOpen=true;csgIdx=0;csgInput.value='';csgOverlay.classList.add('v');csgPanel.classList.add('v');requestAnimationFrame(()=>{csgInput.focus();csgRender();});}
+function csgHide(){csgOpen=false;csgOverlay.classList.remove('v');csgPanel.classList.remove('v');}
+csgOverlay.addEventListener('click',csgHide);
+
+function csgRender(){
+  const q=(csgInput.value||'').toLowerCase().trim();
+  csgResults=q?TICKET_COLS.filter(c=>c.name.toLowerCase().includes(q)):TICKET_COLS;
+  if(!csgResults.length){csgList.innerHTML='<div style="padding:20px;text-align:center;color:#9ca3af;font-size:13px">No columns found</div>';return;}
+  csgList.innerHTML=csgResults.map((col,i)=>`<div class="csg-i ${i===csgIdx?'a':''}" data-ci="${i}"><span class="ci-name">${col.name}</span><span class="ci-hint">${col.idx>=0?'click to sort':'hidden col'}</span></div>`).join('');
+  csgList.querySelectorAll('.csg-i').forEach(el=>{
+    el.addEventListener('click',()=>{const c=csgResults[+el.dataset.ci];csgHide();csgJump(c);});
+    el.addEventListener('mouseenter',()=>{csgIdx=+el.dataset.ci;csgHilite();});
+  });
+}
+function csgHilite(){csgList.querySelectorAll('.csg-i').forEach((el,i)=>el.classList.toggle('a',i===csgIdx));}
+csgInput.addEventListener('input',()=>{csgIdx=0;csgRender();});
+csgPanel.addEventListener('keydown',e=>{
+  if(e.key==='ArrowDown'){e.preventDefault();csgIdx=Math.min(csgIdx+1,csgResults.length-1);csgHilite();}
+  else if(e.key==='ArrowUp'){e.preventDefault();csgIdx=Math.max(csgIdx-1,0);csgHilite();}
+  else if(e.key==='Enter'){e.preventDefault();if(csgResults[csgIdx]){csgHide();csgJump(csgResults[csgIdx]);}}
+  else if(e.key==='Escape'){e.preventDefault();e.stopPropagation();csgHide();}
+});
+
+function csgJump(col){
+  if(col.idx<0){toast(`${col.name} — sort not available for hidden columns`);return;}
+  // Trigger sort on that column via the React app's sort handler
+  ctrlkExecute('sort.'+col.id);
+  // Highlight the column header
+  setTimeout(()=>{
+    const headers=document.querySelectorAll('.ticket-header>span');
+    const rows=document.querySelectorAll('.ticket-row');
+    // Add highlight class to the column cells
+    [headers,...rows].forEach(row=>{
+      const cells=row.querySelectorAll?row.querySelectorAll(':scope>span'):row.children;
+      if(cells&&cells[col.idx]){cells[col.idx].classList.add('col-hl');setTimeout(()=>cells[col.idx].classList.remove('col-hl'),1500);}
+    });
+  },100);
+  toast(`Sorted by: ${col.name}`);
+}
+
+document.addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();palOpen?palHide():palShow();}
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='g'&&!palOpen){e.preventDefault();csgShow();}
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='d'&&!palOpen&&!csgOpen){e.preventDefault();cycleDensity();}
+  if((e.ctrlKey||e.metaKey)&&e.key==='/'&&!palOpen){e.preventDefault();toast('Ctrl+K: Palette · Ctrl+G: Columns · Ctrl+D: Density · Alt+R: Reviewed · Alt+N: Next');}
+  if(e.altKey&&e.key.toLowerCase()==='r'&&!palOpen&&!csgOpen){e.preventDefault();ctrlkExecute('review.toggle');}
+  if(e.altKey&&e.key.toLowerCase()==='n'&&!palOpen&&!csgOpen){e.preventDefault();ctrlkExecute('review.next');}
+  if((e.ctrlKey||e.metaKey)&&e.shiftKey&&e.key.toLowerCase()==='s'){e.preventDefault();ctrlkExecute('share.view');}
+});
+
+// ═══════════════════════════════════════════════
+// REACT APP
+// ═══════════════════════════════════════════════
+const { useState, useEffect, useCallback, useMemo } = React;
+
+function App() {
+  const [view, setView] = useState('all');
+  const [selected, setSelected] = useState(new Set());
+  const [reviewed, setReviewed] = useState(new Set());
+  const [focusedId, setFocusedId] = useState(null);
+  const [sortField, setSortField] = useState(null);
+  const [sortDir, setSortDir] = useState('asc');
+  const [macroRecording, setMacroRecording] = useState(false);
+  const [macroSteps, setMacroSteps] = useState([]);
+
+  // Expose state for share/URL reader
+  window._ticketApp = { view, setView, sortField, setSortField, sortDir, setSortDir };
+
+  // Read shared view from URL on mount
+  useEffect(() => {
+    const hash = window.location.hash?.slice(1) || '';
+    if (hash.startsWith('ctrlk=')) {
+      try {
+        const encoded = hash.slice(6);
+        const base64 = encoded.replace(/-/g, '+').replace(/_/g, '/');
+        const padded = base64 + '='.repeat((4 - base64.length % 4) % 4);
+        const json = decodeURIComponent(escape(atob(padded)));
+        const state = JSON.parse(json);
+        if (state.view) setView(state.view);
+        if (state.sortField) setSortField(state.sortField);
+        if (state.sortDir) setSortDir(state.sortDir);
+        if (window.history?.replaceState) window.history.replaceState(null, '', window.location.pathname);
+        setTimeout(() => toast('Shared view applied!'), 300);
+      } catch (e) { console.warn('[CtrlK] Failed to apply shared view:', e); }
+    }
+  }, []);
+
+  // Filtered data
+  const filtered = useMemo(() => {
+    let data = [...tickets];
+    if (view === 'open') data = data.filter(t => t.status === 'Open');
+    else if (view === 'pending') data = data.filter(t => t.status === 'Pending');
+    else if (view === 'escalated') data = data.filter(t => t.status === 'Escalated');
+    else if (view === 'resolved') data = data.filter(t => t.status === 'Resolved');
+    else if (view === 'critical') data = data.filter(t => t.priority === 'Critical');
+    else if (view === 'sla-breach') data = data.filter(t => t.sla.text === 'Breached');
+    else if (view === 'unassigned') data = data.filter(t => t.agent === '—');
+    else if (view === 'my-tickets') data = data.filter(t => t.agent === 'Sarah Chen');
+
+    if (sortField) {
+      data.sort((a, b) => {
+        let va = a[sortField] || '', vb = b[sortField] || '';
+        if (sortField === 'createdAgo') { va = a.createdAgo; vb = b.createdAgo; return sortDir === 'asc' ? va - vb : vb - va; }
+        return sortDir === 'asc' ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
+      });
+    }
+    return data;
+  }, [view, sortField, sortDir]);
+
+  // View counts
+  const counts = useMemo(() => ({
+    all: tickets.length,
+    open: tickets.filter(t => t.status === 'Open').length,
+    pending: tickets.filter(t => t.status === 'Pending').length,
+    escalated: tickets.filter(t => t.status === 'Escalated').length,
+    resolved: tickets.filter(t => t.status === 'Resolved').length,
+    critical: tickets.filter(t => t.priority === 'Critical').length,
+    'sla-breach': tickets.filter(t => t.sla.text === 'Breached').length,
+    unassigned: tickets.filter(t => t.agent === '—').length,
+    'my-tickets': tickets.filter(t => t.agent === 'Sarah Chen').length,
+  }), []);
+
+  // Review progress
+  const reviewProgress = useMemo(() => {
+    const total = filtered.length;
+    const done = filtered.filter(t => reviewed.has(t.id)).length;
+    return { done, total, percent: total > 0 ? Math.round((done / total) * 100) : 0 };
+  }, [filtered, reviewed]);
+
+  // Toggle selection
+  const toggleSelect = useCallback((id) => {
+    setSelected(prev => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next; });
+  }, []);
+
+  // Toggle reviewed
+  const toggleReviewed = useCallback((id) => {
+    const targetId = id || focusedId;
+    if (!targetId) return;
+    setReviewed(prev => { const next = new Set(prev); next.has(targetId) ? next.delete(targetId) : next.add(targetId); return next; });
+    toast(reviewed.has(targetId) ? `Unmarked: ${targetId}` : `Reviewed: ${targetId}`);
+  }, [focusedId, reviewed]);
+
+  // Next unreviewed
+  const nextUnreviewed = useCallback(() => {
+    const unreviewedTicket = filtered.find(t => !reviewed.has(t.id));
+    if (unreviewedTicket) {
+      setFocusedId(unreviewedTicket.id);
+      const el = document.querySelector(`[data-ticket="${unreviewedTicket.id}"]`);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      toast(`Next: ${unreviewedTicket.id} — ${unreviewedTicket.subject}`);
+    } else {
+      toast('All tickets in this view have been reviewed!');
+    }
+  }, [filtered, reviewed]);
+
+  // Sort
+  const handleSort = useCallback((field) => {
+    setSortField(prev => { if (prev === field) { setSortDir(d => d === 'asc' ? 'desc' : 'asc'); return field; } setSortDir('asc'); return field; });
+  }, []);
+
+  // Register commands
+  useEffect(() => {
+    ctrlkRegister({ id: 'palette', title: 'Command Palette', category: 'CtrlK', icon: '🔍', shortcut: 'Ctrl+K', execute: palShow });
+    ctrlkRegister({ id: 'density', title: 'Cycle Density', category: 'CtrlK', icon: '📐', shortcut: 'Ctrl+D', execute: cycleDensity });
+    ctrlkRegister({ id: 'colsearch', title: 'Jump to Column', category: 'CtrlK', icon: '🔎', shortcut: 'Ctrl+G', execute: csgShow });
+
+    ctrlkRegister({ id: 'view.all', title: 'All Tickets', category: 'Views', icon: '📋', execute: () => setView('all') });
+    ctrlkRegister({ id: 'view.open', title: 'Open Tickets', category: 'Views', icon: '🟢', execute: () => setView('open') });
+    ctrlkRegister({ id: 'view.pending', title: 'Pending Tickets', category: 'Views', icon: '🟡', execute: () => setView('pending') });
+    ctrlkRegister({ id: 'view.escalated', title: 'Escalated Tickets', category: 'Views', icon: '🔴', execute: () => setView('escalated') });
+    ctrlkRegister({ id: 'view.resolved', title: 'Resolved Tickets', category: 'Views', icon: '✅', execute: () => setView('resolved') });
+    ctrlkRegister({ id: 'view.critical', title: 'Critical Priority', category: 'Views', icon: '🚨', execute: () => setView('critical') });
+    ctrlkRegister({ id: 'view.sla', title: 'SLA Breached', category: 'Views', icon: '⏰', execute: () => setView('sla-breach') });
+    ctrlkRegister({ id: 'view.unassigned', title: 'Unassigned Tickets', category: 'Views', icon: '👤', execute: () => setView('unassigned') });
+    ctrlkRegister({ id: 'view.mine', title: 'My Tickets (Sarah Chen)', category: 'Views', icon: '⭐', execute: () => setView('my-tickets') });
+
+    ctrlkRegister({ id: 'sort.id', title: 'Sort by Ticket ID', category: 'Sort', icon: '🔢', execute: () => handleSort('id') });
+    ctrlkRegister({ id: 'sort.subject', title: 'Sort by Subject', category: 'Sort', icon: '📝', execute: () => handleSort('subject') });
+    ctrlkRegister({ id: 'sort.priority', title: 'Sort by Priority', category: 'Sort', icon: '🔤', execute: () => handleSort('priority') });
+    ctrlkRegister({ id: 'sort.status', title: 'Sort by Status', category: 'Sort', icon: '🔄', execute: () => handleSort('status') });
+    ctrlkRegister({ id: 'sort.created', title: 'Sort by Created Time', category: 'Sort', icon: '🕐', execute: () => handleSort('createdAgo') });
+    ctrlkRegister({ id: 'sort.customer', title: 'Sort by Customer', category: 'Sort', icon: '🏢', execute: () => handleSort('customer') });
+    ctrlkRegister({ id: 'sort.agent', title: 'Sort by Agent', category: 'Sort', icon: '👤', execute: () => handleSort('agent') });
+    ctrlkRegister({ id: 'sort.sla', title: 'Sort by SLA Status', category: 'Sort', icon: '⏰', execute: () => handleSort('sla') });
+
+    ctrlkRegister({ id: 'selection.clear', title: 'Clear Selection', category: 'Selection', icon: '✕', execute: () => setSelected(new Set()) });
+    ctrlkRegister({ id: 'selection.all', title: 'Select All Visible', category: 'Selection', icon: '☑', execute: () => setSelected(new Set(filtered.map(t => t.id))) });
+
+    ctrlkRegister({ id: 'review.toggle', title: 'Toggle Reviewed', category: 'Review', icon: '✅', shortcut: 'Alt+R', execute: () => toggleReviewed() });
+    ctrlkRegister({ id: 'review.next', title: 'Next Unreviewed', category: 'Review', icon: '⏭', shortcut: 'Alt+N', execute: () => nextUnreviewed() });
+    ctrlkRegister({ id: 'review.clear', title: 'Clear All Reviews', category: 'Review', icon: '🔄', execute: () => { setReviewed(new Set()); toast('Reviews cleared'); } });
+
+    ctrlkRegister({ id: 'batch.assign', title: 'Assign Selected to Me', category: 'Batch Actions', icon: '👤', execute: () => toast(`Assigned ${selected.size} tickets to Sarah Chen`) });
+    ctrlkRegister({ id: 'batch.escalate', title: 'Escalate Selected', category: 'Batch Actions', icon: '🚨', execute: () => toast(`Escalated ${selected.size} tickets`) });
+    ctrlkRegister({ id: 'batch.close', title: 'Close Selected', category: 'Batch Actions', icon: '✅', execute: () => toast(`Closed ${selected.size} tickets`) });
+
+    ctrlkRegister({ id: 'share.view', title: 'Share Current View', category: 'Share', icon: '🔗', shortcut: 'Ctrl+Shift+S', execute: () => {
+      const state = { view: window._ticketApp.view, sortField: window._ticketApp.sortField, sortDir: window._ticketApp.sortDir };
+      const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(state)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+      const link = window.location.href.split('#')[0] + '#ctrlk=' + encoded;
+      navigator.clipboard?.writeText(link);
+      toast('View link copied!');
+    }});
+    ctrlkRegister({ id: 'export.csv', title: 'Export to CSV', category: 'Export', icon: '📄', execute: () => toast(`Exporting ${filtered.length} tickets...`) });
+  }, [filtered, selected]);
+
+  const viewLabels = { all: 'All Tickets', open: 'Open', pending: 'Pending', escalated: 'Escalated', resolved: 'Resolved', critical: 'Critical Priority', 'sla-breach': 'SLA Breached', unassigned: 'Unassigned', 'my-tickets': 'My Tickets' };
+
+  return (
+    <div className="app">
+      {/* Sidebar */}
+      <div className="sidebar">
+        <div className="sidebar-header">🎧 HelpDesk Pro</div>
+        <div className="sidebar-nav">
+          <div className="nav-section">Queue</div>
+          {[['all','📋','All Tickets'],['open','🟢','Open'],['pending','🟡','Pending'],['escalated','🔴','Escalated'],['resolved','✅','Resolved']].map(([v,icon,label]) => (
+            <div key={v} className={`nav-item ${view===v?'active':''}`} onClick={() => setView(v)}>
+              <span>{icon} {label}</span>
+              <span className="nav-count">{counts[v]}</span>
+            </div>
+          ))}
+          <div className="nav-section">Smart Views</div>
+          {[['critical','🚨','Critical'],['sla-breach','⏰','SLA Breached'],['unassigned','👤','Unassigned'],['my-tickets','⭐','My Tickets']].map(([v,icon,label]) => (
+            <div key={v} className={`nav-item ${view===v?'active':''}`} onClick={() => setView(v)}>
+              <span>{icon} {label}</span>
+              <span className="nav-count">{counts[v]}</span>
+            </div>
+          ))}
+        </div>
+        <div className="sidebar-footer">
+          <div className="ctrlk-btn" onClick={palShow} style={{marginBottom:4}}>⚡ Ctrl+K — Command Palette</div>
+          <div className="ctrlk-btn" onClick={csgShow} style={{background:'#f0fdf4',borderColor:'#bbf7d0',color:'#059669'}}>🔎 Ctrl+G — Jump to Column</div>
+        </div>
+      </div>
+
+      {/* Main */}
+      <div className="main">
+        <div className="top-bar">
+          <h2>{viewLabels[view] || view} <span style={{fontSize:'14px',fontWeight:400,color:'var(--dim)',marginLeft:8}}>{filtered.length} tickets</span></h2>
+          <div className="top-actions">
+            {selected.size > 0 && (
+              <>
+                <button className="btn" onClick={() => ctrlkExecute('batch.assign')}>👤 Assign ({selected.size})</button>
+                <button className="btn danger" onClick={() => ctrlkExecute('batch.escalate')}>🚨 Escalate ({selected.size})</button>
+              </>
+            )}
+            <button className="btn" onClick={cycleDensity}>📐 Density</button>
+            <button className="btn primary" onClick={palShow}>⚡ Ctrl+K</button>
+          </div>
+        </div>
+
+        {/* Review Progress */}
+        <div className={`progress-bar ${reviewed.size === 0 ? 'hidden' : ''}`}>
+          <span>📋 Review Progress</span>
+          <div className="progress-track">
+            <div className="progress-fill" style={{width: `${reviewProgress.percent}%`}}></div>
+          </div>
+          <span className="progress-text">{reviewProgress.done} / {reviewProgress.total} reviewed ({reviewProgress.percent}%)</span>
+          <button className="btn" style={{padding:'3px 8px',fontSize:'11px'}} onClick={nextUnreviewed}>Next ▸ <kbd>Alt+N</kbd></button>
+        </div>
+
+        {/* Filter strip */}
+        <div className={`filter-strip ${view !== 'all' ? 'active' : ''}`}>
+          <span className="f-label">Active Filter</span>
+          <span className="f-chip">{viewLabels[view]} <button onClick={() => setView('all')}>×</button></span>
+          {selected.size > 0 && <span className="f-chip">{selected.size} selected <button onClick={() => setSelected(new Set())}>×</button></span>}
+        </div>
+
+        {/* Ticket List */}
+        <div className="ticket-list">
+          <div className="ticket-header">
+            <span></span>
+            <span style={{cursor:'pointer'}} onClick={() => handleSort('id')}>Ticket ID</span>
+            <span>Subject</span>
+            <span style={{cursor:'pointer'}} onClick={() => handleSort('customer')}>Customer</span>
+            <span style={{cursor:'pointer'}} onClick={() => handleSort('priority')}>Priority</span>
+            <span style={{cursor:'pointer'}} onClick={() => handleSort('status')}>Status</span>
+            <span style={{cursor:'pointer'}} onClick={() => handleSort('agent')}>Agent</span>
+            <span style={{cursor:'pointer'}} onClick={() => handleSort('createdAgo')}>Created</span>
+            <span>SLA</span>
+          </div>
+          {filtered.map(ticket => (
+            <div
+              key={ticket.id}
+              data-ticket={ticket.id}
+              className={`ticket-row ${selected.has(ticket.id)?'selected':''} ${reviewed.has(ticket.id)?'reviewed':''}`}
+              onClick={() => { setFocusedId(ticket.id); }}
+              onDoubleClick={() => toggleReviewed(ticket.id)}
+              title="Click to focus · Double-click to mark reviewed · Alt+R to toggle"
+            >
+              <span><input type="checkbox" checked={selected.has(ticket.id)} onChange={() => toggleSelect(ticket.id)} onClick={e => e.stopPropagation()} /></span>
+              <span className="ticket-id">{ticket.id}</span>
+              <span className="ticket-subject">{ticket.subject}</span>
+              <span style={{fontSize:'var(--fs-sm)'}}>{ticket.customer}</span>
+              <span><span className={`tag tag-${ticket.priority.toLowerCase()}`}>{ticket.priority}</span></span>
+              <span><span className={`tag tag-${ticket.status.toLowerCase()}`}>{ticket.status}</span></span>
+              <span style={{fontSize:'12px',color:ticket.agent==='—'?'var(--red)':'var(--dim)'}}>{ticket.agent}</span>
+              <span style={{fontSize:'12px',color:'var(--dim)',fontFamily:'"Geist Mono",monospace'}}>{ticket.createdText}</span>
+              <span className={ticket.sla.class}>{ticket.sla.text}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Status Bar */}
+        <div className="status-bar">
+          <span>{filtered.length} tickets · {selected.size} selected · {reviewed.size} reviewed</span>
+          <span>⚡ CtrlK IOUX · React Demo</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.render(<App />, document.getElementById('root'));
+console.log('%c⚡ CtrlK IOUX %cSupport Ticket Queue (React) %c· Press Ctrl+K', 'color:#4f46e5;font-weight:bold;', 'color:#059669;', 'color:#6b7280;');
+</script>
+</body>
+</html>

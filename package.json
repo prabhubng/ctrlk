@@ -1,0 +1,35 @@
+{
+  "name": "ctrlk",
+  "version": "1.1.0",
+  "description": "The first IOUX (Integrated Operational UX) for enterprise web apps",
+  "main": "dist/ctrlk.runtime.js",
+  "module": "src/ctrlk.js",
+  "type": "module",
+  "scripts": {
+    "build": "node build.js",
+    "test": "node test/run-all.js",
+    "test:phase1": "node test/phase1.js",
+    "test:phase2": "node test/phase2.js",
+    "test:phase3": "node test/phase3.js",
+    "test:share": "node test/share.js"
+  },
+  "author": "Prabhu <prabhu@neuralweaves.com>",
+  "license": "MIT",
+  "homepage": "https://ctrlk.dev",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/prabhuignoto/ctrlk"
+  },
+  "bugs": {
+    "url": "https://github.com/prabhuignoto/ctrlk/issues"
+  },
+  "keywords": [
+    "ioux", "enterprise-ux", "opux", "command-palette", "keyboard-shortcuts",
+    "saved-views", "ctrl-k", "power-user", "grid-adapter", "ag-grid",
+    "devextreme", "data-grid", "excel-ux", "ux-runtime"
+  ],
+  "files": ["dist/", "src/", "packages/", "README.md", "LICENSE", "CHANGELOG.md"],
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

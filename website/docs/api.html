@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CtrlK Documentation — API Reference</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#fff;--surface:#f9fafb;--border:#e5e7eb;--text:#1f2937;--dim:#6b7280;--accent:#4f46e5;--accent-bg:#eef2ff;--accent-border:#c7d2fe;--green:#059669;--green-bg:#ecfdf5;--yellow:#d97706;--red:#dc2626;--sidebar-w:260px;--code-bg:#1e1e2e;--code-text:#cdd6f4;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:15px;line-height:1.7;}
+
+/* ─── Layout ─── */
+.layout{display:flex;min-height:100vh;}
+.sidebar{width:var(--sidebar-w);position:fixed;top:0;left:0;bottom:0;background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;padding:16px 0;z-index:10;flex-shrink:0;}
+.content{margin-left:var(--sidebar-w);flex:1;max-width:780px;padding:32px 40px 80px;}
+
+/* ─── Sidebar ─── */
+.sb-logo{padding:0 20px 16px;font-size:18px;font-weight:800;border-bottom:1px solid var(--border);margin-bottom:8px;}
+.sb-logo span{color:var(--accent);}
+.sb-version{font-size:11px;font-weight:400;color:var(--dim);margin-left:6px;}
+.sb-group{padding:14px 20px 4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--dim);}
+.sb-link{display:block;padding:4px 20px 4px 28px;font-size:13px;color:var(--dim);text-decoration:none;border-left:2px solid transparent;transition:all 0.15s;}
+.sb-link:hover{color:var(--text);background:var(--bg);}
+.sb-link.active{color:var(--accent);border-left-color:var(--accent);font-weight:600;background:var(--accent-bg);}
+.sb-link.l2{padding-left:40px;font-size:12px;}
+
+/* ─── Content ─── */
+h1{font-size:32px;font-weight:800;letter-spacing:-0.03em;margin-bottom:8px;}
+h2{font-size:24px;font-weight:700;letter-spacing:-0.02em;margin-top:48px;margin-bottom:12px;padding-top:24px;border-top:1px solid var(--border);scroll-margin-top:24px;}
+h2:first-of-type{border-top:none;margin-top:32px;}
+h3{font-size:18px;font-weight:700;margin-top:32px;margin-bottom:8px;scroll-margin-top:24px;}
+h4{font-size:14px;font-weight:700;margin-top:20px;margin-bottom:4px;color:var(--accent);}
+p{margin-bottom:12px;}
+.subtitle{font-size:17px;color:var(--dim);margin-bottom:24px;line-height:1.6;}
+
+/* ─── Code ─── */
+code{font-family:'JetBrains Mono',monospace;font-size:0.85em;background:var(--surface);padding:2px 6px;border-radius:3px;color:var(--accent);}
+.code{background:var(--code-bg);border-radius:8px;overflow:hidden;margin:12px 0;}
+.code-h{padding:6px 16px;background:#181825;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #313244;}
+.code-h .fn{font-family:'JetBrains Mono',monospace;font-size:11px;color:#a6adc8;}
+.code-h .lang{font-family:'JetBrains Mono',monospace;font-size:10px;color:#585b70;text-transform:uppercase;letter-spacing:1px;}
+pre{padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;color:var(--code-text);overflow-x:auto;white-space:pre;margin:0;}
+pre .kw{color:#cba6f7;} pre .fn{color:#89b4fa;} pre .str{color:#a6e3a1;} pre .cm{color:#585b70;} pre .num{color:#fab387;} pre .ty{color:#89dceb;} pre .prop{color:#f9e2af;}
+
+/* ─── Tables ─── */
+table{width:100%;border-collapse:collapse;font-size:13px;margin:12px 0;}
+th{background:var(--surface);padding:8px 12px;text-align:left;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:var(--dim);border-bottom:2px solid var(--border);}
+td{padding:8px 12px;border-bottom:1px solid #f3f4f6;vertical-align:top;}
+td:first-child{font-weight:500;white-space:nowrap;}
+td code{font-size:11px;}
+
+/* ─── Callouts ─── */
+.note{background:var(--accent-bg);border-left:3px solid var(--accent);padding:10px 16px;font-size:13px;color:#3730a3;border-radius:0 6px 6px 0;margin:12px 0;line-height:1.6;}
+.note strong{font-weight:700;}
+.warn{background:#fef3c7;border-left:3px solid var(--yellow);padding:10px 16px;font-size:13px;color:#92400e;border-radius:0 6px 6px 0;margin:12px 0;line-height:1.6;}
+.tip{background:var(--green-bg);border-left:3px solid var(--green);padding:10px 16px;font-size:13px;color:#065f46;border-radius:0 6px 6px 0;margin:12px 0;line-height:1.6;}
+
+/* ─── Badges ─── */
+.badge{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 8px;border-radius:3px;font-weight:600;}
+.badge-core{background:#dbeafe;color:#1e40af;}
+.badge-state{background:#d1fae5;color:#065f46;}
+.badge-power{background:#fef3c7;color:#92400e;}
+.badge-nav{background:#ede9fe;color:#5b21b6;}
+.badge-adapter{background:#fce7f3;color:#9d174d;}
+.badge-new{background:#fee2e2;color:#991b1b;}
+
+.method-sig{font-family:'JetBrains Mono',monospace;font-size:13px;background:var(--surface);padding:8px 14px;border:1px solid var(--border);border-radius:6px;margin:8px 0;color:var(--text);overflow-x:auto;}
+.method-sig .mname{color:var(--accent);font-weight:600;}
+.method-sig .mtype{color:var(--green);}
+.method-sig .mparam{color:var(--yellow);}
+
+.event-tag{font-family:'JetBrains Mono',monospace;font-size:11px;background:#faf5ff;border:1px solid #e9d5ff;padding:1px 8px;border-radius:3px;color:#7c3aed;}
+
+.divider{height:1px;background:var(--border);margin:40px 0;}
+
+@media(max-width:768px){.sidebar{display:none;}.content{margin-left:0;padding:20px 16px;}}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- ═══════════════════════════════════════ -->
+<!-- SIDEBAR -->
+<!-- ═══════════════════════════════════════ -->
+<aside class="sidebar">
+  <div class="sb-logo">ctrl<span>K</span> <span class="sb-version">v1.1</span></div>
+
+  <div class="sb-group">Getting Started</div>
+  <a class="sb-link" href="#introduction">Introduction</a>
+  <a class="sb-link" href="#install">Installation</a>
+  <a class="sb-link" href="#quick-start">Quick Start</a>
+  <a class="sb-link" href="#patterns">Integration Patterns</a>
+
+  <div class="sb-group">Core Modules</div>
+  <a class="sb-link" href="#eventbus">EventBus</a>
+  <a class="sb-link" href="#commandregistry">CommandRegistry</a>
+  <a class="sb-link" href="#shortcutengine">ShortcutEngine</a>
+  <a class="sb-link" href="#commandpalette">CommandPalette</a>
+  <a class="sb-link" href="#densitycontroller">DensityController</a>
+  <a class="sb-link" href="#autodiscovery">AutoDiscovery</a>
+
+  <div class="sb-group">State Modules</div>
+  <a class="sb-link" href="#viewstatemanager">ViewStateManager</a>
+  <a class="sb-link" href="#selectionmodel">SelectionModel</a>
+  <a class="sb-link" href="#fieldregistry">FieldRegistry</a>
+  <a class="sb-link" href="#gridadapter">GridAdapter</a>
+
+  <div class="sb-group">Power Modules</div>
+  <a class="sb-link" href="#macroengine">MacroEngine</a>
+  <a class="sb-link" href="#historymanager">HistoryManager</a>
+  <a class="sb-link" href="#activefilterbar">ActiveFilterBar</a>
+
+  <div class="sb-group">Navigation</div>
+  <a class="sb-link" href="#columnnavigator">ColumnNavigator</a>
+  <a class="sb-link" href="#focusnavigator">FocusNavigator</a>
+  <a class="sb-link" href="#sessiontracker">SessionTracker</a>
+
+  <div class="sb-group">Share</div>
+  <a class="sb-link" href="#viewshare">ViewShare</a>
+
+  <div class="sb-group">Framework Integration</div>
+  <a class="sb-link" href="#react">React</a>
+  <a class="sb-link" href="#angular">Angular</a>
+  <a class="sb-link" href="#vue">Vue 3</a>
+
+  <div class="sb-group">Grid Adapters</div>
+  <a class="sb-link" href="#aggrid">AG Grid</a>
+  <a class="sb-link" href="#devextreme">DevExtreme</a>
+
+  <div class="sb-group">Reference</div>
+  <a class="sb-link" href="#config">Configuration</a>
+  <a class="sb-link" href="#events">Events Reference</a>
+  <a class="sb-link" href="#keyboard">Keyboard Shortcuts</a>
+</aside>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- CONTENT -->
+<!-- ═══════════════════════════════════════ -->
+<main class="content">
+
+<!-- ─── INTRODUCTION ─── -->
+<h1 id="introduction">CtrlK Documentation</h1>
+<p class="subtitle">The first IOUX (Integrated Operational UX) for enterprise web apps. 19 modules, 150 tests, zero dependencies.</p>
+
+<p>CtrlK is an <strong>interaction layer</strong> that sits between your users and your application. It adds command palette, keyboard shortcuts, saved views, persistent selections, field navigation, macros, undo, and shareable view links — on top of any existing enterprise web app. No redesign required.</p>
+
+<div class="note"><strong>What is an IOUX?</strong> An IOUX (Integrated Operational UX) is to application operators what an IDE is to developers. Where an IDE integrates editing, compiling, and debugging into a development workspace, an IOUX integrates commands, views, shortcuts, macros, and history into an operational workspace.</div>
+
+
+<!-- ─── INSTALLATION ─── -->
+<h2 id="install">Installation</h2>
+
+<div class="code"><div class="code-h"><span class="fn">terminal</span><span class="lang">Shell</span></div>
+<pre><span class="cm"># npm</span>
+npm install ctrlk
+
+<span class="cm"># yarn</span>
+yarn add ctrlk
+
+<span class="cm"># CDN (Pattern A drop-in)</span>
+&lt;script src="https://unpkg.com/ctrlk/dist/ctrlk.runtime.min.js"&gt;&lt;/script&gt;</pre></div>
+
+<p>Framework-specific packages:</p>
+<div class="code"><div class="code-h"><span class="fn">terminal</span><span class="lang">Shell</span></div>
+<pre>npm install @ctrlk/react       <span class="cm"># React hooks + Provider</span>
+npm install @ctrlk/angular     <span class="cm"># Service + directives</span>
+npm install @ctrlk/ag-grid     <span class="cm"># AG Grid adapter</span></pre></div>
+
+
+<!-- ─── QUICK START ─── -->
+<h2 id="quick-start">Quick Start</h2>
+
+<h4>30-Second Setup (Pattern A)</h4>
+<div class="code"><div class="code-h"><span class="fn">index.html</span><span class="lang">HTML</span></div>
+<pre><span class="cm">&lt;!-- Add before &lt;/body&gt;. That's it. --&gt;</span>
+&lt;<span class="kw">script</span> <span class="ty">src</span>=<span class="str">"ctrlk.runtime.min.js"</span>&gt;&lt;/<span class="kw">script</span>&gt;
+
+<span class="cm">&lt;!-- Result:
+  · Ctrl+K opens command palette
+  · All buttons auto-discovered as commands
+  · Ctrl+D cycles density
+  · Every section and link is searchable --&gt;</span></pre></div>
+
+<h4>Programmatic Setup (Pattern B)</h4>
+<div class="code"><div class="code-h"><span class="fn">app.js</span><span class="lang">JavaScript</span></div>
+<pre><span class="kw">import</span> ctrlk <span class="kw">from</span> <span class="str">'ctrlk'</span>;
+
+<span class="cm">// Initialize with options</span>
+ctrlk.<span class="fn">init</span>({
+  <span class="prop">palette</span>: <span class="kw">true</span>,          <span class="cm">// Enable command palette UI</span>
+  <span class="prop">density</span>: <span class="kw">true</span>,          <span class="cm">// Enable density controller</span>
+  <span class="prop">autoDiscover</span>: <span class="kw">true</span>,     <span class="cm">// Auto-register DOM elements</span>
+  <span class="prop">session</span>: <span class="kw">true</span>,          <span class="cm">// Enable session tracking</span>
+  <span class="prop">macros</span>: <span class="kw">true</span>,           <span class="cm">// Enable macro recording</span>
+  <span class="prop">history</span>: <span class="kw">true</span>,          <span class="cm">// Enable undo/redo</span>
+});
+
+<span class="cm">// Register a command</span>
+ctrlk.commands.<span class="fn">register</span>({
+  <span class="prop">id</span>: <span class="str">'filter.active'</span>,
+  <span class="prop">title</span>: <span class="str">'Show Active Only'</span>,
+  <span class="prop">shortcut</span>: <span class="str">'Alt+A'</span>,
+  <span class="prop">category</span>: <span class="str">'Filters'</span>,
+  <span class="prop">icon</span>: <span class="str">'✅'</span>,
+  <span class="fn">execute</span>: () => applyFilter(<span class="str">'active'</span>),
+});</pre></div>
+
+
+<!-- ─── INTEGRATION PATTERNS ─── -->
+<h2 id="patterns">Integration Patterns</h2>
+
+<table>
+<thead><tr><th>Pattern</th><th>Setup Time</th><th>Integration Depth</th><th>Best For</th></tr></thead>
+<tbody>
+<tr><td><strong>A — Drop-In</strong></td><td>30 seconds</td><td>Auto-discovery only</td><td>Quick evaluation, legacy apps</td></tr>
+<tr><td><strong>B — Declarative</strong></td><td>1-2 hours</td><td>Custom commands + views</td><td>Most applications</td></tr>
+<tr><td><strong>C — Framework</strong></td><td>Half day</td><td>Hooks, directives, adapters</td><td>React/Angular/Vue apps with grid libraries</td></tr>
+</tbody>
+</table>
+
+<p>Each pattern extends the previous. Start with A, evolve to C over time. No migration or rewrite needed.</p>
+
+
+<!-- ═══════════════════════════════════════ -->
+<!-- CORE MODULES -->
+<!-- ═══════════════════════════════════════ -->
+
+<h2 id="eventbus">EventBus <span class="badge badge-core">Core</span></h2>
+<p>The internal event system. All modules communicate through this bus. You rarely call it directly, but you can subscribe to any event for custom behavior.</p>
+
+<table>
+<thead><tr><th>Method</th><th>Parameters</th><th>Returns</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>on(event, handler)</code></td><td><code>string</code>, <code>Function</code></td><td><code>Function</code> (unsubscribe)</td><td>Subscribe to an event. Returns cleanup function.</td></tr>
+<tr><td><code>emit(event, data)</code></td><td><code>string</code>, <code>any</code></td><td><code>void</code></td><td>Emit an event with optional data payload.</td></tr>
+<tr><td><code>off(event?)</code></td><td><code>string?</code></td><td><code>void</code></td><td>Remove all listeners for an event, or all events if no argument.</td></tr>
+</tbody>
+</table>
+
+<div class="code"><div class="code-h"><span class="fn">example</span><span class="lang">JavaScript</span></div>
+<pre><span class="cm">// Listen for any command execution</span>
+<span class="kw">const</span> unsub = ctrlk.bus.<span class="fn">on</span>(<span class="str">'command:executed'</span>, ({ id }) => {
+  console.<span class="fn">log</span>(<span class="str">`Command executed: ${id}`</span>);
+});
+
+<span class="cm">// Later: clean up</span>
+<span class="fn">unsub</span>();</pre></div>
+
+
+<h2 id="commandregistry">CommandRegistry <span class="badge badge-core">Core</span></h2>
+<p>The central registry of all commands. Every action in CtrlK is a command — palette entries, shortcuts, macro steps, and history entries all reference commands by ID.</p>
+
+<table>
+<thead><tr><th>Method</th><th>Parameters</th><th>Returns</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>register(definition)</code></td><td><code>CommandDef</code></td><td><code>Function</code> (unregister)</td><td>Register a command. Returns cleanup function.</td></tr>
+<tr><td><code>execute(id, ...args)</code></td><td><code>string</code>, <code>...any</code></td><td><code>any</code></td><td>Execute a command by ID.</td></tr>
+<tr><td><code>search(query)</code></td><td><code>string</code></td><td><code>CommandDef[]</code></td><td>Fuzzy search commands by title or ID.</td></tr>
+<tr><td><code>get(id)</code></td><td><code>string</code></td><td><code>CommandDef?</code></td><td>Get a command definition by ID.</td></tr>
+<tr><td><code>has(id)</code></td><td><code>string</code></td><td><code>boolean</code></td><td>Check if a command exists.</td></tr>
+<tr><td><code>list(category?)</code></td><td><code>string?</code></td><td><code>CommandDef[]</code></td><td>List all commands, optionally filtered by category.</td></tr>
+<tr><td><code>unregister(id)</code></td><td><code>string</code></td><td><code>boolean</code></td><td>Remove a command by ID.</td></tr>
+</tbody>
+</table>
+
+<h4>CommandDef Object</h4>
+<table>
+<thead><tr><th>Property</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>id</code></td><td><code>string</code></td><td>Yes</td><td>Unique command ID (e.g. <code>'view.save'</code>)</td></tr>
+<tr><td><code>title</code></td><td><code>string</code></td><td>Yes</td><td>Display title in palette</td></tr>
+<tr><td><code>execute</code></td><td><code>Function</code></td><td>Yes</td><td>Function to run when command is invoked</td></tr>
+<tr><td><code>shortcut</code></td><td><code>string</code></td><td>No</td><td>Keyboard shortcut (e.g. <code>'Ctrl+Shift+S'</code>)</td></tr>
+<tr><td><code>category</code></td><td><code>string</code></td><td>No</td><td>Group label in palette (e.g. <code>'Views'</code>)</td></tr>
+<tr><td><code>icon</code></td><td><code>string</code></td><td>No</td><td>Emoji or icon for palette display</td></tr>
+<tr><td><code>undo</code></td><td><code>Function</code></td><td>No</td><td>Undo function (enables Ctrl+Z for this command)</td></tr>
+<tr><td><code>when</code></td><td><code>Function</code></td><td>No</td><td>Condition function — command only available when this returns true</td></tr>
+</tbody>
+</table>
+
+<p>Events emitted: <span class="event-tag">command:registered</span> <span class="event-tag">command:executed</span> <span class="event-tag">command:unregistered</span></p>
+
+
+<h2 id="shortcutengine">ShortcutEngine <span class="badge badge-core">Core</span></h2>
+<p>Scope-aware keyboard shortcut binding. Supports modifier keys, key chords (sequences), and scope-based activation (e.g. a shortcut only active when a grid is focused).</p>
+
+<table>
+<thead><tr><th>Method</th><th>Parameters</th><th>Returns</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>bind(shortcut, commandId)</code></td><td><code>string</code>, <code>string</code></td><td><code>Function</code> (unbind)</td><td>Bind a shortcut to a command.</td></tr>
+<tr><td><code>unbind(shortcut)</code></td><td><code>string</code></td><td><code>void</code></td><td>Remove a shortcut binding.</td></tr>
+<tr><td><code>setScope(scope)</code></td><td><code>string</code></td><td><code>void</code></td><td>Set the active scope (e.g. <code>'grid'</code>, <code>'detail'</code>).</td></tr>
+<tr><td><code>getScope()</code></td><td>—</td><td><code>string</code></td><td>Get the current scope.</td></tr>
+</tbody>
+</table>
+
+<h4>Shortcut Format</h4>
+<div class="code"><div class="code-h"><span class="fn">examples</span><span class="lang">Text</span></div>
+<pre><span class="str">'Ctrl+K'</span>           <span class="cm">// Single shortcut</span>
+<span class="str">'Ctrl+Shift+S'</span>     <span class="cm">// Multiple modifiers</span>
+<span class="str">'Alt+1'</span>            <span class="cm">// Alt + number</span>
+<span class="str">'F2'</span>               <span class="cm">// Function key</span>
+<span class="str">'Ctrl+K Ctrl+S'</span>    <span class="cm">// Chord (press Ctrl+K, then Ctrl+S)</span>
+<span class="str">'Escape'</span>           <span class="cm">// Named key</span></pre></div>
+
+<p>Events emitted: <span class="event-tag">shortcut:fired</span> <span class="event-tag">shortcut:chord-started</span></p>
+
+
+<h2 id="commandpalette">CommandPalette <span class="badge badge-core">Core</span></h2>
+<p>The Ctrl+K searchable command UI. Renders a floating overlay with fuzzy search, keyboard navigation, category grouping, and shortcut display.</p>
+
+<table>
+<thead><tr><th>Method</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>inject()</code></td><td>Create and inject the palette DOM elements into the page.</td></tr>
+<tr><td><code>show()</code></td><td>Open the palette.</td></tr>
+<tr><td><code>hide()</code></td><td>Close the palette.</td></tr>
+<tr><td><code>toggle()</code></td><td>Toggle open/close.</td></tr>
+<tr><td><code>isOpen()</code></td><td>Returns <code>true</code> if palette is currently visible.</td></tr>
+</tbody>
+</table>
+
+<p>Events emitted: <span class="event-tag">palette:opened</span> <span class="event-tag">palette:closed</span> <span class="event-tag">palette:selected</span></p>
+
+
+<h2 id="densitycontroller">DensityController <span class="badge badge-core">Core</span></h2>
+<p>Controls information density across the application. Cycles between <code>compact</code>, <code>comfortable</code>, and <code>spacious</code> by setting CSS custom properties on the document root.</p>
+
+<table>
+<thead><tr><th>Method</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>init()</code></td><td>Initialize with default level (reads from localStorage if saved).</td></tr>
+<tr><td><code>cycle()</code></td><td>Advance to the next density level.</td></tr>
+<tr><td><code>set(level)</code></td><td>Set a specific level: <code>'compact'</code>, <code>'comfortable'</code>, or <code>'spacious'</code>.</td></tr>
+<tr><td><code>get()</code></td><td>Returns the current density level string.</td></tr>
+</tbody>
+</table>
+
+<h4>CSS Custom Properties Set</h4>
+<table>
+<thead><tr><th>Property</th><th>Compact</th><th>Comfortable</th><th>Spacious</th></tr></thead>
+<tbody>
+<tr><td><code>--ctrlk-density</code></td><td>compact</td><td>comfortable</td><td>spacious</td></tr>
+<tr><td><code>--ctrlk-row-height</code></td><td>28px</td><td>36px</td><td>48px</td></tr>
+<tr><td><code>--ctrlk-cell-padding</code></td><td>2px 8px</td><td>6px 12px</td><td>10px 16px</td></tr>
+<tr><td><code>--ctrlk-font-size</code></td><td>12px</td><td>14px</td><td>16px</td></tr>
+</tbody>
+</table>
+
+<p>Events emitted: <span class="event-tag">density:changed</span></p>
+
+
+<h2 id="autodiscovery">AutoDiscovery <span class="badge badge-core">Core</span></h2>
+<p>Scans the DOM and auto-registers elements as commands. Buttons get their text content as the title, links get their href, sections get navigation commands. This is what makes Pattern A work with zero configuration.</p>
+
+<table>
+<thead><tr><th>Method</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>start()</code></td><td>Begin scanning and watching for DOM changes (uses MutationObserver).</td></tr>
+<tr><td><code>stop()</code></td><td>Stop watching for DOM changes.</td></tr>
+<tr><td><code>rescan()</code></td><td>Manually re-scan the DOM for new elements.</td></tr>
+</tbody>
+</table>
+
+<div class="tip"><strong>Pattern A in one sentence:</strong> include the script → AutoDiscovery scans all <code>&lt;button&gt;</code>, <code>&lt;a&gt;</code>, and <code>[data-ctrlk]</code> elements → registers them as searchable commands in the palette.</div>
+
+
+<!-- ═══════════════════════════════════════ -->
+<!-- STATE MODULES -->
+<!-- ═══════════════════════════════════════ -->
+
+<h2 id="viewstatemanager">ViewStateManager <span class="badge badge-state">State</span></h2>
+<p>Save, restore, and share complete application view states. A "view" captures grid columns, filters, sort, scroll position, density, and any custom app state. Default limit: 5 saved views with LRU eviction.</p>
+
+<table>
+<thead><tr><th>Method</th><th>Parameters</th><th>Returns</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>save(name, options?)</code></td><td><code>string</code>, <code>{description?, scope?, overwrite?}</code></td><td><code>ViewState</code></td><td>Save current state as a named view. Evicts LRU if at max.</td></tr>
+<tr><td><code>load(name)</code></td><td><code>string</code></td><td><code>boolean</code></td><td>Restore a saved view. Updates <code>lastUsed</code> timestamp.</td></tr>
+<tr><td><code>has(name)</code></td><td><code>string</code></td><td><code>boolean</code></td><td>Check if a named view exists.</td></tr>
+<tr><td><code>get(name)</code></td><td><code>string</code></td><td><code>ViewState?</code></td><td>Get a saved view without applying it.</td></tr>
+<tr><td><code>delete(name)</code></td><td><code>string</code></td><td><code>boolean</code></td><td>Delete a saved view.</td></tr>
+<tr><td><code>list()</code></td><td>—</td><td><code>ViewState[]</code></td><td>List all saved views.</td></tr>
+<tr><td><code>getSlots()</code></td><td>—</td><td><code>Array</code></td><td>All views with slot numbers and shortcuts (Ctrl+1 through Ctrl+N).</td></tr>
+<tr><td><code>capture()</code></td><td>—</td><td><code>Object</code></td><td>Capture current state (grid + app providers) without saving.</td></tr>
+<tr><td><code>autoSave()</code></td><td>—</td><td><code>void</code></td><td>Auto-save current state (restored on next init).</td></tr>
+<tr><td><code>autoRestore()</code></td><td>—</td><td><code>boolean</code></td><td>Restore the auto-saved state.</td></tr>
+<tr><td><code>setMaxViews(n)</code></td><td><code>number</code></td><td><code>void</code></td><td>Change max saved views. Evicts if currently over limit.</td></tr>
+<tr><td><code>getMaxViews()</code></td><td>—</td><td><code>number</code></td><td>Get current max (default: 5).</td></tr>
+<tr><td><code>setGridAdapter(adapter)</code></td><td><code>GridAdapter</code></td><td><code>void</code></td><td>Connect a grid adapter for state capture/restore.</td></tr>
+<tr><td><code>registerProvider(key, provider)</code></td><td><code>string</code>, <code>{capture, restore}</code></td><td><code>Function</code></td><td>Register custom app state. Returns unregister function.</td></tr>
+</tbody>
+</table>
+
+<h4>Constructor Options</h4>
+<div class="code"><div class="code-h"><span class="fn">options</span><span class="lang">JavaScript</span></div>
+<pre><span class="kw">new</span> <span class="fn">ViewStateManager</span>(bus, {
+  <span class="prop">maxViews</span>: <span class="num">5</span>,   <span class="cm">// Default: 5. LRU eviction when exceeded.</span>
+});</pre></div>
+
+<h4>view:saved Event Payload</h4>
+<div class="code"><div class="code-h"><span class="fn">event data</span><span class="lang">JavaScript</span></div>
+<pre>{
+  <span class="prop">name</span>: <span class="str">'Monday Review'</span>,
+  <span class="prop">slot</span>: <span class="num">2</span>,                    <span class="cm">// Position (1-based)</span>
+  <span class="prop">shortcut</span>: <span class="str">'Ctrl+2'</span>,          <span class="cm">// Assigned shortcut (null if slot > 9)</span>
+  <span class="prop">totalSaved</span>: <span class="num">3</span>,               <span class="cm">// Current count</span>
+  <span class="prop">maxViews</span>: <span class="num">5</span>,                 <span class="cm">// Configured max</span>
+  <span class="prop">remaining</span>: <span class="num">2</span>,                <span class="cm">// Slots available</span>
+  <span class="prop">evicted</span>: <span class="str">'Old View'</span>,         <span class="cm">// Name of evicted view (null if none)</span>
+}</pre></div>
+
+<p>Events: <span class="event-tag">view:saved</span> <span class="event-tag">view:loaded</span> <span class="event-tag">view:deleted</span> <span class="event-tag">view:evicted</span></p>
+
+
+<h2 id="selectionmodel">SelectionModel <span class="badge badge-state">State</span></h2>
+<p>Cross-page persistent selections with named sets and set operations. Selections survive pagination, filtering, and navigation.</p>
+
+<table>
+<thead><tr><th>Method</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>select(ids)</code></td><td>Add IDs to the current selection.</td></tr>
+<tr><td><code>deselect(ids)</code></td><td>Remove IDs from the current selection.</td></tr>
+<tr><td><code>toggle(id)</code></td><td>Toggle a single ID.</td></tr>
+<tr><td><code>clear()</code></td><td>Clear the entire selection.</td></tr>
+<tr><td><code>getSelected()</code></td><td>Returns <code>Set</code> of all selected IDs.</td></tr>
+<tr><td><code>count()</code></td><td>Number of selected items.</td></tr>
+<tr><td><code>isSelected(id)</code></td><td>Check if a specific ID is selected.</td></tr>
+<tr><td><code>where(predicate)</code></td><td>Select by expression: <code>.where(row => row.status === 'active')</code></td></tr>
+<tr><td><code>saveAs(name)</code></td><td>Save the current selection as a named set.</td></tr>
+<tr><td><code>loadSet(name)</code></td><td>Restore a named selection set.</td></tr>
+<tr><td><code>union(setName)</code></td><td>Current selection ∪ named set.</td></tr>
+<tr><td><code>intersect(setName)</code></td><td>Current selection ∩ named set.</td></tr>
+<tr><td><code>subtract(setName)</code></td><td>Current selection − named set.</td></tr>
+</tbody>
+</table>
+
+<p>Events: <span class="event-tag">selection:changed</span> <span class="event-tag">selection:cleared</span> <span class="event-tag">selection:set-saved</span></p>
+
+
+<h2 id="fieldregistry">FieldRegistry <span class="badge badge-state">State</span></h2>
+<p>Field-level navigation and tracking for detail pages. Registers form fields for jump-to, dirty tracking, empty navigation, and pinning.</p>
+
+<table>
+<thead><tr><th>Method</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>register(fieldId, options)</code></td><td>Register a field with label, section, element ref.</td></tr>
+<tr><td><code>jumpTo(fieldId)</code></td><td>Scroll to and focus a field.</td></tr>
+<tr><td><code>nextEmpty()</code></td><td>Jump to the next empty/unfilled field.</td></tr>
+<tr><td><code>getDirty()</code></td><td>Returns list of fields that differ from original values.</td></tr>
+<tr><td><code>pin(fieldId)</code></td><td>Pin a field for cross-record comparison.</td></tr>
+<tr><td><code>unpin(fieldId)</code></td><td>Unpin a field.</td></tr>
+<tr><td><code>getPinned()</code></td><td>Returns all pinned field IDs.</td></tr>
+<tr><td><code>search(query)</code></td><td>Search fields by label text.</td></tr>
+<tr><td><code>getCompleteness()</code></td><td>Returns <code>{ total, filled, empty, percent }</code>.</td></tr>
+</tbody>
+</table>
+
+<p>Events: <span class="event-tag">field:focused</span> <span class="event-tag">field:dirty</span> <span class="event-tag">field:pinned</span></p>
+
+
+<h2 id="gridadapter">GridAdapter <span class="badge badge-adapter">Adapter</span></h2>
+<p>Abstract interface that grid-specific adapters implement. This is the contract between CtrlK and any grid library.</p>
+
+<table>
+<thead><tr><th>Method</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>captureState()</code></td><td>Returns the full grid state: columns, filters, sort, scroll.</td></tr>
+<tr><td><code>restoreState(state)</code></td><td>Apply a previously captured state.</td></tr>
+<tr><td><code>getColumns()</code></td><td>Returns array of column definitions with visibility.</td></tr>
+<tr><td><code>setColumnVisible(colId, visible)</code></td><td>Show/hide a column.</td></tr>
+<tr><td><code>ensureColumnVisible(colId)</code></td><td>Scroll to make a column visible.</td></tr>
+<tr><td><code>getSelectedRows()</code></td><td>Returns array of selected row IDs.</td></tr>
+<tr><td><code>flashCells(options)</code></td><td>Flash-highlight cells (for column jump feedback).</td></tr>
+</tbody>
+</table>
+
+<div class="note"><strong>Grid adapter implementations:</strong> <code>@ctrlk/ag-grid</code> and <code>@ctrlk/devextreme</code> implement this interface. The same CtrlK commands work with either grid — the adapter translates.</div>
+
+
+<!-- ═══════════════════════════════════════ -->
+<!-- POWER MODULES -->
+<!-- ═══════════════════════════════════════ -->
+
+<h2 id="macroengine">MacroEngine <span class="badge badge-power">Power</span></h2>
+<p>Record, parameterize, and replay command sequences. A macro is a named list of commands that can be replayed with a single keystroke.</p>
+
+<table>
+<thead><tr><th>Method</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>startRecording(name)</code></td><td>Begin recording. All subsequent command executions are captured.</td></tr>
+<tr><td><code>stopRecording()</code></td><td>Stop recording and save the macro.</td></tr>
+<tr><td><code>play(name, params?)</code></td><td>Replay a saved macro. Optional parameter substitution.</td></tr>
+<tr><td><code>list()</code></td><td>List all saved macros.</td></tr>
+<tr><td><code>delete(name)</code></td><td>Delete a saved macro.</td></tr>
+<tr><td><code>isRecording()</code></td><td>Returns <code>true</code> if currently recording.</td></tr>
+</tbody>
+</table>
+
+<p>Events: <span class="event-tag">macro:recording-started</span> <span class="event-tag">macro:recording-stopped</span> <span class="event-tag">macro:played</span></p>
+
+
+<h2 id="historymanager">HistoryManager <span class="badge badge-power">Power</span></h2>
+<p>Application-level undo/redo with branching. Tracks commands that define an <code>undo</code> function and allows reversal.</p>
+
+<table>
+<thead><tr><th>Method</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>undo()</code></td><td>Undo the last undoable command.</td></tr>
+<tr><td><code>redo()</code></td><td>Redo the last undone command.</td></tr>
+<tr><td><code>canUndo()</code></td><td>Returns <code>true</code> if undo is available.</td></tr>
+<tr><td><code>canRedo()</code></td><td>Returns <code>true</code> if redo is available.</td></tr>
+<tr><td><code>getHistory()</code></td><td>Returns the full history stack.</td></tr>
+<tr><td><code>clear()</code></td><td>Clear all history.</td></tr>
+</tbody>
+</table>
+
+<p>Events: <span class="event-tag">history:undo</span> <span class="event-tag">history:redo</span> <span class="event-tag">history:pushed</span></p>
+
+
+<h2 id="activefilterbar">ActiveFilterBar <span class="badge badge-power">Power</span></h2>
+<p>Renders dismissible filter chips showing all active filters. Each chip has a × button to remove that filter.</p>
+
+<table>
+<thead><tr><th>Method</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>addFilter(key, label, removeFn)</code></td><td>Add a filter chip. <code>removeFn</code> is called when × is clicked.</td></tr>
+<tr><td><code>removeFilter(key)</code></td><td>Programmatically remove a filter chip.</td></tr>
+<tr><td><code>clear()</code></td><td>Remove all filter chips.</td></tr>
+<tr><td><code>getActive()</code></td><td>Returns array of active filter keys.</td></tr>
+</tbody>
+</table>
+
+
+<!-- ═══════════════════════════════════════ -->
+<!-- NAVIGATION MODULES -->
+<!-- ═══════════════════════════════════════ -->
+
+<h2 id="columnnavigator">ColumnNavigator <span class="badge badge-nav">Nav</span></h2>
+<p>Column search, bookmarks, and horizontal navigation. The module that solves Problem #1 — finding columns in a 150-column grid.</p>
+
+<table>
+<thead><tr><th>Method</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>search(query)</code></td><td>Search columns by name. Returns matching column definitions.</td></tr>
+<tr><td><code>jumpTo(colId)</code></td><td>Scroll horizontally to a column and flash-highlight it.</td></tr>
+<tr><td><code>bookmark(colId)</code></td><td>Toggle bookmark on a column.</td></tr>
+<tr><td><code>nextBookmark()</code></td><td>Jump to the next bookmarked column.</td></tr>
+<tr><td><code>prevBookmark()</code></td><td>Jump to the previous bookmarked column.</td></tr>
+<tr><td><code>getBookmarks()</code></td><td>Returns all bookmarked column IDs.</td></tr>
+<tr><td><code>setVisibilityProfile(name, colIds)</code></td><td>Define a named column profile.</td></tr>
+<tr><td><code>applyProfile(name)</code></td><td>Apply a column visibility profile.</td></tr>
+</tbody>
+</table>
+
+<p>Default shortcuts: <code>Ctrl+G</code> (search), <code>Ctrl+→</code> / <code>Ctrl+←</code> (bookmark nav)</p>
+
+
+<h2 id="focusnavigator">FocusNavigator <span class="badge badge-nav">Nav</span></h2>
+<p>Spatial zone navigation. Defines zones (toolbar, grid, sidebar, detail panel) and cycles between them with F6.</p>
+
+<table>
+<thead><tr><th>Method</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>addZone(id, element, options?)</code></td><td>Register a focus zone.</td></tr>
+<tr><td><code>nextZone()</code></td><td>Move focus to the next zone (F6).</td></tr>
+<tr><td><code>prevZone()</code></td><td>Move focus to the previous zone (Shift+F6).</td></tr>
+<tr><td><code>focusZone(id)</code></td><td>Focus a specific zone by ID.</td></tr>
+<tr><td><code>discover()</code></td><td>Auto-discover zones from <code>[data-ctrlk-zone]</code> attributes.</td></tr>
+</tbody>
+</table>
+
+
+<h2 id="sessiontracker">SessionTracker <span class="badge badge-nav">Nav</span></h2>
+<p>Track which records have been visited, reviewed, or marked dirty in a batch workflow. Shows progress (e.g. "12/30 reviewed").</p>
+
+<table>
+<thead><tr><th>Method</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>markVisited(id)</code></td><td>Mark a record as visited.</td></tr>
+<tr><td><code>markReviewed(id)</code></td><td>Mark as reviewed (subset of visited).</td></tr>
+<tr><td><code>markDirty(id)</code></td><td>Mark as having unsaved changes.</td></tr>
+<tr><td><code>nextUnreviewed()</code></td><td>Returns the ID of the next unreviewed record.</td></tr>
+<tr><td><code>getProgress()</code></td><td>Returns <code>{ visited, reviewed, dirty, total, percent }</code>.</td></tr>
+<tr><td><code>isReviewed(id)</code></td><td>Check if a specific record is reviewed.</td></tr>
+<tr><td><code>reset()</code></td><td>Clear all tracking data.</td></tr>
+</tbody>
+</table>
+
+<p>Events: <span class="event-tag">session:visited</span> <span class="event-tag">session:reviewed</span> <span class="event-tag">session:progress</span></p>
+
+
+<!-- ═══════════════════════════════════════ -->
+<!-- VIEW SHARE -->
+<!-- ═══════════════════════════════════════ -->
+
+<h2 id="viewshare">ViewShare <span class="badge badge-new">New</span></h2>
+<p>Shareable application views. Three tiers: URL links (no server), stored team views (app provides storage), and live sharing (Enterprise).</p>
+
+<h3>Tier 1 — URL Links (no server)</h3>
+<table>
+<thead><tr><th>Method</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>createLink(options?)</code></td><td>Compress current view state into a shareable URL. Options: <code>{ name?, description? }</code></td></tr>
+<tr><td><code>applyFromUrl()</code></td><td>Read <code>#ctrlk=</code> hash from current URL and apply the state.</td></tr>
+<tr><td><code>copyLink(options?)</code></td><td>Create link and copy to clipboard.</td></tr>
+<tr><td><code>peekLink(url)</code></td><td>Extract metadata from a shared URL without applying it.</td></tr>
+</tbody>
+</table>
+
+<h3>Tier 2 — Stored Sharing (app provides storage)</h3>
+<table>
+<thead><tr><th>Method</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>setProvider(provider)</code></td><td>Set storage backend: <code>{ save, load, list, delete }</code></td></tr>
+<tr><td><code>publish(name, options?)</code></td><td>Save view to shared store. Options: <code>{ scope?, expiresIn? }</code></td></tr>
+<tr><td><code>load(viewId)</code></td><td>Load a shared view by ID. Tracks usage count.</td></tr>
+<tr><td><code>list(options?)</code></td><td>List shared views. Sort by name, date, or useCount.</td></tr>
+<tr><td><code>remove(viewId)</code></td><td>Delete a shared view.</td></tr>
+<tr><td><code>createLocalProvider(ns?)</code></td><td>Built-in localStorage provider for testing.</td></tr>
+</tbody>
+</table>
+
+<h3>Tier 3 — Live Sharing (Enterprise)</h3>
+<table>
+<thead><tr><th>Method</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>startBroadcast()</code></td><td>Start broadcasting view state changes.</td></tr>
+<tr><td><code>stopBroadcast()</code></td><td>Stop broadcasting.</td></tr>
+<tr><td><code>follow(userId)</code></td><td>Follow another user's view in real-time.</td></tr>
+<tr><td><code>stopFollow()</code></td><td>Stop following.</td></tr>
+</tbody>
+</table>
+
+<p>Events: <span class="event-tag">share:link-created</span> <span class="event-tag">share:published</span> <span class="event-tag">share:loaded</span> <span class="event-tag">share:broadcast-start</span></p>
+
+
+<!-- ═══════════════════════════════════════ -->
+<!-- FRAMEWORK INTEGRATION -->
+<!-- ═══════════════════════════════════════ -->
+
+<h2 id="react">React Integration <span class="badge badge-adapter">Framework</span></h2>
+
+<h4>Setup</h4>
+<div class="code"><div class="code-h"><span class="fn">App.jsx</span><span class="lang">React</span></div>
+<pre><span class="kw">import</span> { <span class="ty">CtrlKProvider</span> } <span class="kw">from</span> <span class="str">'@ctrlk/react'</span>;
+<span class="kw">import</span> ctrlk <span class="kw">from</span> <span class="str">'ctrlk'</span>;
+
+<span class="kw">function</span> <span class="fn">App</span>() {
+  <span class="kw">return</span> (
+    &lt;<span class="ty">CtrlKProvider</span> <span class="prop">instance</span>={ctrlk}&gt;
+      &lt;<span class="ty">YourApp</span> /&gt;
+    &lt;/<span class="ty">CtrlKProvider</span>&gt;
+  );
+}</pre></div>
+
+<h4>Available Hooks</h4>
+<table>
+<thead><tr><th>Hook</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>useCtrlkCommand(def, deps)</code></td><td>Register a command. Auto-unregisters on unmount.</td></tr>
+<tr><td><code>useCtrlkView(key, default)</code></td><td>Two-way binding to a view state value.</td></tr>
+<tr><td><code>useCtrlkDensity()</code></td><td>Returns current density level.</td></tr>
+<tr><td><code>useCtrlkSelection()</code></td><td>Returns <code>[selected, { select, deselect, toggle, clear }]</code>.</td></tr>
+<tr><td><code>useCtrlkField(fieldId, options)</code></td><td>Register a form field for jump-to and tracking.</td></tr>
+<tr><td><code>useCtrlkShortcut(shortcut, handler)</code></td><td>Bind a shortcut inside a component.</td></tr>
+<tr><td><code>useCtrlk()</code></td><td>Access the raw CtrlK instance.</td></tr>
+</tbody>
+</table>
+
+<div class="code"><div class="code-h"><span class="fn">Component.jsx</span><span class="lang">React</span></div>
+<pre><span class="kw">import</span> { <span class="ty">useCtrlkCommand</span>, <span class="ty">useCtrlkView</span> } <span class="kw">from</span> <span class="str">'@ctrlk/react'</span>;
+
+<span class="kw">function</span> <span class="fn">DataGrid</span>() {
+  <span class="cm">// Command auto-registers, auto-unregisters on unmount</span>
+  <span class="fn">useCtrlkCommand</span>({
+    <span class="prop">id</span>: <span class="str">'grid.refresh'</span>,
+    <span class="prop">title</span>: <span class="str">'Refresh Data'</span>,
+    <span class="prop">shortcut</span>: <span class="str">'Ctrl+R'</span>,
+    <span class="fn">execute</span>: () => fetchData(),
+  }, []);
+
+  <span class="cm">// View state survives navigation</span>
+  <span class="kw">const</span> [filters, setFilters] = <span class="fn">useCtrlkView</span>(<span class="str">'grid.filters'</span>, {});
+
+  <span class="kw">return</span> &lt;<span class="ty">Grid</span> <span class="prop">filters</span>={filters} /&gt;;
+}</pre></div>
+
+
+<h2 id="angular">Angular Integration <span class="badge badge-adapter">Framework</span></h2>
+
+<h4>Setup</h4>
+<div class="code"><div class="code-h"><span class="fn">app.module.ts</span><span class="lang">Angular</span></div>
+<pre><span class="kw">import</span> { <span class="ty">CtrlkModule</span> } <span class="kw">from</span> <span class="str">'@ctrlk/angular'</span>;
+
+@<span class="fn">NgModule</span>({
+  <span class="prop">imports</span>: [<span class="ty">CtrlkModule</span>.<span class="fn">forRoot</span>()],
+})</pre></div>
+
+<h4>Available Directives</h4>
+<table>
+<thead><tr><th>Directive</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>[ctrlkCommand]</code></td><td>Register a command from a template element.</td></tr>
+<tr><td><code>[ctrlkField]</code></td><td>Register a form field for jump-to navigation.</td></tr>
+<tr><td><code>[ctrlkShortcut]</code></td><td>Bind a shortcut to a component method.</td></tr>
+<tr><td><code>[ctrlkZone]</code></td><td>Define a focus navigation zone.</td></tr>
+</tbody>
+</table>
+
+<div class="code"><div class="code-h"><span class="fn">component.html</span><span class="lang">Angular</span></div>
+<pre><span class="cm">&lt;!-- Register commands from templates --&gt;</span>
+&lt;<span class="kw">button</span>
+  <span class="ty">ctrlkCommand</span>=<span class="str">"export.csv"</span>
+  <span class="ty">ctrlkCommandTitle</span>=<span class="str">"Export to CSV"</span>
+  <span class="ty">ctrlkCommandShortcut</span>=<span class="str">"Ctrl+Shift+E"</span>
+  (<span class="fn">click</span>)=<span class="str">"exportCsv()"</span>&gt;
+  Export
+&lt;/<span class="kw">button</span>&gt;
+
+<span class="cm">&lt;!-- Register fields for jump-to --&gt;</span>
+&lt;<span class="kw">input</span>
+  <span class="ty">ctrlkField</span>=<span class="str">"patient.name"</span>
+  <span class="ty">ctrlkFieldLabel</span>=<span class="str">"Patient Name"</span>
+  <span class="ty">ctrlkFieldSection</span>=<span class="str">"Demographics"</span>
+  [(<span class="fn">ngModel</span>)]=<span class="str">"patient.name"</span> /&gt;</pre></div>
+
+
+<h2 id="vue">Vue 3 Integration <span class="badge badge-adapter">Framework</span></h2>
+
+<div class="code"><div class="code-h"><span class="fn">composables/useCtrlk.js</span><span class="lang">Vue 3</span></div>
+<pre><span class="kw">import</span> { <span class="ty">onMounted</span>, <span class="ty">onUnmounted</span> } <span class="kw">from</span> <span class="str">'vue'</span>;
+<span class="kw">import</span> ctrlk <span class="kw">from</span> <span class="str">'ctrlk'</span>;
+
+<span class="kw">export function</span> <span class="fn">useCtrlkCommand</span>(def) {
+  <span class="kw">let</span> unregister;
+  <span class="fn">onMounted</span>(() => { unregister = ctrlk.commands.<span class="fn">register</span>(def); });
+  <span class="fn">onUnmounted</span>(() => { unregister?.(); });
+}
+
+<span class="kw">export function</span> <span class="fn">useCtrlkField</span>(fieldId, options) {
+  <span class="fn">onMounted</span>(() => { ctrlk.fields.<span class="fn">register</span>(fieldId, options); });
+}</pre></div>
+
+
+<!-- ═══════════════════════════════════════ -->
+<!-- GRID ADAPTERS -->
+<!-- ═══════════════════════════════════════ -->
+
+<h2 id="aggrid">AG Grid Adapter <span class="badge badge-adapter">Adapter</span></h2>
+
+<div class="code"><div class="code-h"><span class="fn">setup</span><span class="lang">JavaScript</span></div>
+<pre><span class="kw">import</span> { <span class="ty">AgGridAdapter</span> } <span class="kw">from</span> <span class="str">'@ctrlk/ag-grid'</span>;
+
+gridOptions.<span class="fn">onGridReady</span> = (params) => {
+  <span class="kw">const</span> adapter = <span class="kw">new</span> <span class="fn">AgGridAdapter</span>(params.api);
+  ctrlk.views.<span class="fn">setGridAdapter</span>(adapter);
+};</pre></div>
+
+<h4>API Translation</h4>
+<table>
+<thead><tr><th>CtrlK Operation</th><th>AG Grid API Called</th></tr></thead>
+<tbody>
+<tr><td>Capture state</td><td><code>gridApi.getColumnState()</code> + <code>getFilterModel()</code></td></tr>
+<tr><td>Restore state</td><td><code>gridApi.applyColumnState()</code> + <code>setFilterModel()</code></td></tr>
+<tr><td>Show/hide column</td><td><code>applyColumnState({ state: [{ colId, hide }] })</code></td></tr>
+<tr><td>Scroll to column</td><td><code>gridApi.ensureColumnVisible(colId)</code></td></tr>
+<tr><td>Highlight column</td><td><code>gridApi.flashCells({ columns: [colId] })</code></td></tr>
+<tr><td>Set row height</td><td><code>updateGridOptions({ rowHeight })</code> + <code>resetRowHeights()</code></td></tr>
+<tr><td>Export CSV</td><td><code>gridApi.exportDataAsCsv()</code></td></tr>
+</tbody>
+</table>
+
+
+<h2 id="devextreme">DevExtreme Adapter <span class="badge badge-adapter">Adapter</span></h2>
+
+<div class="code"><div class="code-h"><span class="fn">setup</span><span class="lang">JavaScript</span></div>
+<pre><span class="kw">const</span> grid = <span class="kw">new</span> DevExpress.ui.<span class="fn">dxDataGrid</span>(el, { ... });
+
+<span class="cm">// DevExtreme has a built-in state() method</span>
+<span class="kw">const</span> adapter = {
+  <span class="fn">captureState</span>: () => grid.<span class="fn">state</span>(),
+  <span class="fn">restoreState</span>: (s) => grid.<span class="fn">state</span>(s),
+  <span class="fn">setColumnVisible</span>: (f, v) => grid.<span class="fn">columnOption</span>(f, <span class="str">'visible'</span>, v),
+  <span class="fn">ensureColumnVisible</span>: (f) => {
+    <span class="kw">const</span> idx = grid.<span class="fn">getVisibleColumnIndex</span>(f);
+    grid.<span class="fn">getScrollable</span>()?.<span class="fn">scrollToElement</span>(/*...*/);
+  },
+};
+ctrlk.views.<span class="fn">setGridAdapter</span>(adapter);</pre></div>
+
+
+<!-- ═══════════════════════════════════════ -->
+<!-- CONFIGURATION -->
+<!-- ═══════════════════════════════════════ -->
+
+<h2 id="config">Configuration</h2>
+
+<div class="code"><div class="code-h"><span class="fn">full config</span><span class="lang">JavaScript</span></div>
+<pre>ctrlk.<span class="fn">init</span>({
+  <span class="cm">// Feature toggles</span>
+  <span class="prop">palette</span>: <span class="kw">true</span>,            <span class="cm">// Enable command palette UI</span>
+  <span class="prop">density</span>: <span class="kw">true</span>,            <span class="cm">// Enable density controller</span>
+  <span class="prop">autoDiscover</span>: <span class="kw">true</span>,       <span class="cm">// Auto-register DOM elements</span>
+  <span class="prop">session</span>: <span class="kw">true</span>,            <span class="cm">// Enable session tracking</span>
+  <span class="prop">macros</span>: <span class="kw">true</span>,             <span class="cm">// Enable macro recording</span>
+  <span class="prop">history</span>: <span class="kw">true</span>,            <span class="cm">// Enable undo/redo</span>
+
+  <span class="cm">// Shortcuts</span>
+  <span class="prop">paletteShortcut</span>: <span class="str">'Ctrl+K'</span>,
+  <span class="prop">densityCycleShortcut</span>: <span class="str">'Ctrl+D'</span>,
+
+  <span class="cm">// ViewStateManager</span>
+  <span class="prop">maxViews</span>: <span class="num">5</span>,              <span class="cm">// Max saved views (LRU eviction)</span>
+});</pre></div>
+
+
+<!-- ═══════════════════════════════════════ -->
+<!-- EVENTS REFERENCE -->
+<!-- ═══════════════════════════════════════ -->
+
+<h2 id="events">Events Reference</h2>
+
+<table>
+<thead><tr><th>Event</th><th>Module</th><th>Payload</th></tr></thead>
+<tbody>
+<tr><td><code>command:registered</code></td><td>CommandRegistry</td><td><code>{ id, title }</code></td></tr>
+<tr><td><code>command:executed</code></td><td>CommandRegistry</td><td><code>{ id, result }</code></td></tr>
+<tr><td><code>shortcut:fired</code></td><td>ShortcutEngine</td><td><code>{ shortcut, commandId }</code></td></tr>
+<tr><td><code>palette:opened</code></td><td>CommandPalette</td><td>—</td></tr>
+<tr><td><code>palette:closed</code></td><td>CommandPalette</td><td>—</td></tr>
+<tr><td><code>density:changed</code></td><td>DensityController</td><td><code>{ level, previous }</code></td></tr>
+<tr><td><code>view:saved</code></td><td>ViewStateManager</td><td><code>{ name, slot, shortcut, remaining, evicted }</code></td></tr>
+<tr><td><code>view:loaded</code></td><td>ViewStateManager</td><td><code>{ name }</code></td></tr>
+<tr><td><code>view:evicted</code></td><td>ViewStateManager</td><td><code>{ name, reason, maxViews }</code></td></tr>
+<tr><td><code>selection:changed</code></td><td>SelectionModel</td><td><code>{ selected, count }</code></td></tr>
+<tr><td><code>field:focused</code></td><td>FieldRegistry</td><td><code>{ fieldId, label }</code></td></tr>
+<tr><td><code>session:reviewed</code></td><td>SessionTracker</td><td><code>{ id, progress }</code></td></tr>
+<tr><td><code>macro:played</code></td><td>MacroEngine</td><td><code>{ name, steps }</code></td></tr>
+<tr><td><code>history:undo</code></td><td>HistoryManager</td><td><code>{ commandId }</code></td></tr>
+<tr><td><code>share:link-created</code></td><td>ViewShare</td><td><code>{ name, length, compressedSize }</code></td></tr>
+<tr><td><code>share:published</code></td><td>ViewShare</td><td><code>{ id, name, scope }</code></td></tr>
+<tr><td><code>ctrlk:initialized</code></td><td>Core</td><td><code>{ version, options }</code></td></tr>
+</tbody>
+</table>
+
+
+<!-- ═══════════════════════════════════════ -->
+<!-- KEYBOARD REFERENCE -->
+<!-- ═══════════════════════════════════════ -->
+
+<h2 id="keyboard">Keyboard Shortcuts</h2>
+
+<h4>Default Shortcuts (configurable)</h4>
+<table>
+<thead><tr><th>Shortcut</th><th>Action</th><th>Excel Equivalent</th></tr></thead>
+<tbody>
+<tr><td><code>Ctrl+K</code></td><td>Open command palette</td><td>—</td></tr>
+<tr><td><code>Ctrl+G</code></td><td>Jump to column / field</td><td>F5 / Ctrl+G</td></tr>
+<tr><td><code>Ctrl+D</code></td><td>Cycle density level</td><td>—</td></tr>
+<tr><td><code>Ctrl+/</code></td><td>Show shortcut reference</td><td>—</td></tr>
+<tr><td><code>Ctrl+Z</code></td><td>Undo</td><td>Ctrl+Z</td></tr>
+<tr><td><code>Ctrl+Y</code></td><td>Redo</td><td>Ctrl+Y</td></tr>
+<tr><td><code>Ctrl+Shift+S</code></td><td>Share current view</td><td>—</td></tr>
+<tr><td><code>Ctrl+1</code> – <code>Ctrl+5</code></td><td>Load saved view by slot</td><td>—</td></tr>
+<tr><td><code>Alt+N</code></td><td>Next unreviewed / empty</td><td>—</td></tr>
+<tr><td><code>Alt+R</code></td><td>Toggle reviewed</td><td>—</td></tr>
+<tr><td><code>Ctrl+→</code> / <code>Ctrl+←</code></td><td>Next / previous bookmark</td><td>Ctrl+Arrow</td></tr>
+<tr><td><code>F2</code></td><td>Edit cell</td><td>F2</td></tr>
+<tr><td><code>F6</code></td><td>Next focus zone</td><td>F6</td></tr>
+<tr><td><code>Escape</code></td><td>Close overlay / cancel</td><td>Escape</td></tr>
+</tbody>
+</table>
+
+<div class="tip"><strong>All shortcuts are customizable.</strong> Override any default with <code>ctrlk.keys.bind('your-shortcut', 'command.id')</code>.</div>
+
+<div class="divider"></div>
+
+<p style="text-align:center;color:var(--dim);font-size:13px;padding:24px 0;">
+  <strong>CtrlK</strong> — The first IOUX for enterprise web apps · <a href="https://ctrlk.dev" style="color:var(--accent)">ctrlk.dev</a><br>
+  MIT License · Neural Weaves Pvt Ltd
+</p>
+
+</main>
+</div>
+
+<script>
+// Sidebar active state on scroll
+const sections = document.querySelectorAll('h2[id], h3[id]');
+const links = document.querySelectorAll('.sb-link');
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(s => { if (window.scrollY >= s.offsetTop - 80) current = s.id; });
+  links.forEach(l => { l.classList.toggle('active', l.getAttribute('href') === '#' + current); });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CtrlK — Implementation Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#fff;--surface:#f9fafb;--border:#e5e7eb;--text:#111827;--dim:#6b7280;--accent:#4f46e5;--accent-bg:#eef2ff;--accent-border:#c7d2fe;--green:#059669;--green-bg:#ecfdf5;--yellow:#d97706;--red:#dc2626;--code-bg:#1e1e2e;--code-text:#cdd6f4;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:15px;line-height:1.7;}
+
+.page{max-width:860px;margin:0 auto;padding:40px 24px 80px;}
+
+/* ─── Header ─── */
+.page-header{margin-bottom:48px;padding-bottom:32px;border-bottom:1px solid var(--border);}
+.page-header .badge{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);background:var(--accent-bg);border:1px solid var(--accent-border);padding:3px 12px;border-radius:20px;margin-bottom:12px;}
+.page-header h1{font-size:36px;font-weight:800;letter-spacing:-0.03em;line-height:1.1;margin-bottom:8px;}
+.page-header h1 span{color:var(--accent);}
+.page-header p{font-size:17px;color:var(--dim);max-width:640px;line-height:1.6;}
+
+/* ─── Nav ─── */
+.guide-nav{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px 24px;margin-bottom:40px;}
+.guide-nav h3{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--dim);margin-bottom:10px;}
+.guide-nav-list{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.guide-nav-list a{font-size:14px;color:var(--accent);text-decoration:none;padding:4px 0;display:flex;align-items:center;gap:6px;}
+.guide-nav-list a:hover{text-decoration:underline;}
+.guide-nav-list .nav-demo{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--dim);background:var(--bg);padding:1px 6px;border-radius:3px;border:1px solid var(--border);}
+
+/* ─── Section ─── */
+.guide-section{margin-bottom:56px;scroll-margin-top:24px;}
+.section-tag{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);background:var(--accent-bg);border:1px solid var(--accent-border);padding:2px 10px;border-radius:3px;display:inline-block;margin-bottom:8px;}
+.section-title{font-size:24px;font-weight:800;letter-spacing:-0.02em;margin-bottom:4px;}
+.section-subtitle{font-size:15px;color:var(--dim);margin-bottom:20px;}
+
+.tech-stack{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;}
+.tech-pill{font-family:'JetBrains Mono',monospace;font-size:11px;padding:3px 10px;border-radius:4px;border:1px solid var(--border);color:var(--dim);background:var(--surface);}
+
+/* ─── Steps ─── */
+.step{margin-bottom:28px;padding-left:36px;position:relative;}
+.step::before{content:attr(data-step);position:absolute;left:0;top:2px;width:24px;height:24px;border-radius:50%;background:var(--accent);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;}
+.step h4{font-size:16px;font-weight:700;margin-bottom:6px;}
+.step p{font-size:14px;color:var(--dim);margin-bottom:10px;line-height:1.6;}
+.step .note{background:var(--accent-bg);border-left:3px solid var(--accent);padding:8px 14px;font-size:13px;color:var(--accent);border-radius:0 4px 4px 0;margin:10px 0;line-height:1.5;}
+.step .warn{background:#fef3c7;border-left:3px solid var(--yellow);padding:8px 14px;font-size:13px;color:#92400e;border-radius:0 4px 4px 0;margin:10px 0;line-height:1.5;}
+.step .tip{background:var(--green-bg);border-left:3px solid var(--green);padding:8px 14px;font-size:13px;color:#065f46;border-radius:0 4px 4px 0;margin:10px 0;line-height:1.5;}
+
+/* ─── Code ─── */
+.code{background:var(--code-bg);border-radius:8px;overflow:hidden;margin:12px 0;position:relative;}
+.code-header{padding:8px 16px;background:#181825;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #313244;}
+.code-header .filename{font-family:'JetBrains Mono',monospace;font-size:11px;color:#a6adc8;}
+.code-header .lang{font-family:'JetBrains Mono',monospace;font-size:10px;color:#585b70;text-transform:uppercase;letter-spacing:1px;}
+pre.code-body{padding:16px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;color:var(--code-text);overflow-x:auto;white-space:pre;margin:0;}
+.code-body .kw{color:#cba6f7;}
+.code-body .fn{color:#89b4fa;}
+.code-body .str{color:#a6e3a1;}
+.code-body .cm{color:#585b70;}
+.code-body .num{color:#fab387;}
+.code-body .ty{color:#89dceb;}
+.code-body .op{color:#f38ba8;}
+.code-body .prop{color:#f9e2af;}
+
+/* ─── Result ─── */
+.result{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px 20px;margin:12px 0;}
+.result-label{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
+.result-content{font-size:14px;color:var(--text);line-height:1.6;}
+.result-content kbd{font-family:'JetBrains Mono',monospace;font-size:11px;padding:2px 6px;background:var(--bg);border:1px solid var(--border);border-radius:3px;color:var(--text);}
+
+/* ─── Features checklist ─── */
+.features{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:12px 0;}
+.feature-item{font-size:13px;color:var(--text);padding:4px 0;display:flex;align-items:center;gap:6px;}
+.feature-item::before{content:'✓';color:var(--green);font-weight:700;}
+
+/* ─── Comparison ─── */
+.compare-table{width:100%;border-collapse:collapse;font-size:13px;margin:16px 0;}
+.compare-table th{background:var(--surface);padding:8px 12px;text-align:left;font-weight:600;border-bottom:2px solid var(--border);font-size:12px;text-transform:uppercase;letter-spacing:0.5px;color:var(--dim);}
+.compare-table td{padding:8px 12px;border-bottom:1px solid #f3f4f6;}
+.compare-table td:first-child{font-weight:600;color:var(--text);}
+.compare-table code{font-family:'JetBrains Mono',monospace;font-size:11px;background:var(--surface);padding:1px 5px;border-radius:3px;color:var(--accent);}
+
+.divider{height:1px;background:var(--border);margin:48px 0;}
+
+/* ─── Footer ─── */
+.guide-footer{text-align:center;padding:32px 0;font-size:13px;color:var(--dim);border-top:1px solid var(--border);}
+
+@media(max-width:640px){
+  .guide-nav-list{grid-template-columns:1fr;}
+  .features{grid-template-columns:1fr;}
+  .page{padding:20px 16px 60px;}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- ═══════ HEADER ═══════ -->
+<div class="page-header">
+  <span class="badge">Implementation Guide v1.0</span>
+  <h1>Add <span>CtrlK</span> to your app</h1>
+  <p>Step-by-step instructions for integrating CtrlK into five different application architectures. Each section maps to a live demo you can run and inspect.</p>
+</div>
+
+<!-- ═══════ NAV ═══════ -->
+<div class="guide-nav">
+  <h3>Contents</h3>
+  <div class="guide-nav-list">
+    <a href="#demo1"><span class="nav-demo">Demo 1</span> Vanilla JS — HR Directory</a>
+    <a href="#demo2"><span class="nav-demo">Demo 2</span> React — Support Tickets</a>
+    <a href="#demo3"><span class="nav-demo">Demo 3</span> Vue 3 — Patient Records</a>
+    <a href="#demo4a"><span class="nav-demo">Demo 4A</span> AG Grid — Inventory</a>
+    <a href="#demo4b"><span class="nav-demo">Demo 4B</span> DevExtreme — Inventory</a>
+    <a href="#shortcuts"><span class="nav-demo">Reference</span> Keyboard Shortcut Map</a>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- DEMO 1 — Vanilla JS -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="guide-section" id="demo1">
+  <span class="section-tag">Demo 1</span>
+  <h2 class="section-title">Vanilla JS — HR Employee Directory</h2>
+  <p class="section-subtitle">Pattern A drop-in. Add CtrlK to any existing page with zero build step. Shows column profiles, density control, view sharing.</p>
+  <div class="tech-stack">
+    <span class="tech-pill">Vanilla JS</span>
+    <span class="tech-pill">HTML Table</span>
+    <span class="tech-pill">No build tools</span>
+    <span class="tech-pill">25 columns</span>
+    <span class="tech-pill">200 rows</span>
+  </div>
+
+  <div class="step" data-step="1">
+    <h4>Include the runtime</h4>
+    <p>Add the single script tag. CtrlK auto-initializes, scans the DOM, and registers all buttons and links as commands.</p>
+    <div class="code"><div class="code-header"><span class="filename">index.html</span><span class="lang">HTML</span></div>
+<pre class="code-body"><span class="cm">&lt;!-- Drop this before &lt;/body&gt;. Nothing else needed. --&gt;</span>
+&lt;<span class="kw">script</span> <span class="ty">src</span>=<span class="str">"ctrlk.runtime.js"</span>&gt;&lt;/<span class="kw">script</span>&gt;
+
+<span class="cm">&lt;!-- Ctrl+K now opens command palette automatically. --&gt;</span>
+<span class="cm">&lt;!-- All &lt;button&gt; elements are auto-discovered as commands. --&gt;</span></pre></div>
+    <div class="tip"><strong>Zero-config result:</strong> Command palette opens with Ctrl+K. Every button on the page becomes a searchable command. Density control (Ctrl+D) is active. This is Pattern A.</div>
+  </div>
+
+  <div class="step" data-step="2">
+    <h4>Register custom commands</h4>
+    <p>Go beyond auto-discovery. Register named commands with shortcuts, categories, and execute functions.</p>
+    <div class="code"><div class="code-header"><span class="filename">app.js</span><span class="lang">JavaScript</span></div>
+<pre class="code-body"><span class="cm">// Register a command — appears in Ctrl+K palette</span>
+ctrlk.commands.<span class="fn">register</span>({
+  <span class="prop">id</span>: <span class="str">'view.engineering'</span>,
+  <span class="prop">title</span>: <span class="str">'Show Engineering Department'</span>,
+  <span class="prop">category</span>: <span class="str">'Department Views'</span>,
+  <span class="prop">icon</span>: <span class="str">'⚙'</span>,
+  <span class="prop">shortcut</span>: <span class="str">'Alt+1'</span>,
+  <span class="fn">execute</span>: () => filterByDept(<span class="str">'Engineering'</span>),
+});
+
+<span class="cm">// Bind the shortcut</span>
+ctrlk.keys.<span class="fn">bind</span>(<span class="str">'Alt+1'</span>, <span class="str">'view.engineering'</span>);</pre></div>
+  </div>
+
+  <div class="step" data-step="3">
+    <h4>Add column profiles (named column sets)</h4>
+    <p>Define which columns to show for different tasks. Users switch profiles from the palette or via shortcuts.</p>
+    <div class="code"><div class="code-header"><span class="filename">app.js</span><span class="lang">JavaScript</span></div>
+<pre class="code-body"><span class="cm">// Define column profiles</span>
+<span class="kw">const</span> PROFILES = {
+  people: [<span class="str">'empId'</span>,<span class="str">'name'</span>,<span class="str">'department'</span>,<span class="str">'title'</span>,<span class="str">'status'</span>,<span class="str">'location'</span>],
+  compensation: [<span class="str">'empId'</span>,<span class="str">'name'</span>,<span class="str">'band'</span>,<span class="str">'salary'</span>,<span class="str">'tenure'</span>],
+  contact: [<span class="str">'empId'</span>,<span class="str">'name'</span>,<span class="str">'email'</span>,<span class="str">'phone'</span>,<span class="str">'deskId'</span>],
+};
+
+<span class="kw">function</span> <span class="fn">showColumns</span>(profileName) {
+  <span class="kw">const</span> cols = PROFILES[profileName];
+  <span class="cm">// Hide all columns, show only these</span>
+  allColumns.<span class="fn">forEach</span>(col => {
+    col.visible = cols.<span class="fn">includes</span>(col.id);
+  });
+  renderGrid();
+}
+
+ctrlk.commands.<span class="fn">register</span>({
+  <span class="prop">id</span>: <span class="str">'cols.people'</span>,
+  <span class="prop">title</span>: <span class="str">'Columns: People Overview'</span>,
+  <span class="prop">category</span>: <span class="str">'Column Profiles'</span>,
+  <span class="prop">icon</span>: <span class="str">'👤'</span>,
+  <span class="fn">execute</span>: () => <span class="fn">showColumns</span>(<span class="str">'people'</span>),
+});</pre></div>
+  </div>
+
+  <div class="step" data-step="4">
+    <h4>Add column search (Ctrl+G)</h4>
+    <p>Build a column search overlay. On selection, scroll the grid horizontally to the column and highlight it.</p>
+    <div class="code"><div class="code-header"><span class="filename">column-search.js</span><span class="lang">JavaScript</span></div>
+<pre class="code-body"><span class="cm">// Get all columns for the search index</span>
+<span class="kw">const</span> searchableColumns = COLUMNS.<span class="fn">map</span>((col, i) => ({
+  <span class="prop">id</span>: col.id,
+  <span class="prop">name</span>: col.headerName,
+  <span class="prop">index</span>: i,
+}));
+
+<span class="cm">// Search function — filter by query</span>
+<span class="kw">function</span> <span class="fn">searchColumns</span>(query) {
+  <span class="kw">const</span> q = query.<span class="fn">toLowerCase</span>();
+  <span class="kw">return</span> searchableColumns.<span class="fn">filter</span>(c =>
+    c.name.<span class="fn">toLowerCase</span>().<span class="fn">includes</span>(q)
+  );
+}
+
+<span class="cm">// Jump to column — scroll + highlight</span>
+<span class="kw">function</span> <span class="fn">jumpToColumn</span>(col) {
+  <span class="kw">const</span> gridWrap = document.<span class="fn">querySelector</span>(<span class="str">'.grid-wrap'</span>);
+  <span class="kw">const</span> header = document.<span class="fn">querySelectorAll</span>(<span class="str">'th'</span>)[col.index];
+  <span class="cm">// Scroll horizontally to center the column</span>
+  <span class="kw">const</span> scrollLeft = header.offsetLeft - gridWrap.offsetWidth / <span class="num">2</span>;
+  gridWrap.<span class="fn">scrollTo</span>({ left: scrollLeft, behavior: <span class="str">'smooth'</span> });
+  <span class="cm">// Flash the column</span>
+  header.classList.<span class="fn">add</span>(<span class="str">'col-highlight'</span>);
+  <span class="fn">setTimeout</span>(() => header.classList.<span class="fn">remove</span>(<span class="str">'col-highlight'</span>), <span class="num">1500</span>);
+}
+
+<span class="cm">// Register Ctrl+G shortcut</span>
+ctrlk.keys.<span class="fn">bind</span>(<span class="str">'Ctrl+G'</span>, <span class="str">'ctrlk.colsearch'</span>);</pre></div>
+  </div>
+
+  <div class="step" data-step="5">
+    <h4>Add view sharing</h4>
+    <p>Capture the current view state (filters, columns, sort) and encode it into a shareable URL.</p>
+    <div class="code"><div class="code-header"><span class="filename">share.js</span><span class="lang">JavaScript</span></div>
+<pre class="code-body"><span class="kw">function</span> <span class="fn">shareCurrentView</span>() {
+  <span class="kw">const</span> state = {
+    <span class="prop">filter</span>: currentFilter,
+    <span class="prop">sort</span>: sortColumn,
+    <span class="prop">columns</span>: visibleColumns,
+    <span class="prop">selected</span>: [...selectedRows],
+  };
+  <span class="kw">const</span> encoded = <span class="fn">btoa</span>(JSON.<span class="fn">stringify</span>(state));
+  <span class="kw">const</span> link = location.href.<span class="fn">split</span>(<span class="str">'#'</span>)[<span class="num">0</span>] + <span class="str">'#ctrlk='</span> + encoded;
+  navigator.clipboard.<span class="fn">writeText</span>(link);
+}
+
+<span class="cm">// On page load — check for shared view in URL</span>
+<span class="kw">if</span> (location.hash.<span class="fn">startsWith</span>(<span class="str">'#ctrlk='</span>)) {
+  <span class="kw">const</span> state = JSON.<span class="fn">parse</span>(<span class="fn">atob</span>(location.hash.<span class="fn">slice</span>(<span class="num">7</span>)));
+  <span class="fn">applyViewState</span>(state);
+}</pre></div>
+  </div>
+
+  <div class="result">
+    <div class="result-label">What the user gets</div>
+    <div class="features">
+      <span class="feature-item"><kbd>Ctrl+K</kbd> — Command palette with all commands</span>
+      <span class="feature-item"><kbd>Ctrl+G</kbd> — Column search with jump-to</span>
+      <span class="feature-item"><kbd>Ctrl+D</kbd> — Density cycling (compact/spacious)</span>
+      <span class="feature-item"><kbd>Alt+1-5</kbd> — Quick department views</span>
+      <span class="feature-item"><kbd>Ctrl+Shift+S</kbd> — Share view as URL</span>
+      <span class="feature-item">Right-click headers to bookmark columns</span>
+      <span class="feature-item"><kbd>Ctrl+←→</kbd> — Jump between bookmarks</span>
+      <span class="feature-item">Column profiles from palette</span>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- DEMO 2 — React -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="guide-section" id="demo2">
+  <span class="section-tag">Demo 2</span>
+  <h2 class="section-title">React — Support Ticket Queue</h2>
+  <p class="section-subtitle">Pattern C deep integration using React hooks. Shows session tracking with batch review progress, selection with batch actions.</p>
+  <div class="tech-stack">
+    <span class="tech-pill">React 18</span>
+    <span class="tech-pill">Hooks (useState, useMemo)</span>
+    <span class="tech-pill">Custom row components</span>
+    <span class="tech-pill">120 tickets</span>
+  </div>
+
+  <div class="step" data-step="1">
+    <h4>Install and wrap with Provider</h4>
+    <div class="code"><div class="code-header"><span class="filename">terminal</span><span class="lang">Shell</span></div>
+<pre class="code-body">npm install ctrlk</pre></div>
+    <div class="code"><div class="code-header"><span class="filename">App.jsx</span><span class="lang">React</span></div>
+<pre class="code-body"><span class="kw">import</span> { <span class="ty">CtrlKProvider</span> } <span class="kw">from</span> <span class="str">'@ctrlk/react'</span>;
+<span class="kw">import</span> ctrlk <span class="kw">from</span> <span class="str">'ctrlk'</span>;
+
+<span class="kw">function</span> <span class="fn">App</span>() {
+  <span class="kw">return</span> (
+    &lt;<span class="ty">CtrlKProvider</span> <span class="prop">instance</span>={ctrlk}&gt;
+      &lt;<span class="ty">TicketQueue</span> /&gt;
+    &lt;/<span class="ty">CtrlKProvider</span>&gt;
+  );
+}</pre></div>
+  </div>
+
+  <div class="step" data-step="2">
+    <h4>Register commands with useCtrlkCommand</h4>
+    <p>Commands auto-unregister on component unmount. The hook wraps the latest closure, so execute always has fresh state.</p>
+    <div class="code"><div class="code-header"><span class="filename">TicketQueue.jsx</span><span class="lang">React</span></div>
+<pre class="code-body"><span class="kw">import</span> { <span class="ty">useCtrlkCommand</span> } <span class="kw">from</span> <span class="str">'@ctrlk/react'</span>;
+
+<span class="kw">function</span> <span class="fn">TicketQueue</span>() {
+  <span class="kw">const</span> [view, setView] = <span class="fn">useState</span>(<span class="str">'all'</span>);
+
+  <span class="cm">// This command auto-registers and auto-unregisters</span>
+  <span class="fn">useCtrlkCommand</span>({
+    <span class="prop">id</span>: <span class="str">'view.open'</span>,
+    <span class="prop">title</span>: <span class="str">'Show Open Tickets'</span>,
+    <span class="prop">category</span>: <span class="str">'Views'</span>,
+    <span class="prop">icon</span>: <span class="str">'🟢'</span>,
+    <span class="fn">execute</span>: () => <span class="fn">setView</span>(<span class="str">'open'</span>),
+  }, []);  <span class="cm">// empty deps = register once</span>
+}</pre></div>
+  </div>
+
+  <div class="step" data-step="3">
+    <h4>Add session tracking (batch review)</h4>
+    <p>Track which tickets have been reviewed. Show progress. Navigate to next unreviewed with Alt+N.</p>
+    <div class="code"><div class="code-header"><span class="filename">TicketQueue.jsx</span><span class="lang">React</span></div>
+<pre class="code-body"><span class="kw">const</span> [reviewed, setReviewed] = <span class="fn">useState</span>(<span class="kw">new</span> Set());
+
+<span class="cm">// Toggle reviewed status (Alt+R)</span>
+<span class="kw">function</span> <span class="fn">toggleReviewed</span>(ticketId) {
+  <span class="fn">setReviewed</span>(prev => {
+    <span class="kw">const</span> next = <span class="kw">new</span> Set(prev);
+    next.<span class="fn">has</span>(ticketId) ? next.<span class="fn">delete</span>(ticketId) : next.<span class="fn">add</span>(ticketId);
+    <span class="kw">return</span> next;
+  });
+}
+
+<span class="cm">// Next unreviewed (Alt+N)</span>
+<span class="kw">function</span> <span class="fn">nextUnreviewed</span>() {
+  <span class="kw">const</span> next = filteredTickets.<span class="fn">find</span>(t => !reviewed.<span class="fn">has</span>(t.id));
+  <span class="kw">if</span> (next) {
+    <span class="fn">setFocused</span>(next.id);
+    document.<span class="fn">querySelector</span>(<span class="str">`[data-ticket="${next.id}"]`</span>)
+      ?.<span class="fn">scrollIntoView</span>({ behavior: <span class="str">'smooth'</span> });
+  }
+}
+
+<span class="cm">// Progress bar data</span>
+<span class="kw">const</span> progress = {
+  <span class="prop">done</span>: filteredTickets.<span class="fn">filter</span>(t => reviewed.<span class="fn">has</span>(t.id)).length,
+  <span class="prop">total</span>: filteredTickets.length,
+};
+
+<span class="cm">// Register as commands</span>
+<span class="fn">useCtrlkCommand</span>({ <span class="prop">id</span>:<span class="str">'review.toggle'</span>, <span class="prop">shortcut</span>:<span class="str">'Alt+R'</span>, <span class="fn">execute</span>: toggleReviewed });
+<span class="fn">useCtrlkCommand</span>({ <span class="prop">id</span>:<span class="str">'review.next'</span>, <span class="prop">shortcut</span>:<span class="str">'Alt+N'</span>, <span class="fn">execute</span>: nextUnreviewed });</pre></div>
+  </div>
+
+  <div class="step" data-step="4">
+    <h4>Render with visual indicators</h4>
+    <div class="code"><div class="code-header"><span class="filename">TicketRow.jsx</span><span class="lang">React</span></div>
+<pre class="code-body"><span class="cm">// Green left border = reviewed</span>
+<span class="cm">// Blue background = selected</span>
+&lt;<span class="kw">div</span>
+  <span class="prop">className</span>={<span class="str">`ticket-row
+    ${</span>selected.<span class="fn">has</span>(ticket.id) ? <span class="str">'selected'</span> : <span class="str">''</span><span class="str">}
+    ${</span>reviewed.<span class="fn">has</span>(ticket.id) ? <span class="str">'reviewed'</span> : <span class="str">''</span><span class="str">}`</span>}
+  <span class="prop">data-ticket</span>={ticket.id}
+  <span class="prop">onDoubleClick</span>={() => <span class="fn">toggleReviewed</span>(ticket.id)}
+&gt;
+  ...
+&lt;/<span class="kw">div</span>&gt;</pre></div>
+  </div>
+
+  <div class="result">
+    <div class="result-label">What the user gets</div>
+    <div class="features">
+      <span class="feature-item"><kbd>Alt+R</kbd> — Toggle reviewed on focused ticket</span>
+      <span class="feature-item"><kbd>Alt+N</kbd> — Jump to next unreviewed</span>
+      <span class="feature-item">Progress bar: "7/45 reviewed (16%)"</span>
+      <span class="feature-item">Double-click to mark reviewed (green border)</span>
+      <span class="feature-item">Batch selection with checkbox + actions</span>
+      <span class="feature-item">Smart views in sidebar</span>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- DEMO 3 — Vue 3 -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="guide-section" id="demo3">
+  <span class="section-tag">Demo 3</span>
+  <h2 class="section-title">Vue 3 — Patient Record Detail Page</h2>
+  <p class="section-subtitle">Field-level CtrlK integration. Shows jump-to-field, empty field navigation, dirty tracking, field pinning, and completeness.</p>
+  <div class="tech-stack">
+    <span class="tech-pill">Vue 3 Composition API</span>
+    <span class="tech-pill">v-model binding</span>
+    <span class="tech-pill">52 fields</span>
+    <span class="tech-pill">7 sections</span>
+  </div>
+
+  <div class="step" data-step="1">
+    <h4>Define field schema with sections</h4>
+    <p>Structure fields into logical sections. Each field has a label, section, and editability flag.</p>
+    <div class="code"><div class="code-header"><span class="filename">patient-schema.js</span><span class="lang">JavaScript</span></div>
+<pre class="code-body"><span class="kw">const</span> SECTIONS = [
+  {
+    <span class="prop">id</span>: <span class="str">'vitals'</span>,
+    <span class="prop">title</span>: <span class="str">'Vitals'</span>,
+    <span class="prop">icon</span>: <span class="str">'❤️'</span>,
+    <span class="prop">fields</span>: [<span class="str">'bloodPressure'</span>, <span class="str">'heartRate'</span>, <span class="str">'temperature'</span>,
+             <span class="str">'weight'</span>, <span class="str">'height'</span>, <span class="str">'bmi'</span>, <span class="str">'oxygenSat'</span>],
+  },
+  <span class="cm">// ... more sections</span>
+];
+
+<span class="kw">const</span> LABELS = {
+  <span class="prop">bloodPressure</span>: <span class="str">'Blood Pressure'</span>,
+  <span class="prop">heartRate</span>: <span class="str">'Heart Rate (bpm)'</span>,
+  <span class="cm">// ... one label per field</span>
+};
+
+<span class="kw">const</span> READONLY = <span class="kw">new</span> Set([<span class="str">'mrn'</span>, <span class="str">'ssn'</span>, <span class="str">'bmi'</span>]);
+<span class="kw">const</span> REQUIRED = <span class="kw">new</span> Set([<span class="str">'firstName'</span>, <span class="str">'bloodPressure'</span>]);</pre></div>
+  </div>
+
+  <div class="step" data-step="2">
+    <h4>Build the field search (Ctrl+G for fields)</h4>
+    <p>Unlike grid column search, field search operates on form fields. Shows section, empty/dirty status, and pin state.</p>
+    <div class="code"><div class="code-header"><span class="filename">field-search.js</span><span class="lang">JavaScript</span></div>
+<pre class="code-body"><span class="kw">function</span> <span class="fn">searchFields</span>(query) {
+  <span class="kw">const</span> q = query.<span class="fn">toLowerCase</span>();
+  <span class="kw">const</span> results = [];
+
+  <span class="kw">for</span> (<span class="kw">const</span> section <span class="kw">of</span> SECTIONS) {
+    <span class="kw">for</span> (<span class="kw">const</span> fieldId <span class="kw">of</span> section.fields) {
+      <span class="kw">const</span> label = LABELS[fieldId];
+      <span class="kw">if</span> (label.<span class="fn">toLowerCase</span>().<span class="fn">includes</span>(q)) {
+        results.<span class="fn">push</span>({
+          <span class="prop">field</span>: fieldId,
+          <span class="prop">label</span>: label,
+          <span class="prop">section</span>: section.title,
+          <span class="prop">empty</span>: <span class="fn">isEmpty</span>(fieldId),
+          <span class="prop">dirty</span>: <span class="fn">isDirty</span>(fieldId),
+          <span class="prop">pinned</span>: pinnedFields.<span class="fn">has</span>(fieldId),
+        });
+      }
+    }
+  }
+  <span class="kw">return</span> results;
+}
+
+<span class="cm">// Jump to field — scroll, highlight, focus input</span>
+<span class="kw">function</span> <span class="fn">scrollToField</span>(fieldId) {
+  <span class="kw">const</span> el = document.<span class="fn">querySelector</span>(<span class="str">`[data-field="${fieldId}"]`</span>);
+  el?.<span class="fn">scrollIntoView</span>({ behavior: <span class="str">'smooth'</span>, block: <span class="str">'center'</span> });
+  <span class="kw">const</span> input = el?.<span class="fn">querySelector</span>(<span class="str">'input'</span>);
+  input?.<span class="fn">focus</span>();
+}</pre></div>
+  </div>
+
+  <div class="step" data-step="3">
+    <h4>Add dirty tracking and pre-save diff</h4>
+    <div class="code"><div class="code-header"><span class="filename">PatientRecord.vue</span><span class="lang">Vue 3</span></div>
+<pre class="code-body"><span class="cm">// Track original values for dirty comparison</span>
+<span class="kw">const</span> data = <span class="fn">ref</span>({...PATIENT});
+<span class="kw">const</span> original = <span class="fn">ref</span>({...PATIENT});
+
+<span class="cm">// Computed: which fields changed?</span>
+<span class="kw">const</span> dirtyFields = <span class="fn">computed</span>(() => {
+  <span class="kw">return</span> Object.<span class="fn">keys</span>(data.value)
+    .<span class="fn">filter</span>(k => data.value[k] !== original.value[k])
+    .<span class="fn">map</span>(k => ({
+      <span class="prop">field</span>: k,
+      <span class="prop">label</span>: LABELS[k],
+      <span class="prop">old</span>: original.value[k],
+      <span class="prop">new</span>: data.value[k],
+    }));
+});
+
+<span class="cm">// Show diff modal with Ctrl+Shift+D</span>
+<span class="cm">// Yellow border on dirty inputs via :class binding</span>
+<span class="cm">&lt;input :class="{dirty: isDirty(fieldId)}" v-model="data[fieldId]" /&gt;</span></pre></div>
+  </div>
+
+  <div class="step" data-step="4">
+    <h4>Add field pinning for cross-record comparison</h4>
+    <div class="code"><div class="code-header"><span class="filename">PatientRecord.vue</span><span class="lang">Vue 3</span></div>
+<pre class="code-body"><span class="kw">const</span> pinnedFields = <span class="fn">ref</span>(<span class="kw">new</span> Set());
+
+<span class="kw">function</span> <span class="fn">togglePin</span>(fieldId) {
+  <span class="kw">const</span> p = <span class="kw">new</span> Set(pinnedFields.value);
+  p.<span class="fn">has</span>(fieldId) ? p.<span class="fn">delete</span>(fieldId) : p.<span class="fn">add</span>(fieldId);
+  pinnedFields.value = p;
+}
+
+<span class="cm">&lt;!-- Pinned bar at top of page --&gt;</span>
+<span class="cm">&lt;div class="pinned-bar" v-if="pinnedFields.size > 0"&gt;</span>
+<span class="cm">  &lt;div v-for="f in pinnedFields" class="pinned-item"&gt;</span>
+<span class="cm">    {{ LABELS[f] }}: {{ data[f] }}</span>
+<span class="cm">  &lt;/div&gt;</span>
+<span class="cm">&lt;/div&gt;</span></pre></div>
+    <div class="note"><strong>Cross-record use:</strong> When navigating to the next patient, pinned field values stay visible at the top — showing the previous patient's blood pressure next to the current one without memorizing.</div>
+  </div>
+
+  <div class="result">
+    <div class="result-label">What the user gets</div>
+    <div class="features">
+      <span class="feature-item"><kbd>Ctrl+G</kbd> — Jump to any field by name</span>
+      <span class="feature-item"><kbd>Alt+N</kbd> — Navigate to next empty field</span>
+      <span class="feature-item"><kbd>Ctrl+Shift+D</kbd> — Pre-save diff (old → new)</span>
+      <span class="feature-item">Yellow highlight on dirty fields</span>
+      <span class="feature-item">Dashed border on empty fields</span>
+      <span class="feature-item">📌 Pin fields for cross-record viewing</span>
+      <span class="feature-item">Completeness: "40/52 fields (77%)"</span>
+      <span class="feature-item">Section-level fill counts in sidebar</span>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- DEMO 4A — AG Grid -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="guide-section" id="demo4a">
+  <span class="section-tag">Demo 4A</span>
+  <h2 class="section-title">AG Grid — Inventory Management</h2>
+  <p class="section-subtitle">CtrlK + AG Grid Community. Shows the GridAdapter in action — view state capture/restore, column search via grid API, density affecting row height.</p>
+  <div class="tech-stack">
+    <span class="tech-pill">AG Grid Community v31</span>
+    <span class="tech-pill">GridAdapter pattern</span>
+    <span class="tech-pill">21 columns</span>
+    <span class="tech-pill">500 rows</span>
+  </div>
+
+  <div class="step" data-step="1">
+    <h4>Initialize AG Grid and connect CtrlK</h4>
+    <div class="code"><div class="code-header"><span class="filename">inventory.js</span><span class="lang">JavaScript</span></div>
+<pre class="code-body"><span class="kw">import</span> { AgGridAdapter } <span class="kw">from</span> <span class="str">'@ctrlk/ag-grid'</span>;
+
+<span class="cm">// After AG Grid is ready</span>
+<span class="kw">const</span> gridOptions = {
+  <span class="prop">columnDefs</span>: columnDefs,
+  <span class="prop">rowData</span>: products,
+  <span class="fn">onGridReady</span>: (params) => {
+    <span class="kw">const</span> adapter = <span class="kw">new</span> <span class="fn">AgGridAdapter</span>(params.api, {
+      <span class="prop">rowIdField</span>: <span class="str">'sku'</span>,
+    });
+
+    <span class="cm">// Wire CtrlK to AG Grid</span>
+    ctrlk.<span class="fn">connectGrid</span>(adapter);
+    <span class="cm">// This single call connects:</span>
+    <span class="cm">//   → views (capture/restore column state)</span>
+    <span class="cm">//   → selection (sync selected rows)</span>
+    <span class="cm">//   → columnNav (search via AG Grid API)</span>
+  },
+};</pre></div>
+    <div class="note"><strong>One call:</strong> <code>ctrlk.connectGrid(adapter)</code> wires views, selection, and column navigation to the grid simultaneously. No per-module configuration needed.</div>
+  </div>
+
+  <div class="step" data-step="2">
+    <h4>Column search uses AG Grid API directly</h4>
+    <p>The column search overlay reads from <code>gridApi.getColumnState()</code> and jumps using <code>gridApi.ensureColumnVisible()</code>.</p>
+    <div class="code"><div class="code-header"><span class="filename">column-search.js</span><span class="lang">JavaScript</span></div>
+<pre class="code-body"><span class="cm">// Column search reads from AG Grid API</span>
+<span class="kw">function</span> <span class="fn">getColumns</span>() {
+  <span class="kw">return</span> gridApi.<span class="fn">getColumnState</span>().<span class="fn">map</span>(cs => ({
+    <span class="prop">colId</span>: cs.colId,
+    <span class="prop">name</span>: columnDefs.<span class="fn">find</span>(cd => cd.field === cs.colId)?.headerName,
+    <span class="prop">hidden</span>: cs.hide,
+  }));
+}
+
+<span class="cm">// Jump uses AG Grid's native scroll + flash</span>
+<span class="kw">function</span> <span class="fn">jumpToColumn</span>(colId) {
+  <span class="cm">// Make visible if hidden</span>
+  <span class="kw">if</span> (col.hidden) {
+    gridApi.<span class="fn">applyColumnState</span>({
+      <span class="prop">state</span>: [{ <span class="prop">colId</span>: colId, <span class="prop">hide</span>: <span class="kw">false</span> }]
+    });
+  }
+  <span class="cm">// Scroll to it</span>
+  gridApi.<span class="fn">ensureColumnVisible</span>(colId);
+  <span class="cm">// Flash highlight</span>
+  gridApi.<span class="fn">flashCells</span>({ <span class="prop">columns</span>: [colId] });
+}</pre></div>
+  </div>
+
+  <div class="step" data-step="3">
+    <h4>Density changes AG Grid row height</h4>
+    <div class="code"><div class="code-header"><span class="filename">density.js</span><span class="lang">JavaScript</span></div>
+<pre class="code-body"><span class="kw">const</span> densityConfig = {
+  <span class="prop">compact</span>:     { <span class="prop">rowHeight</span>: <span class="num">28</span>, <span class="prop">headerHeight</span>: <span class="num">30</span> },
+  <span class="prop">comfortable</span>: { <span class="prop">rowHeight</span>: <span class="num">36</span>, <span class="prop">headerHeight</span>: <span class="num">36</span> },
+  <span class="prop">spacious</span>:    { <span class="prop">rowHeight</span>: <span class="num">48</span>, <span class="prop">headerHeight</span>: <span class="num">42</span> },
+};
+
+<span class="kw">function</span> <span class="fn">setDensity</span>(level) {
+  <span class="kw">const</span> cfg = densityConfig[level];
+  <span class="cm">// AG Grid API for row height</span>
+  gridApi.<span class="fn">updateGridOptions</span>({
+    <span class="prop">rowHeight</span>: cfg.rowHeight,
+    <span class="prop">headerHeight</span>: cfg.headerHeight,
+  });
+  gridApi.<span class="fn">resetRowHeights</span>();
+}</pre></div>
+  </div>
+
+  <div class="step" data-step="4">
+    <h4>Save and restore views via AG Grid state API</h4>
+    <div class="code"><div class="code-header"><span class="filename">views.js</span><span class="lang">JavaScript</span></div>
+<pre class="code-body"><span class="cm">// Save: capture AG Grid's full state</span>
+<span class="kw">function</span> <span class="fn">saveView</span>(name) {
+  <span class="kw">const</span> state = {
+    <span class="prop">columns</span>: gridApi.<span class="fn">getColumnState</span>(),
+    <span class="prop">filters</span>: gridApi.<span class="fn">getFilterModel</span>(),
+    <span class="prop">sort</span>: gridApi.<span class="fn">getColumnState</span>()
+      .<span class="fn">filter</span>(c => c.sort)
+      .<span class="fn">map</span>(c => ({ <span class="prop">colId</span>: c.colId, <span class="prop">sort</span>: c.sort })),
+  };
+  localStorage.<span class="fn">setItem</span>(<span class="str">`view-${name}`</span>, JSON.<span class="fn">stringify</span>(state));
+}
+
+<span class="cm">// Restore: apply everything back</span>
+<span class="kw">function</span> <span class="fn">loadView</span>(name) {
+  <span class="kw">const</span> state = JSON.<span class="fn">parse</span>(localStorage.<span class="fn">getItem</span>(<span class="str">`view-${name}`</span>));
+  gridApi.<span class="fn">applyColumnState</span>({ <span class="prop">state</span>: state.columns, <span class="prop">applyOrder</span>: <span class="kw">true</span> });
+  gridApi.<span class="fn">setFilterModel</span>(state.filters);
+}</pre></div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- DEMO 4B — DevExtreme -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="guide-section" id="demo4b">
+  <span class="section-tag">Demo 4B</span>
+  <h2 class="section-title">DevExtreme — Inventory Management</h2>
+  <p class="section-subtitle">Same app as 4A, different grid library. Shows the adapter abstraction — same CtrlK commands, different API calls underneath.</p>
+  <div class="tech-stack">
+    <span class="tech-pill">DevExtreme DataGrid</span>
+    <span class="tech-pill">GridAdapter pattern</span>
+    <span class="tech-pill">Same 21 columns</span>
+    <span class="tech-pill">Same 500 rows</span>
+  </div>
+
+  <div class="step" data-step="1">
+    <h4>The key difference: API translation</h4>
+    <p>Every CtrlK operation maps to a different DevExtreme API call. The user experience is identical.</p>
+
+    <table class="compare-table">
+      <thead><tr><th>CtrlK Operation</th><th>AG Grid API</th><th>DevExtreme API</th></tr></thead>
+      <tbody>
+        <tr><td>Get column state</td><td><code>gridApi.getColumnState()</code></td><td><code>dxGrid.state()</code></td></tr>
+        <tr><td>Restore state</td><td><code>gridApi.applyColumnState()</code></td><td><code>dxGrid.state(saved)</code></td></tr>
+        <tr><td>Show/hide column</td><td><code>applyColumnState({hide})</code></td><td><code>columnOption(field,'visible')</code></td></tr>
+        <tr><td>Scroll to column</td><td><code>ensureColumnVisible()</code></td><td><code>getScrollable().scrollToElement()</code></td></tr>
+        <tr><td>Flash cells</td><td><code>flashCells({columns})</code></td><td>CSS animation (manual)</td></tr>
+        <tr><td>Set filter</td><td><code>setFilterModel()</code></td><td><code>filter(['field','=','val'])</code></td></tr>
+        <tr><td>Clear filters</td><td><code>setFilterModel(null)</code></td><td><code>clearFilter()</code></td></tr>
+        <tr><td>Select all</td><td><code>selectAllFiltered()</code></td><td><code>selectAll()</code></td></tr>
+        <tr><td>Export CSV</td><td><code>exportDataAsCsv()</code></td><td><code>exportToExcel()</code></td></tr>
+        <tr><td>Row height</td><td><code>updateGridOptions({rowHeight})</code></td><td>CSS padding on cells</td></tr>
+      </tbody>
+    </table>
+
+    <div class="tip"><strong>This is why the adapter layer exists.</strong> The CtrlK command says "save view." The adapter translates that to the grid library's specific API. Switch from AG Grid to DevExtreme? Change the adapter. All commands, shortcuts, and user workflows remain identical.</div>
+  </div>
+
+  <div class="step" data-step="2">
+    <h4>DevExtreme-specific view save/restore</h4>
+    <div class="code"><div class="code-header"><span class="filename">dx-views.js</span><span class="lang">JavaScript</span></div>
+<pre class="code-body"><span class="cm">// DevExtreme has a built-in state() method</span>
+<span class="cm">// It captures EVERYTHING — columns, filters, sort, grouping</span>
+
+<span class="kw">function</span> <span class="fn">saveView</span>(name) {
+  <span class="kw">const</span> state = dxGrid.<span class="fn">state</span>();  <span class="cm">// One call. Done.</span>
+  localStorage.<span class="fn">setItem</span>(<span class="str">`view-${name}`</span>, JSON.<span class="fn">stringify</span>(state));
+}
+
+<span class="kw">function</span> <span class="fn">loadView</span>(name) {
+  <span class="kw">const</span> state = JSON.<span class="fn">parse</span>(localStorage.<span class="fn">getItem</span>(<span class="str">`view-${name}`</span>));
+  dxGrid.<span class="fn">state</span>(state);  <span class="cm">// One call. Everything restored.</span>
+}
+
+<span class="cm">// Column visibility toggle — different API than AG Grid</span>
+<span class="kw">function</span> <span class="fn">showOnlyColumns</span>(fieldNames) {
+  ALL_COLUMNS.<span class="fn">forEach</span>(col => {
+    dxGrid.<span class="fn">columnOption</span>(
+      col.dataField,
+      <span class="str">'visible'</span>,
+      fieldNames.<span class="fn">includes</span>(col.dataField)
+    );
+  });
+}</pre></div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- KEYBOARD REFERENCE -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="guide-section" id="shortcuts">
+  <span class="section-tag">Reference</span>
+  <h2 class="section-title">Keyboard Shortcut Map</h2>
+  <p class="section-subtitle">These shortcuts work across all demos. They follow Excel conventions where applicable.</p>
+
+  <table class="compare-table">
+    <thead><tr><th>Shortcut</th><th>Action</th><th>Demos</th><th>Excel Equivalent</th></tr></thead>
+    <tbody>
+      <tr><td><kbd>Ctrl+K</kbd></td><td>Open command palette</td><td>All</td><td>—</td></tr>
+      <tr><td><kbd>Ctrl+G</kbd></td><td>Jump to column / field</td><td>All</td><td>F5 / Ctrl+G (Go To)</td></tr>
+      <tr><td><kbd>Ctrl+D</kbd></td><td>Cycle density</td><td>All</td><td>—</td></tr>
+      <tr><td><kbd>Ctrl+/</kbd></td><td>Show all shortcuts</td><td>All</td><td>—</td></tr>
+      <tr><td><kbd>Ctrl+Shift+S</kbd></td><td>Share current view</td><td>1, 4A, 4B</td><td>—</td></tr>
+      <tr><td><kbd>Alt+N</kbd></td><td>Next empty / unreviewed</td><td>2, 3</td><td>—</td></tr>
+      <tr><td><kbd>Alt+R</kbd></td><td>Toggle reviewed</td><td>2</td><td>—</td></tr>
+      <tr><td><kbd>Ctrl+Shift+D</kbd></td><td>Show dirty diff</td><td>3</td><td>—</td></tr>
+      <tr><td><kbd>Ctrl+S</kbd></td><td>Save changes</td><td>3</td><td>Ctrl+S</td></tr>
+      <tr><td><kbd>Ctrl+1-4</kbd></td><td>Saved views</td><td>4A, 4B</td><td>—</td></tr>
+      <tr><td><kbd>Alt+1-5</kbd></td><td>Quick department views</td><td>1</td><td>—</td></tr>
+      <tr><td><kbd>Ctrl+←→</kbd></td><td>Jump between bookmarks</td><td>1</td><td>Ctrl+Arrow (boundaries)</td></tr>
+      <tr><td><kbd>F2</kbd></td><td>Edit cell / field</td><td>Core module</td><td>F2</td></tr>
+      <tr><td><kbd>F6</kbd></td><td>Cycle between zones</td><td>Core module</td><td>F6 (panes)</td></tr>
+      <tr><td><kbd>Escape</kbd></td><td>Close overlay / cancel</td><td>All</td><td>Escape</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="divider"></div>
+
+<!-- ═══════ ARCHITECTURE SUMMARY ═══════ -->
+<div class="guide-section">
+  <span class="section-tag">Architecture</span>
+  <h2 class="section-title">How it all fits together</h2>
+
+  <div class="code"><div class="code-header"><span class="filename">architecture</span><span class="lang">Diagram</span></div>
+<pre class="code-body" style="line-height:1.4;"><span class="cm">  User Input (keyboard, mouse)</span>
+          │
+          ▼
+  ┌──────────────────────────┐
+  │     <span class="fn">CtrlK Runtime</span>          │ ◄── <span class="cm">The IOUX layer</span>
+  │                          │
+  │  <span class="ty">CommandRegistry</span>         │     All actions are commands
+  │  <span class="ty">ShortcutEngine</span>          │     Scope-aware key binding
+  │  <span class="ty">CommandPalette</span>          │     Ctrl+K search UI
+  │  <span class="ty">ViewStateManager</span>        │     Named views + auto-save
+  │  <span class="ty">SelectionModel</span>          │     Cross-page persistent sets
+  │  <span class="ty">FieldRegistry</span>           │     Field nav + dirty tracking
+  │  <span class="ty">ColumnNavigator</span>         │     Column search + bookmarks
+  │  <span class="ty">SessionTracker</span>          │     Batch review progress
+  │  <span class="ty">MacroEngine</span>             │     Record + replay
+  │  <span class="ty">HistoryManager</span>          │     Undo/redo + branching
+  │  <span class="ty">ViewShare</span>               │     Shareable view links
+  │  <span class="ty">DensityController</span>       │     Compact/comfortable/spacious
+  └──────────┬───────────────┘
+             │
+             ▼
+  ┌──────────────────────────┐
+  │   <span class="fn">Grid Adapter</span>             │ ◄── <span class="cm">Translates to grid API</span>
+  │                          │
+  │  <span class="str">@ctrlk/ag-grid</span>          │     AG Grid v28-31+
+  │  <span class="str">@ctrlk/devextreme</span>      │     DevExtreme DataGrid
+  │  <span class="str">@ctrlk/kendo</span>            │     Kendo UI Grid
+  │  <span class="str">@ctrlk/generic</span>          │     Plain HTML tables
+  └──────────┬───────────────┘
+             │
+             ▼
+  ┌──────────────────────────┐
+  │   <span class="fn">Your Application</span>        │ ◄── <span class="cm">No changes needed</span>
+  │                          │
+  │  React / Angular / Vue   │     Framework components
+  │  AG Grid / DevExtreme    │     Grid library
+  │  Bootstrap / Material    │     CSS framework
+  └──────────────────────────┘</pre></div>
+</div>
+
+<!-- ═══════ FOOTER ═══════ -->
+<div class="guide-footer">
+  <strong>CtrlK</strong> — The first IOUX for enterprise web apps · <a href="https://ctrlk.dev" style="color:var(--accent)">ctrlk.dev</a>
+  <br>MIT License · Neural Weaves Pvt Ltd
+</div>
+
+</div>
+</body>
+</html>

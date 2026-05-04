@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CtrlK — The Operational UX (OpUX) Failure Catalog</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Instrument+Serif:ital@0;1&display=swap');
+  :root {
+    --bg:#08090d; --surface:#0f1118; --card:#161922; --border:#1e2230;
+    --text:#c8ccd8; --dim:#5a5f74; --accent:#e8a44a; --highlight:#e8785a;
+    --good:#5a9e6f; --warn:#e07755; --info:#5a8ec0;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;font-size:13px;line-height:1.8;}
+
+  .page-header{padding:40px 48px 24px;border-bottom:1px solid var(--border);max-width:1100px;margin:0 auto;}
+  .page-header .doc-label{font-size:9px;text-transform:uppercase;letter-spacing:2px;color:var(--dim);margin-bottom:8px;}
+  .page-header h1{font-family:'Instrument Serif',serif;font-size:28px;font-weight:400;color:#e8eaf0;line-height:1.3;}
+  .page-header .subtitle{font-family:'Instrument Serif',serif;font-size:18px;font-weight:400;color:var(--accent);margin-top:6px;font-style:italic;}
+  .page-header .abstract{color:var(--dim);font-size:12px;line-height:1.8;margin-top:16px;max-width:800px;}
+  .meta-row{display:flex;gap:24px;margin-top:16px;font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;}
+  .meta-row span{display:flex;align-items:center;gap:6px;}
+  .meta-dot{width:6px;height:6px;border-radius:50%;}
+
+  .main{max-width:1100px;margin:0 auto;padding:24px 48px 60px;}
+
+  h2{font-family:'Instrument Serif',serif;font-size:21px;font-weight:400;color:#e8eaf0;
+     margin:36px 0 12px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+  h3{font-family:'Instrument Serif',serif;font-size:16px;font-weight:400;color:#e8eaf0;margin:20px 0 8px;}
+
+  p{margin:8px 0;line-height:1.8;}
+  p.lead{font-size:13px;color:var(--text);max-width:860px;}
+  p.dim{color:var(--dim);font-size:12px;}
+
+  .note{background:var(--surface);border-left:2px solid var(--accent);padding:10px 14px;margin:12px 0;font-size:12px;line-height:1.7;color:var(--dim);}
+  .note strong{color:var(--accent);}
+  .note.highlight{border-color:var(--highlight);}
+  .note.highlight strong{color:var(--highlight);}
+  .note.info{border-color:var(--info);}
+  .note.info strong{color:var(--info);}
+  .note.good{border-color:var(--good);}
+  .note.good strong{color:var(--good);}
+
+  .thesis-box{background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:24px 28px;margin:20px 0;max-width:860px;}
+  .thesis-box .tb-label{font-size:9px;text-transform:uppercase;letter-spacing:2px;color:var(--highlight);margin-bottom:10px;}
+  .thesis-box p{font-family:'Instrument Serif',serif;font-size:18px;color:#e8eaf0;line-height:1.6;font-style:italic;}
+
+  .problem-card{background:var(--card);border:1px solid var(--border);border-radius:5px;margin:20px 0;overflow:hidden;}
+  .pc-header{display:flex;align-items:center;gap:12px;padding:14px 18px;background:var(--surface);border-bottom:1px solid var(--border);}
+  .pc-num{font-family:'Instrument Serif',serif;font-size:22px;color:var(--highlight);min-width:32px;}
+  .pc-title{font-family:'Instrument Serif',serif;font-size:16px;color:#e8eaf0;flex:1;}
+  .pc-layer{font-size:9px;text-transform:uppercase;letter-spacing:1px;padding:3px 8px;border-radius:2px;}
+  .pc-layer.client{background:#e8785a18;color:var(--highlight);}
+  .pc-layer.hybrid{background:#e8a44a18;color:var(--accent);}
+  .pc-layer.server{background:#5a8ec018;color:var(--info);}
+
+  .pc-body{padding:18px;display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  .pc-body-full{padding:18px;}
+
+  .pc-section{font-size:12px;}
+  .pc-section-label{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--border);}
+  .pc-section p{color:var(--dim);line-height:1.7;margin:4px 0;}
+
+  .scenario-list{margin:10px 0;padding:0;}
+  .scenario-item{color:var(--text);font-size:12px;margin:8px 0;padding:8px 12px;border-left:2px solid var(--border);background:var(--surface);border-radius:0 3px 3px 0;}
+  .scenario-item .sc-domain{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:3px;}
+  .scenario-item em{color:var(--accent);font-style:normal;}
+
+  .pc-cost{margin-top:8px;font-size:11px;}
+  .pc-cost-label{color:var(--dim);font-size:9px;text-transform:uppercase;letter-spacing:1px;}
+  .pc-cost-row{display:flex;justify-content:space-between;padding:2px 0;}
+  .pc-cost-row .val{color:var(--warn);}
+
+  .pc-solution{font-size:12px;color:var(--dim);line-height:1.7;}
+  .pc-solution .api{font-size:11px;color:var(--accent);background:var(--surface);padding:4px 8px;border-radius:3px;margin-top:6px;display:inline-block;font-family:'DM Mono',monospace;}
+
+  .category-header{margin:40px 0 16px;padding:12px 0;border-bottom:2px solid var(--border);}
+  .category-header .cat-label{font-size:9px;text-transform:uppercase;letter-spacing:2px;color:var(--highlight);margin-bottom:4px;}
+  .category-header h2{margin:0;padding:0;border:none;}
+  .category-header .cat-desc{color:var(--dim);font-size:12px;margin-top:4px;max-width:700px;}
+
+  .stats-bar{display:flex;gap:2px;margin:24px 0;}
+  .stat-block{flex:1;background:var(--card);border:1px solid var(--border);padding:14px 10px;text-align:center;border-radius:3px;}
+  .stat-block .sb-val{font-family:'Instrument Serif',serif;font-size:28px;color:var(--highlight);}
+  .stat-block .sb-label{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);margin-top:4px;}
+
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:12px 0;}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:5px;padding:16px;}
+  .card-title{font-family:'Instrument Serif',serif;font-size:14px;color:#e8eaf0;margin-bottom:8px;}
+
+  .matrix{width:100%;border-collapse:collapse;font-size:12px;margin:12px 0;}
+  .matrix th{background:var(--surface);color:var(--dim);padding:6px 10px;text-align:left;font-weight:400;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);}
+  .matrix td{padding:5px 10px;border-bottom:1px solid #151820;color:var(--text);}
+  .matrix .va{color:var(--accent);font-weight:500;}
+  .matrix .vg{color:var(--good);}
+  .matrix .vw{color:var(--warn);}
+  .matrix .vh{color:var(--highlight);}
+  .matrix .vi{color:var(--info);}
+
+  .cog-box{background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:14px 18px;margin:12px 0;display:flex;gap:14px;align-items:flex-start;}
+  .cog-icon{font-size:20px;flex-shrink:0;margin-top:2px;}
+  .cog-body{font-size:12px;color:var(--dim);line-height:1.7;}
+  .cog-body strong{color:var(--info);}
+  .cog-body em{color:var(--text);font-style:normal;}
+
+  .principle{background:var(--card);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:0 5px 5px 0;padding:14px 18px;margin:14px 0;font-size:13px;}
+  .principle .pr-num{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:4px;}
+  .principle .pr-text{color:#e8eaf0;font-family:'Instrument Serif',serif;font-size:16px;line-height:1.5;}
+  .principle .pr-detail{color:var(--dim);font-size:12px;margin-top:6px;line-height:1.7;}
+
+  .timeline{margin:16px 0;}
+  .tl-item{display:flex;gap:14px;padding:8px 0;border-bottom:1px solid var(--border);}
+  .tl-era{min-width:100px;font-size:11px;color:var(--accent);text-align:right;padding-top:2px;}
+  .tl-content{font-size:12px;color:var(--dim);line-height:1.6;}
+  .tl-content strong{color:var(--text);font-weight:500;}
+
+  .footer{margin-top:48px;padding:20px 0;border-top:1px solid var(--border);font-size:10px;color:var(--dim);text-align:center;letter-spacing:1px;text-transform:uppercase;}
+
+  @media(max-width:768px){
+    .page-header,.main{padding-left:20px;padding-right:20px;}
+    .pc-body{grid-template-columns:1fr;}
+    .grid-2{grid-template-columns:1fr;}
+    .stats-bar{flex-direction:column;}
+  }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <div class="doc-label">ctrlk.dev · Founding Document · v1.0</div>
+  <h1>The Operational UX (OpUX) Failure Catalog</h1>
+  <div class="subtitle">Why enterprise users export to Excel — and why the answer is a new architectural layer called IOUX</div>
+  <p class="abstract">
+    This document identifies 12 systemic Operational UX (OpUX) failures present in virtually every enterprise web application — from hospital management to supply chain logistics, from CRM platforms to financial analytics, from HR portals to manufacturing dashboards. These failures are invisible to traditional UX teams because they manifest only at high usage intensity: users spending 4+ hours daily for months or years. They explain why power users invariably escape to Excel, and why billions in enterprise software investment produces tools that are tolerated rather than loved. CtrlK — the first IOUX (Integrated Operational UX) — exists to solve them.
+  </p>
+  <div class="meta-row">
+    <span><div class="meta-dot" style="background:var(--highlight)"></div>12 Problem Areas</span>
+    <span><div class="meta-dot" style="background:var(--accent)"></div>8 Client-Solvable</span>
+    <span><div class="meta-dot" style="background:var(--info)"></div>4 Hybrid/Server</span>
+    <span><div class="meta-dot" style="background:var(--good)"></div>ctrlk.dev</span>
+  </div>
+</div>
+
+<div class="main">
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2>The Central Thesis</h2>
+
+<div class="thesis-box">
+  <div class="tb-label">Core Insight</div>
+  <p>Enterprise web applications treat the database as the product and the UI as a window into it. But for the person who spends 6 hours daily inside the application, the UI IS the product. The database is invisible. Every interaction that forces the user to think about the data structure instead of their actual task is a failure of design.</p>
+</div>
+
+<p class="lead">
+  The modern web UI stack — Bootstrap, Material, Tailwind — solves the rendering problem. React, Angular, Vue solve the component problem. AG Grid, DevExtreme, Kendo solve the data display problem. Nobody solves the <em style="color:var(--highlight);">Operational UX</em> problem — how a human who has used this tool for thousands of hours actually works inside it. That's the layer CtrlK provides: the IOUX (Integrated Operational UX).
+</p>
+
+<div class="cog-box">
+  <div class="cog-icon">🧠</div>
+  <div class="cog-body">
+    <strong>The Cognitive Science:</strong> Human perception operates in two modes. <em>Preattentive processing</em> — parallel, unconscious, under 250ms — handles color, shape, spatial position, motion. <em>Attentive processing</em> — serial, conscious, slow — handles reading text, comparing numbers, following procedures. Enterprise UIs force attentive processing for tasks that should be preattentive. A red row among grey rows registers in milliseconds. Reading 80 column headers to find "Last Inspection Date" takes seconds. The difference, compounded across thousands of daily interactions, is the difference between flow state and fatigue.
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2>The User Evolution Model</h2>
+<p class="dim">Enterprise applications serve four classes of user, but are designed for only the first two.</p>
+
+<div class="stats-bar">
+  <div class="stat-block">
+    <div class="sb-val">L1</div>
+    <div class="sb-label">Reader</div>
+    <p style="font-size:10px;color:var(--dim);margin-top:6px;">Lands, scans, clicks obvious CTAs. Uses the app a few times per week. Needs onboarding, tooltips, visual hierarchy.</p>
+  </div>
+  <div class="stat-block">
+    <div class="sb-val">L2</div>
+    <div class="sb-label">Navigator</div>
+    <p style="font-size:10px;color:var(--dim);margin-top:6px;">Uses search, filters, bookmarks. Daily user. Knows the layout. Needs efficiency, not discovery.</p>
+  </div>
+  <div class="stat-block" style="border-color:var(--accent);">
+    <div class="sb-val" style="color:var(--accent);">L3</div>
+    <div class="sb-label" style="color:var(--accent);">Operator</div>
+    <p style="font-size:10px;color:var(--dim);margin-top:6px;">Keyboard shortcuts, batch operations, saved views. 4+ hours daily. Friction is physical pain. Needs keyboard-first, state persistence.</p>
+  </div>
+  <div class="stat-block" style="border-color:var(--highlight);">
+    <div class="sb-val" style="color:var(--highlight);">L4</div>
+    <div class="sb-label" style="color:var(--highlight);">Performer</div>
+    <p style="font-size:10px;color:var(--dim);margin-top:6px;">Muscle memory, macros, composable primitives. Multi-year tenure. The tool disappears — work flows through hands, not eyes. Needs composability, zero-UI paths.</p>
+  </div>
+</div>
+
+<div class="note highlight">
+  <strong>The Gap:</strong> Every CSS framework, every UX design system, every Figma workflow targets L1 and L2. The UX team's deliverables — wireframes, user journeys, onboarding flows — optimize for discovery and first impressions. Nobody designs for the user at year 3 who has thousands of hours of context and for whom a single misplaced button costs real time, every single day. This gap has a name now: the <em style="color:var(--highlight)">Operational UX (OpUX)</em> gap. CtrlK is the first IOUX — the architectural layer that closes it.
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="category-header">
+  <div class="cat-label">Category A</div>
+  <h2>Navigation & Spatial Orientation</h2>
+  <div class="cat-desc">How users find what they need in data-dense interfaces. The fundamental failure: enterprise apps organize data by structure (what it is), not by task (what the user needs right now).</div>
+</div>
+
+<!-- Problem 1 -->
+<div class="problem-card">
+  <div class="pc-header">
+    <div class="pc-num">01</div>
+    <div class="pc-title">Horizontal Navigation Does Not Exist</div>
+    <span class="pc-layer client">Client-Solvable</span>
+  </div>
+  <div class="pc-body">
+    <div class="pc-section">
+      <div class="pc-section-label">The Problem</div>
+      <p>Data grids with 50-150+ columns offer exactly one horizontal navigation mechanism: the scroll bar. No keyboard traversal between column groups. No "jump to column" search. No memory of last horizontal position. Arrow keys work vertically because rows are the default mental model, but in wide grids the horizontal axis is where real work happens.</p>
+      <div class="scenario-list">
+        <div class="scenario-item">
+          <div class="sc-domain">Healthcare</div>
+          A hospital administrator reviewing patient records needs to check admission date (column 12), last lab result (column 38), insurance status (column 55), and discharge notes (column 72). Four scroll-hunts, each time visually scanning column headers.
+        </div>
+        <div class="scenario-item">
+          <div class="sc-domain">Supply Chain</div>
+          A logistics coordinator managing a 120-column shipment grid needs to cross-reference origin port, current location, customs status, and estimated arrival — scattered across the grid with no way to jump between them.
+        </div>
+        <div class="scenario-item">
+          <div class="sc-domain">Finance</div>
+          A credit analyst checking agency ratings across a 150-column portfolio grid scrolls horizontally to Moody's (column 47), then S&P (column 52), then an internal score (column 89) — three separate scroll-hunts for a single comparison task.
+        </div>
+      </div>
+      <div class="pc-cost">
+        <div class="pc-cost-label">Cost Per Occurrence</div>
+        <div class="pc-cost-row"><span>Time to locate a column (100+ col grid)</span><span class="val">4-8 seconds</span></div>
+        <div class="pc-cost-row"><span>Occurrences per user per day</span><span class="val">80-120</span></div>
+        <div class="pc-cost-row"><span>Daily time lost per user</span><span class="val">8-16 minutes</span></div>
+      </div>
+    </div>
+    <div class="pc-section">
+      <div class="pc-section-label">CtrlK Solution</div>
+      <div class="pc-solution">
+        <p><strong style="color:var(--good)">Column Navigator:</strong> Ctrl+G opens a column search. Type "insurance" — all matching columns appear. Select one and the grid scrolls horizontally to it, highlighted. Keyboard then navigates within that column group.</p>
+        <p><strong style="color:var(--good)">Column Bookmarks:</strong> Mark frequently accessed columns as favorites. Ctrl+Left/Right jumps between bookmarked columns only, skipping the 140 columns you don't need right now.</p>
+        <div class="api">ctrlk.grid.columnNav.jumpTo('insurance_status')</div>
+        <div class="api">ctrlk.grid.columnNav.bookmark(['col_12', 'col_38', 'col_55'])</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Problem 2 -->
+<div class="problem-card">
+  <div class="pc-header">
+    <div class="pc-num">02</div>
+    <div class="pc-title">Column Sets Don't Exist as a Concept</div>
+    <span class="pc-layer client">Client-Solvable</span>
+  </div>
+  <div class="pc-body">
+    <div class="pc-section">
+      <div class="pc-section-label">The Problem</div>
+      <p>Users care about different subsets of columns at different times. But web grids treat column visibility as a settings menu to click through every time. There is no concept of named column profiles that can be saved, switched, or shared with a team.</p>
+      <div class="scenario-list">
+        <div class="scenario-item">
+          <div class="sc-domain">HR / People Ops</div>
+          Every Monday, the HR manager hides 80 columns and shows only headcount, department, tenure, and compensation for the weekly review. Every Wednesday, they reconfigure for the benefits audit — different 15 columns. Manually rebuilt every single week.
+        </div>
+        <div class="scenario-item">
+          <div class="sc-domain">Manufacturing</div>
+          A quality engineer switches between "Defect Analysis" columns (defect type, line, batch, root cause) and "Production Output" columns (units, yield, cycle time, downtime) — two completely different views of the same dataset, manually toggled each time.
+        </div>
+      </div>
+    </div>
+    <div class="pc-section">
+      <div class="pc-section-label">CtrlK Solution</div>
+      <div class="pc-solution">
+        <p><strong style="color:var(--good)">Named Column Profiles:</strong> Save the current column configuration (visibility, order, width) as a named profile. Switch between profiles with a keyboard shortcut. Share profiles with team members. This is Photoshop's workspace concept applied to data grids.</p>
+        <div class="api">ctrlk.views.save('Monday Headcount Review')</div>
+        <div class="api">ctrlk.views.load('Monday Headcount Review')  // one keystroke</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Problem 3 -->
+<div class="problem-card">
+  <div class="pc-header">
+    <div class="pc-num">03</div>
+    <div class="pc-title">Detail Pages Are Organized by Data Structure, Not by Task</div>
+    <span class="pc-layer client">Client-Solvable</span>
+  </div>
+  <div class="pc-body">
+    <div class="pc-section">
+      <div class="pc-section-label">The Problem</div>
+      <p>A detail page groups fields by what they ARE — "Personal Info," "Contact Details," "History." But the user isn't thinking in data categories. They're thinking in tasks: "verify this customer's eligibility," "complete the missing compliance fields," "compare these two scores." The page forces them to translate their task into a data structure navigation problem.</p>
+      <div class="scenario-list">
+        <div class="scenario-item">
+          <div class="sc-domain">CRM / Sales</div>
+          A sales rep needs to prepare for a call: check the last interaction date (Activity section), open deal value (Deals section), support tickets (Support section), and contract renewal date (Billing section). Four sections, one task: "am I about to call a happy customer?"
+        </div>
+        <div class="scenario-item">
+          <div class="sc-domain">Healthcare</div>
+          A nurse checking medication interactions needs the current prescriptions (Medications section), allergies (Patient Info section), latest vitals (Vitals section), and lab results (Diagnostics section). The clinical task is singular. The UI scatters it across four scrollable sections.
+        </div>
+      </div>
+    </div>
+    <div class="pc-section">
+      <div class="pc-section-label">CtrlK Solution</div>
+      <div class="pc-solution">
+        <p><strong style="color:var(--good)">Jump to Field (F5 / Ctrl+G):</strong> A field-level search. Type "allerg" — every field containing "allergy" across all sections appears. Select one and the page scrolls, highlights, and enters edit mode if editable. Like Excel's Go To, but for form pages.</p>
+        <p><strong style="color:var(--good)">Pinned Fields:</strong> Pin the fields you care about in this session. When navigating to the next record, pinned fields auto-surface — no re-scrolling.</p>
+        <div class="api">ctrlk.fields.search('allergy') → scroll + highlight + edit</div>
+        <div class="api">ctrlk.fields.pin(['allergies', 'medications', 'last_vitals'])</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="category-header">
+  <div class="cat-label">Category B</div>
+  <h2>Interaction & Manipulation</h2>
+  <div class="cat-desc">How users modify, select, and act on data. The fundamental failure: enterprise apps treat users as viewers who occasionally click, not as operators who work continuously.</div>
+</div>
+
+<!-- Problem 4 -->
+<div class="problem-card">
+  <div class="pc-header">
+    <div class="pc-num">04</div>
+    <div class="pc-title">Cell-Level Interaction Is Primitive</div>
+    <span class="pc-layer client">Client-Solvable</span>
+  </div>
+  <div class="pc-body">
+    <div class="pc-section">
+      <div class="pc-section-label">The Problem</div>
+      <p>In Excel: click a cell, you're editing. Press F2, you're editing. Type and the old value is replaced. In web grids: double-click to edit (sometimes), there's a dropdown (sometimes), an inline form (sometimes). Every grid implements it differently. None feel like direct manipulation.</p>
+      <p>On detail pages, the same pattern: fields are read-only by default. To edit, you click an edit icon, or toggle "edit mode" for the entire page, or navigate to a separate edit form. The transition from reading to editing is never seamless, never keyboard-driven.</p>
+      <div class="scenario-list">
+        <div class="scenario-item">
+          <div class="sc-domain">Any Enterprise App</div>
+          A data entry operator needs to update 40 records. Each update requires: scroll to field → click edit icon → wait for input to appear → type value → click save → repeat. In Excel, the same task is: type value → Tab → type value → Tab. The web app turns a 2-keystroke action into a 5-step procedure.
+        </div>
+      </div>
+    </div>
+    <div class="pc-section">
+      <div class="pc-section-label">CtrlK Solution</div>
+      <div class="pc-solution">
+        <p><strong style="color:var(--good)">Browse/Edit Mode:</strong> Two modes. Browse mode (default) — navigate, read, compare. Edit mode (Enter or F2 on any editable field) — inline editing, Tab moves to next editable field, Shift+Tab goes back, Escape cancels, Enter commits and advances. Excel behavior, applied to any form page.</p>
+        <p><strong style="color:var(--good)">Empty Field Navigator:</strong> Alt+N jumps to the next empty field. Turns "fill in missing data" from scroll-and-hunt into a sequential keyboard workflow.</p>
+        <div class="api">ctrlk.fields.focusNextEmpty() → Alt+N</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Problem 5 -->
+<div class="problem-card">
+  <div class="pc-header">
+    <div class="pc-num">05</div>
+    <div class="pc-title">Multi-Select Across Pages Is Impossible</div>
+    <span class="pc-layer client">Client-Solvable</span>
+  </div>
+  <div class="pc-body">
+    <div class="pc-section">
+      <div class="pc-section-label">The Problem</div>
+      <p>Select 5 rows on page 1. Navigate to page 3. Select 3 more. Perform a batch action on all 8. This is basic set theory — union of selections across paginated views. Almost no web grid supports this. The selection resets on page change. The user's mental model of "I've identified these 8 records" is impossible to express in the UI.</p>
+      <div class="scenario-list">
+        <div class="scenario-item">
+          <div class="sc-domain">E-Commerce / Inventory</div>
+          A merchandiser identifying products for a flash sale scrolls through 2,000 SKUs across 40 pages, selecting items from different categories. Every page change resets their selection. They resort to writing SKU numbers on a notepad.
+        </div>
+        <div class="scenario-item">
+          <div class="sc-domain">IT / DevOps</div>
+          An ops engineer selecting servers for a maintenance window picks 3 from the US-East page, 2 from EU-West, and 4 from AP-South. The application can't hold all 9 selections simultaneously because they span three filtered views.
+        </div>
+      </div>
+    </div>
+    <div class="pc-section">
+      <div class="pc-section-label">CtrlK Solution</div>
+      <div class="pc-solution">
+        <p><strong style="color:var(--good)">Persistent Selection:</strong> Selection survives navigation, pagination, and filter changes. Named selections can be saved: "Flash Sale Products" — a persistent set of 47 items you're curating over days.</p>
+        <p><strong style="color:var(--good)">Selection by Expression:</strong> Select all rows matching a condition — no clicks needed. Combine selections with set operations: union, intersect, subtract.</p>
+        <div class="api">ctrlk.selection.where(row => row.stock > 100 && row.margin > 0.3)</div>
+        <div class="api">ctrlk.selection.save('Flash Sale Candidates')</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Problem 6 -->
+<div class="problem-card">
+  <div class="pc-header">
+    <div class="pc-num">06</div>
+    <div class="pc-title">Cross-Row Comparison Requires Human Memory</div>
+    <span class="pc-layer client">Client-Solvable</span>
+  </div>
+  <div class="pc-body">
+    <div class="pc-section">
+      <div class="pc-section-label">The Problem</div>
+      <p>A user looks at row 12, notes a value. Scrolls to row 87, sees another value. Now they need to remember what row 12 said. In Excel, they'd freeze a pane or split the screen. In web grids — nothing. No row pinning for comparison, no split view, no "hold this row visible while I scroll." The entire comparison workflow lives in the user's working memory, which holds roughly 4 items.</p>
+      <div class="scenario-list">
+        <div class="scenario-item">
+          <div class="sc-domain">Procurement</div>
+          A procurement officer comparing vendor quotes scrolls between Vendor A (row 5), Vendor B (row 23), and Vendor C (row 41), trying to remember unit prices, lead times, and warranty terms. Three vendors, twelve data points, zero UI support for comparison.
+        </div>
+        <div class="scenario-item">
+          <div class="sc-domain">Real Estate / Property</div>
+          A property manager comparing lease terms across units in a 200-unit building scrolls between rows trying to remember which units have expiring leases, which have rent escalation clauses, and which are below market rate.
+        </div>
+      </div>
+    </div>
+    <div class="pc-section">
+      <div class="pc-section-label">CtrlK Solution</div>
+      <div class="pc-solution">
+        <p><strong style="color:var(--good)">Comparison Pin:</strong> Ctrl+P on a row pins it to a comparison tray at the top. Pin up to 5 rows. They stay visible while you scroll through the rest. Unpin when done.</p>
+        <p><strong style="color:var(--good)">Row Bookmarks:</strong> Color-tag rows for visual tracking — red for "needs action," green for "verified," amber for "waiting."</p>
+        <div class="api">ctrlk.grid.pin(rowId) → sticks to comparison tray</div>
+        <div class="api">ctrlk.grid.bookmark(rowId, 'red')</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="category-header">
+  <div class="cat-label">Category C</div>
+  <h2>State & Continuity</h2>
+  <div class="cat-desc">How applications remember (or forget) what the user was doing. The fundamental failure: every navigation event is treated as a fresh start, destroying minutes of accumulated context.</div>
+</div>
+
+<!-- Problem 7 -->
+<div class="problem-card">
+  <div class="pc-header">
+    <div class="pc-num">07</div>
+    <div class="pc-title">Filter State Is Invisible and Fragile</div>
+    <span class="pc-layer client">Client-Solvable</span>
+  </div>
+  <div class="pc-body">
+    <div class="pc-section">
+      <div class="pc-section-label">The Problem</div>
+      <p>A user applies 4 filters — seeing 23 of 2,000 rows. Clicks a link to a detail page. Hits Back. Filters are gone. 45 seconds of configuration, destroyed by browser navigation. Even when filters persist (via URL params), the user can't see what's active without opening each dropdown. There's no summary, no naming, no "I use this filter set every Monday morning."</p>
+      <div class="scenario-list">
+        <div class="scenario-item">
+          <div class="sc-domain">Customer Support</div>
+          A support lead filters tickets: priority = High, SLA = Breached, assigned = unassigned, region = APAC. This reveals 12 critical tickets. They click into ticket #1 to investigate. When they navigate back, all four filters are gone. They rebuild them. Click into ticket #2. Gone again. By ticket #5, they've spent more time rebuilding filters than resolving issues.
+        </div>
+        <div class="scenario-item">
+          <div class="sc-domain">Education / LMS</div>
+          A university registrar filters the enrollment grid: semester = Fall 2026, status = incomplete, financial aid = pending. Reviewing each student requires clicking into their profile and returning. Every return resets the filter. After three students, they export to Excel instead.
+        </div>
+      </div>
+    </div>
+    <div class="pc-section">
+      <div class="pc-section-label">CtrlK Solution</div>
+      <div class="pc-solution">
+        <p><strong style="color:var(--good)">View State Manager:</strong> Complete application state — filters, sorts, columns, scroll position, selections — is serialized as a named view. Navigation preserves it. Back button restores it. Named views are shareable and switchable.</p>
+        <p><strong style="color:var(--good)">Auto-save/Auto-restore:</strong> State is silently captured before any navigation and restored on return. The user never notices — their filters just survive. As they should.</p>
+        <div class="api">ctrlk.views.save('High Priority APAC Tickets')</div>
+        <div class="api">ctrlk.views.autoRestore() → called on page load</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Problem 8 -->
+<div class="problem-card">
+  <div class="pc-header">
+    <div class="pc-num">08</div>
+    <div class="pc-title">The Grid and Detail Page Don't Talk</div>
+    <span class="pc-layer client">Client-Solvable</span>
+  </div>
+  <div class="pc-body">
+    <div class="pc-section">
+      <div class="pc-section-label">The Problem</div>
+      <p>The user is in a grid. Sees a record needing attention. Clicks into the detail page. Edits fields. Saves. Navigates back to the grid. The grid doesn't know this record changed. No visual indicator, no "recently edited" marker, no auto-refresh. Worse: the user can't remember which records they've already reviewed. There's no visited state, no progress tracking.</p>
+      <div class="scenario-list">
+        <div class="scenario-item">
+          <div class="sc-domain">Compliance / Legal</div>
+          A compliance officer reviewing 30 vendor contracts for regulatory changes opens each contract detail, verifies clauses, marks status. After 15 contracts, they can't remember which ones they've already reviewed. The grid shows no indication of progress.
+        </div>
+        <div class="scenario-item">
+          <div class="sc-domain">Recruitment</div>
+          An HR recruiter screening 50 applicants opens each profile, reviews resume, adds notes. Returning to the applicant grid, nothing indicates which profiles have been reviewed, which need callbacks, or how far through the batch they are.
+        </div>
+      </div>
+    </div>
+    <div class="pc-section">
+      <div class="pc-section-label">CtrlK Solution</div>
+      <div class="pc-solution">
+        <p><strong style="color:var(--good)">Session Tracking:</strong> Rows visited or edited in this session get a subtle visual marker. A progress indicator ("12 of 30 reviewed") appears in the toolbar. Unreviewed rows are visually distinguishable.</p>
+        <div class="api">ctrlk.session.markReviewed(rowId)</div>
+        <div class="api">ctrlk.session.getProgress() → { reviewed: 12, total: 30 }</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Problem 9 -->
+<div class="problem-card">
+  <div class="pc-header">
+    <div class="pc-num">09</div>
+    <div class="pc-title">Export Is the Escape Hatch, Not the Solution</div>
+    <span class="pc-layer client">Client-Solvable</span>
+  </div>
+  <div class="pc-body-full">
+    <div class="pc-section" style="max-width:100%;">
+      <div class="pc-section-label">The Problem</div>
+      <p>When a user clicks "Export to CSV," they are not saying "I want Excel." They are saying: <em style="color:var(--highlight);">"Your application cannot do what I need to do."</em></p>
+      <p>What they need: pivot tables, conditional formatting across rows, formulas referencing other cells, freeze panes, custom column ordering, ad-hoc calculations, merged cells for grouping. These aren't Excel features — they're data manipulation primitives that web grids refuse to provide. Every click on "Export" should register as a UX bug report.</p>
+      <div class="scenario-list">
+        <div class="scenario-item">
+          <div class="sc-domain">Across Every Industry</div>
+          This is universal. A hotel revenue manager exports booking data to calculate occupancy-weighted ADR. A logistics planner exports to pivot shipments by route and carrier. A school principal exports attendance to cross-reference with grades. A warehouse supervisor exports to sort by custom priority formulas. None of them need Excel. All of them need composable data operations that their application doesn't offer.
+        </div>
+      </div>
+    </div>
+
+    <div class="cog-box" style="margin-top:14px;">
+      <div class="cog-icon">📊</div>
+      <div class="cog-body">
+        <strong>The Excel Diagnostic:</strong> If a power user reaches for Excel instead of using your purpose-built application, your application has failed the <em>composability test</em>. Excel wins not because it's prettier or has better charts. Excel wins because it gives the user <em>agency</em>. Select, manipulate, chain, undo, redo, name, save, reuse — all without asking permission from a predetermined workflow. Excel is a language. Enterprise apps are a menu.
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-top:14px;">
+      <div class="card">
+        <div class="card-title">What They Do in Excel</div>
+        <p style="font-size:12px;color:var(--dim);line-height:1.7;">
+          Create a pivot table by region and status. Apply conditional formatting: red for overdue, green for complete. Write a formula to flag outliers. Freeze the ID column. Sort by their custom formula. Save as "Q4 Review" — reopen next quarter with everything intact.
+        </p>
+      </div>
+      <div class="card">
+        <div class="card-title">What CtrlK Enables Instead</div>
+        <p style="font-size:12px;color:var(--dim);line-height:1.7;">
+          Named views with column profiles. Color-coded row rules (configurable, persisted). Computed columns via expression engine. Column pinning (freeze left/right). Sort by any field including computed. Save as named view. Share with team. Never export.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="category-header">
+  <div class="cat-label">Category D</div>
+  <h2>Workflow & Accountability</h2>
+  <div class="cat-desc">How users track changes, undo mistakes, and work collaboratively. The fundamental failure: every action is fire-and-forget, with no memory and no safety net.</div>
+</div>
+
+<!-- Problem 10 -->
+<div class="problem-card">
+  <div class="pc-header">
+    <div class="pc-num">10</div>
+    <div class="pc-title">Dirty Field Tracking and Undo Don't Exist</div>
+    <span class="pc-layer hybrid">Hybrid</span>
+  </div>
+  <div class="pc-body">
+    <div class="pc-section">
+      <div class="pc-section-label">The Problem</div>
+      <p>A user edits 8 fields on a record. Before saving, they want to review what changed. There is no diff view. They can't see which fields were modified, what the old values were, or undo a specific change without reverting everything. The "Save" button is an all-or-nothing commitment with no preview.</p>
+      <div class="scenario-list">
+        <div class="scenario-item">
+          <div class="sc-domain">Insurance / Claims</div>
+          A claims adjuster updates coverage amounts, deductibles, and policy limits across 8 fields. Before saving, they need to verify — one wrong number could mean an incorrect payout. There's no way to see "what did I change?" without comparing against a separate browser tab showing the original.
+        </div>
+      </div>
+    </div>
+    <div class="pc-section">
+      <div class="pc-section-label">CtrlK Solution</div>
+      <div class="pc-solution">
+        <p><strong style="color:var(--good)">Dirty Markers:</strong> Modified fields get a visual indicator — amber for changed, green for newly filled. The "Pending changes" counter updates live.</p>
+        <p><strong style="color:var(--good)">Pre-Save Diff:</strong> Ctrl+Shift+D shows a compact diff — changed fields only, old → new. Review before committing.</p>
+        <p><strong style="color:var(--good)">Field-Level Undo:</strong> Ctrl+Z on a dirty field reverts it individually. Undo is per-field, not per-page.</p>
+        <div class="api">ctrlk.fields.getDirty() → [{ field, oldValue, newValue }]</div>
+        <div class="api">ctrlk.fields.revert(fieldId) → undo one field</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Problem 11 -->
+<div class="problem-card">
+  <div class="pc-header">
+    <div class="pc-num">11</div>
+    <div class="pc-title">Audit Trail Is Absent from the Interface</div>
+    <span class="pc-layer hybrid">Hybrid</span>
+  </div>
+  <div class="pc-body">
+    <div class="pc-section">
+      <div class="pc-section-label">The Problem</div>
+      <p>Who changed this field? When? What was the old value? In regulated industries — healthcare, finance, insurance, government — this is a compliance requirement. But the UI treats audit as a backend concern. The user must open a separate audit log, search for the record, find the field change. The context switch takes 30-60 seconds and breaks concentration.</p>
+      <div class="scenario-list">
+        <div class="scenario-item">
+          <div class="sc-domain">Pharmaceuticals</div>
+          A quality manager reviewing batch records needs to verify who approved a production parameter change, when, and what the previous value was. The information exists in an audit database but requires navigating away from the batch record to a separate audit module, searching by record ID, and scanning timestamped log entries.
+        </div>
+      </div>
+    </div>
+    <div class="pc-section">
+      <div class="pc-section-label">CtrlK Solution</div>
+      <div class="pc-solution">
+        <p><strong style="color:var(--good)">Field-Level Audit Tooltip:</strong> Focus or hover on any field — see last change: who, when, old value. No navigation required.</p>
+        <p><strong style="color:var(--good)">Field History:</strong> Ctrl+H on a focused field shows full change history. Compact, inline, dismissible.</p>
+        <div class="api">ctrlk.audit.getHistory(fieldId) → [{who, when, old, new}]</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Problem 12 -->
+<div class="problem-card">
+  <div class="pc-header">
+    <div class="pc-num">12</div>
+    <div class="pc-title">Collaborative Awareness Doesn't Exist</div>
+    <span class="pc-layer server">Server-Required</span>
+  </div>
+  <div class="pc-body">
+    <div class="pc-section">
+      <div class="pc-section-label">The Problem</div>
+      <p>Two people looking at the same record. One changes a field. The other is editing a different field on the same record. Neither knows the other is there. Google Docs — a free consumer product — shows other users' cursors in real time. Enterprise apps handling critical business data have zero collaborative awareness.</p>
+      <div class="scenario-list">
+        <div class="scenario-item">
+          <div class="sc-domain">Project Management</div>
+          Two project managers update the same project plan. One changes the timeline. The other adjusts the budget. Both save. The last save overwrites the first. Nobody notices until the timeline is wrong in next week's executive review.
+        </div>
+        <div class="scenario-item">
+          <div class="sc-domain">Healthcare</div>
+          A doctor and a nurse both access a patient chart. The doctor orders a medication. The nurse, looking at a stale view, doesn't see the new order and administers a conflicting treatment. No presence indicator, no real-time sync.
+        </div>
+      </div>
+    </div>
+    <div class="pc-section">
+      <div class="pc-section-label">CtrlK Solution</div>
+      <div class="pc-solution">
+        <p><strong style="color:var(--good)">Presence Indicators:</strong> Small avatar dots on fields being viewed or edited by others. Non-intrusive notifications: "Dr. Patel is editing Medications."</p>
+        <p><strong style="color:var(--good)">Conflict Prevention:</strong> If another user saves a field you're also editing, CtrlK shows the conflict before you save — their value vs. your value, with merge options.</p>
+        <p style="color:var(--dim);font-size:11px;margin-top:8px;">Note: Requires WebSocket/SSE server infrastructure. CtrlK provides the client-side UI patterns; the application provides the real-time data channel.</p>
+        <div class="api">ctrlk.presence.onConflict((field, theirValue) => { ... })</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2>Impact Matrix</h2>
+<p class="dim">Each problem scored by frequency, severity, and solvability.</p>
+
+<table class="matrix">
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Problem</th>
+      <th>Frequency</th>
+      <th>Time Cost / Day</th>
+      <th>Cognitive Load</th>
+      <th>Solvable By</th>
+      <th>CtrlK Module</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td class="vh">01</td><td>Horizontal navigation</td><td class="va">Very High</td><td class="vw">8-16 min</td><td class="vw">High</td><td class="vg">Client</td><td>ColumnNavigator</td></tr>
+    <tr><td class="vh">02</td><td>Column sets</td><td class="va">High</td><td class="vw">5-15 min</td><td class="va">Medium</td><td class="vg">Client</td><td>ViewState</td></tr>
+    <tr><td class="vh">03</td><td>Detail page navigation</td><td class="va">Very High</td><td class="vw">10-20 min</td><td class="vw">High</td><td class="vg">Client</td><td>FieldRegistry</td></tr>
+    <tr><td class="vh">04</td><td>Cell interaction</td><td class="va">Very High</td><td class="vw">10-15 min</td><td class="va">Medium</td><td class="vg">Client</td><td>EditManager</td></tr>
+    <tr><td class="vh">05</td><td>Multi-select across pages</td><td class="va">High</td><td class="vw">5-10 min</td><td class="vw">High</td><td class="vg">Client</td><td>SelectionModel</td></tr>
+    <tr><td class="vh">06</td><td>Cross-row comparison</td><td class="va">High</td><td class="vw">8-12 min</td><td class="vw">Very High</td><td class="vg">Client</td><td>ComparisonPin</td></tr>
+    <tr><td class="vh">07</td><td>Filter fragility</td><td class="va">Very High</td><td class="vw">10-20 min</td><td class="vw">High</td><td class="vg">Client</td><td>ViewState</td></tr>
+    <tr><td class="vh">08</td><td>Grid-detail disconnect</td><td class="va">High</td><td class="vw">5-10 min</td><td class="va">Medium</td><td class="vg">Client</td><td>SessionTracker</td></tr>
+    <tr><td class="vh">09</td><td>Export as escape</td><td class="va">Medium</td><td class="vw">15-30 min</td><td class="va">Medium</td><td class="vg">Client</td><td>ComputedCols + Views</td></tr>
+    <tr><td class="vh">10</td><td>Dirty tracking / undo</td><td class="va">High</td><td class="vw">5-10 min</td><td class="vw">High</td><td class="vi">Hybrid</td><td>FieldRegistry</td></tr>
+    <tr><td class="vh">11</td><td>Audit trail in UI</td><td class="va">Medium</td><td class="vw">3-8 min</td><td class="va">Medium</td><td class="vi">Hybrid</td><td>AuditOverlay</td></tr>
+    <tr><td class="vh">12</td><td>Collaborative awareness</td><td class="va">Low-Med</td><td class="vw">5-15 min</td><td class="vw">High</td><td class="vi">Server</td><td>Presence</td></tr>
+  </tbody>
+</table>
+
+<div class="note">
+  <strong>Conservative Estimate:</strong> Problems 1-9 alone account for 75-150 minutes of lost productivity per user per day. For a team of 10 operators at average enterprise cost, that translates to significant and measurable annual productivity loss — invisible because it manifests as "the team is slow" rather than "the tool is broken." Multiply across departments and the waste is staggering.
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2>Design Principles</h2>
+<p class="dim">Derived from the 12 failures — the axioms that govern every CtrlK module.</p>
+
+<div class="principle">
+  <div class="pr-num">Principle 1</div>
+  <div class="pr-text">The UI should be navigable by task, not only by data structure.</div>
+  <div class="pr-detail">Data structure determines storage. Task determines interaction. These are different axes. The schema says "Allergies is in Patient Info." The nurse says "I need allergies, medications, and vitals — now." CtrlK bridges this gap without changing the page layout — it adds task-oriented access patterns on top of structure-oriented layouts.</div>
+</div>
+
+<div class="principle">
+  <div class="pr-num">Principle 2</div>
+  <div class="pr-text">State must survive navigation.</div>
+  <div class="pr-detail">Filters, selections, scroll positions, column configurations, edit history — all state that the user has accumulated through interaction must survive page transitions, browser back/forward, and session interruptions. Destroying user-accumulated state is destroying user labor.</div>
+</div>
+
+<div class="principle">
+  <div class="pr-num">Principle 3</div>
+  <div class="pr-text">Every repeated action should be recordable and replayable.</div>
+  <div class="pr-detail">If a user performs the same 7-step workflow every Monday, the tool should learn it after the first time. Macros are not a power-user luxury — they're a recognition that repetition is a design failure.</div>
+</div>
+
+<div class="principle">
+  <div class="pr-num">Principle 4</div>
+  <div class="pr-text">Keyboard is the primary input device; mouse is the fallback.</div>
+  <div class="pr-detail">A mouse interaction takes 1-3 seconds (locate target, move hand, aim, click). A keyboard shortcut takes 50-200 milliseconds. Over thousands of hours of use, this difference compounds into weeks of recovered time. More importantly, keyboard actions engage the cerebellum (muscle memory) rather than the prefrontal cortex (conscious decision-making), preserving cognitive bandwidth for the actual work.</div>
+</div>
+
+<div class="principle">
+  <div class="pr-num">Principle 5</div>
+  <div class="pr-text">Information density is a user preference, not a design decision.</div>
+  <div class="pr-detail">A first-week user needs padding, whitespace, and help text. A third-year user needs maximum data per pixel. These are not different apps — they are different density settings on the same app. The user controls the dial, not the designer.</div>
+</div>
+
+<div class="principle">
+  <div class="pr-num">Principle 6</div>
+  <div class="pr-text">Composability beats features.</div>
+  <div class="pr-detail">Excel doesn't win because it has more features. It wins because its features are composable — a cell references another cell, a formula uses a named range, a macro chains formulas. Each primitive multiplies the value of every other primitive. Enterprise apps offer isolated features. CtrlK offers composable primitives.</div>
+</div>
+
+<div class="principle">
+  <div class="pr-num">Principle 7</div>
+  <div class="pr-text">Augment, never replace.</div>
+  <div class="pr-detail">An IOUX sits on top of existing applications. It doesn't redesign pages, replace grid libraries, or change visual design. It adds the operational behavioral layer — the invisible runtime that transforms a page you look at into a workspace you operate. The app keeps its appearance. The IOUX gives it operability. Works alongside AG Grid, DevExtreme, Kendo, Bootstrap, Material, Tailwind, React, Angular, Vue — or none of them.</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2>Historical Context</h2>
+<p class="dim">This problem isn't new. But the solution landscape has always addressed the wrong layer.</p>
+
+<div class="timeline">
+  <div class="tl-item">
+    <div class="tl-era">1985</div>
+    <div class="tl-content"><strong>Excel ships.</strong> Establishes the composability model that enterprise apps still can't match 40 years later. Cells, formulas, macros, named ranges — each primitive amplifies the others.</div>
+  </div>
+  <div class="tl-item">
+    <div class="tl-era">1990s</div>
+    <div class="tl-content"><strong>Photoshop establishes the workspace paradigm.</strong> Custom shortcuts, saved workspaces, recordable actions, reusable presets. The user customizes the tool until it becomes an extension of their hands. Every professional creative tool follows this model. No enterprise tool does.</div>
+  </div>
+  <div class="tl-item">
+    <div class="tl-era">2005-2010</div>
+    <div class="tl-content"><strong>jQuery + Bootstrap era.</strong> Web apps become visually competent. The rendering problem is solved. But the interaction model regresses from desktop apps — keyboard shortcuts disappear, selection models simplify, the mouse becomes the only input device.</div>
+  </div>
+  <div class="tl-item">
+    <div class="tl-era">2013-2018</div>
+    <div class="tl-content"><strong>React, Angular, Vue + Material Design.</strong> Component architecture solves the developer's problem. Design systems solve visual consistency. But L3/L4 user interaction is not in the conversation. UX teams focus on onboarding, conversion, and mobile-first — all L1/L2 concerns.</div>
+  </div>
+  <div class="tl-item">
+    <div class="tl-era">2015-2020</div>
+    <div class="tl-content"><strong>Data grid libraries mature.</strong> AG Grid, DevExtreme, Kendo, Handsontable achieve impressive rendering — virtual scrolling, million-row performance, custom cell renderers. But the interaction model remains mouse-driven, view-and-click, no composability. Better windows, still just windows.</div>
+  </div>
+  <div class="tl-item">
+    <div class="tl-era">2015</div>
+    <div class="tl-content"><strong>VS Code launches.</strong> Proves that a web application can have a power-user interaction model — command palette, extensions, customizable everything. But nobody extracts its interaction patterns into a generic framework for enterprise apps.</div>
+  </div>
+  <div class="tl-item">
+    <div class="tl-era">2020-2025</div>
+    <div class="tl-content"><strong>cmdk, kbar, Mousetrap appear.</strong> Individual interaction primitives emerge — a command palette here, a shortcut binder there. Isolated components, not a coherent runtime. No shared state. No composability. No awareness of each other.</div>
+  </div>
+  <div class="tl-item">
+    <div class="tl-era" style="color:var(--highlight);">2026</div>
+    <div class="tl-content"><strong style="color:var(--highlight);">CtrlK.</strong> The first IOUX (Integrated Operational UX) — the missing architectural layer between user input and application response. An IOUX is to application operators what an IDE is to developers. <span style="color:var(--accent)">ctrlk.dev</span></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<h2>Why Now</h2>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-title">Enterprise SaaS Saturation</div>
+    <p style="font-size:12px;color:var(--dim);line-height:1.7;">
+      Every enterprise category — CRM, ERP, HRIS, WMS, EHR — has 5-10 competing products. Features are commoditized. Data models are similar. The only differentiation left is the quality of the daily experience for people who use these tools 6 hours a day. CtrlK is how you win that differentiation without rebuilding your application.
+    </p>
+  </div>
+  <div class="card">
+    <div class="card-title">Power Users Are More Valuable Than Ever</div>
+    <p style="font-size:12px;color:var(--dim);line-height:1.7;">
+      A procurement analyst, a hospital administrator, a logistics coordinator — whoever spends their day inside your application is expensive. Even a 20% efficiency improvement for a team of 10 operators translates to measurable, demonstrable ROI. CtrlK's value proposition is directly visible in time saved by the most expensive people in the organization.
+    </p>
+  </div>
+</div>
+
+<div class="thesis-box" style="margin-top:24px;">
+  <div class="tb-label">Final Statement</div>
+  <p>The enterprise software industry spends billions building applications that their most valuable users escape from — into Excel. This is not a feature gap. It is a missing architectural layer — the Operational UX layer. An IDE solved this for developers in 1983. An IOUX solves it for everyone else in 2026. CtrlK is the first.</p>
+</div>
+
+<div class="footer">
+  ctrlk.dev · The OpUX Failure Catalog v1.0 · 2026 · The first IOUX for enterprise web apps
+</div>
+
+</div>
+</body>
+</html>
