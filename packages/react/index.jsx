@@ -15,7 +15,7 @@
  *   }
  * 
  * @module @ctrlk/react
- * @author Neural Weaves Pvt Ltd
+ * @author Prabhu Raja
  */
 
 import { createContext, useContext, useEffect, useRef, useState, useCallback, useMemo } from 'react';

@@ -31,7 +31,7 @@
  *   });
  * 
  * @module @ctrlk/history
- * @author Neural Weaves Pvt Ltd
+ * @author Prabhu Raja
  */
 
 /**

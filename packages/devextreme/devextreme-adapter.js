@@ -20,7 +20,7 @@
  * Supports DevExtreme v21+ (tested on v23.2).
  * 
  * @module @ctrlk/devextreme
- * @author Neural Weaves Pvt Ltd
+ * @author Prabhu Raja
  */
 
 export class DevExtremeAdapter {

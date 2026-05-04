@@ -25,7 +25,7 @@
  *   - Arrow keys within active sheet (our within-zone navigation)
  * 
  * @module @ctrlk/focus
- * @author Neural Weaves Pvt Ltd
+ * @author Prabhu Raja
  */
 
 /**

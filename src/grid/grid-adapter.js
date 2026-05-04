@@ -18,7 +18,7 @@
  * surface exists, normalizing it to ctrlk's interface.
  * 
  * @module @ctrlk/core/grid-adapter
- * @author Neural Weaves Pvt Ltd
+ * @author Prabhu Raja
  */
 
 /**

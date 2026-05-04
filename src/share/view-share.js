@@ -22,7 +22,7 @@
  * development environment knowledge.
  * 
  * @module @ctrlk/share
- * @author Neural Weaves Pvt Ltd
+ * @author Prabhu Raja
  */
 
 /**

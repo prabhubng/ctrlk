@@ -21,7 +21,7 @@
  * Works through GridAdapter — never touches the grid directly.
  * 
  * @module @ctrlk/column-nav
- * @author Neural Weaves Pvt Ltd
+ * @author Prabhu Raja
  */
 
 const BOOKMARKS_KEY = 'ctrlk-col-bookmarks';

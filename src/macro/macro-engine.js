@@ -24,7 +24,7 @@
  * This is intentional — macros are command-level, not UI-level.
  * 
  * @module @ctrlk/macro
- * @author Neural Weaves Pvt Ltd
+ * @author Prabhu Raja
  */
 
 const STORAGE_KEY = 'ctrlk-macros';

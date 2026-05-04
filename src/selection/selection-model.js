@@ -24,7 +24,7 @@
  * Works with GridAdapter — calls adapter to sync visual selection state.
  * 
  * @module @ctrlk/selection
- * @author Neural Weaves Pvt Ltd
+ * @author Prabhu Raja
  */
 
 const STORAGE_KEY = 'ctrlk-selections';

@@ -18,7 +18,7 @@
  * Designed to sit at the top of any grid, regardless of CSS framework.
  * 
  * @module @ctrlk/filter-bar
- * @author Neural Weaves Pvt Ltd
+ * @author Prabhu Raja
  */
 
 const FILTER_BAR_STYLES = `

@@ -408,7 +408,7 @@ class AutoDiscovery {
  * surface exists, normalizing it to ctrlk's interface.
  * 
  * @module @ctrlk/core/grid-adapter
- * @author Neural Weaves Pvt Ltd
+ * @author Prabhu Raja
  */
 
 /**
@@ -733,7 +733,7 @@ class GridAdapter {
  * Grid state is captured via GridAdapter (works with AG Grid, DevExtreme, etc.)
  * 
  * @module @ctrlk/views
- * @author Neural Weaves Pvt Ltd
+ * @author Prabhu Raja
  */
 
 const STORAGE_KEY = 'ctrlk-views';
@@ -1384,7 +1384,7 @@ class ViewStateManager {
  * Works with GridAdapter — calls adapter to sync visual selection state.
  * 
  * @module @ctrlk/selection
- * @author Neural Weaves Pvt Ltd
+ * @author Prabhu Raja
  */
 
 const STORAGE_KEY = 'ctrlk-selections';
@@ -1872,7 +1872,7 @@ class SelectionModel {
  *   - Enter = commit edit, move to next field
  * 
  * @module @ctrlk/fields
- * @author Neural Weaves Pvt Ltd
+ * @author Prabhu Raja
  */
 
 /**
@@ -2704,7 +2704,7 @@ class FieldRegistry {
  * Works through GridAdapter — never touches the grid directly.
  * 
  * @module @ctrlk/column-nav
- * @author Neural Weaves Pvt Ltd
+ * @author Prabhu Raja
  */
 
 const BOOKMARKS_KEY = 'ctrlk-col-bookmarks';
@@ -3206,7 +3206,7 @@ class ColumnNavigator {
  *   - Arrow keys within active sheet (our within-zone navigation)
  * 
  * @module @ctrlk/focus
- * @author Neural Weaves Pvt Ltd
+ * @author Prabhu Raja
  */
 
 /**
@@ -3656,7 +3656,7 @@ class FocusNavigator {
  *   ctrlk.session.getProgress() → { visited: 7, reviewed: 5, dirty: 3, total: 30 }
  * 
  * @module @ctrlk/session
- * @author Neural Weaves Pvt Ltd
+ * @author Prabhu Raja
  */
 
 const SESSION_KEY = 'ctrlk-session';
@@ -4116,7 +4116,7 @@ class SessionTracker {
  * Designed to sit at the top of any grid, regardless of CSS framework.
  * 
  * @module @ctrlk/filter-bar
- * @author Neural Weaves Pvt Ltd
+ * @author Prabhu Raja
  */
 
 const FILTER_BAR_STYLES = `
@@ -4491,7 +4491,7 @@ class ActiveFilterBar {
  * This is intentional — macros are command-level, not UI-level.
  * 
  * @module @ctrlk/macro
- * @author Neural Weaves Pvt Ltd
+ * @author Prabhu Raja
  */
 
 const STORAGE_KEY = 'ctrlk-macros';
@@ -5051,7 +5051,7 @@ class MacroEngine {
  *   });
  * 
  * @module @ctrlk/history
- * @author Neural Weaves Pvt Ltd
+ * @author Prabhu Raja
  */
 
 /**
@@ -5500,7 +5500,7 @@ class HistoryManager {
  * development environment knowledge.
  * 
  * @module @ctrlk/share
- * @author Neural Weaves Pvt Ltd
+ * @author Prabhu Raja
  */
 
 /**

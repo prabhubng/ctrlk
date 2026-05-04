@@ -25,7 +25,7 @@
  * Grid state is captured via GridAdapter (works with AG Grid, DevExtreme, etc.)
  * 
  * @module @ctrlk/views
- * @author Neural Weaves Pvt Ltd
+ * @author Prabhu Raja
  */
 
 const STORAGE_KEY = 'ctrlk-views';

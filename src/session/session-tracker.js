@@ -32,7 +32,7 @@
  *   ctrlk.session.getProgress() → { visited: 7, reviewed: 5, dirty: 3, total: 30 }
  * 
  * @module @ctrlk/session
- * @author Neural Weaves Pvt Ltd
+ * @author Prabhu Raja
  */
 
 const SESSION_KEY = 'ctrlk-session';

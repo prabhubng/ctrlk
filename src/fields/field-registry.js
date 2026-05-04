@@ -23,7 +23,7 @@
  *   - Enter = commit edit, move to next field
  * 
  * @module @ctrlk/fields
- * @author Neural Weaves Pvt Ltd
+ * @author Prabhu Raja
  */
 
 /**

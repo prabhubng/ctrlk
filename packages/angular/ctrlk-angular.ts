@@ -17,7 +17,7 @@
  *   })
  * 
  * @module @ctrlk/angular
- * @author Neural Weaves Pvt Ltd
+ * @author Prabhu Raja
  */
 
 // ═══════════════════════════════════════════════

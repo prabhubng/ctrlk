@@ -23,7 +23,7 @@
  * Detects API version automatically.
  * 
  * @module @ctrlk/ag-grid
- * @author Neural Weaves Pvt Ltd
+ * @author Prabhu Raja
  */
 
 export class AgGridAdapter {
