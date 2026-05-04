@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CtrlK Demo — HR Employee Directory</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f6f8fa;--surface:#fff;--card:#fff;--border:#d8dee4;--text:#1f2937;--dim:#656d76;--accent:#0969da;--accent-light:#ddf4ff;--green:#1a7f37;--green-bg:#dafbe1;--yellow:#9a6700;--yellow-bg:#fff8c5;--red:#cf222e;--red-bg:#ffebe9;--purple:#8250df;--purple-bg:#fbefff;--row-hover:#f6f8fa;--header-bg:#f6f8fa;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:var(--vlx-font-size,14px);line-height:1.5;}
+
+/* ─── App Shell ─── */
+.app-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;}
+.app-bar h1{font-size:16px;font-weight:700;display:flex;align-items:center;gap:10px;}
+.app-bar h1 .icon{font-size:20px;}
+.app-bar-right{display:flex;align-items:center;gap:12px;font-size:13px;}
+.ctrlk-badge{background:var(--accent-light);color:var(--accent);padding:4px 12px;border-radius:4px;font-family:'DM Mono',monospace;font-size:11px;font-weight:500;cursor:pointer;border:1px solid transparent;transition:border-color 0.2s;}
+.ctrlk-badge:hover{border-color:var(--accent);}
+.density-pill{font-family:'DM Mono',monospace;font-size:11px;color:var(--dim);background:var(--bg);padding:3px 10px;border-radius:3px;border:1px solid var(--border);cursor:pointer;}
+.density-pill:hover{border-color:var(--accent);}
+
+/* ─── Feature Banner ─── */
+.feature-banner{background:#0969da10;border-bottom:1px solid #0969da30;padding:10px 24px;font-size:12px;color:var(--accent);display:flex;gap:20px;align-items:center;flex-wrap:wrap;}
+.fb-tag{background:var(--accent);color:#fff;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;}
+.fb-item{display:flex;align-items:center;gap:4px;}
+.fb-item kbd{font-family:'DM Mono',monospace;background:var(--surface);border:1px solid var(--border);padding:1px 6px;border-radius:3px;font-size:10px;color:var(--text);}
+
+/* ─── Toolbar ─── */
+.toolbar{padding:12px 24px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:var(--surface);border-bottom:1px solid var(--border);}
+.toolbar-group{display:flex;gap:4px;align-items:center;}
+.toolbar-sep{width:1px;height:24px;background:var(--border);margin:0 8px;}
+.tool-btn{padding:var(--vlx-cell-padding,5px 12px);border:1px solid var(--border);background:var(--surface);border-radius:5px;font-size:var(--vlx-font-size-sm,12px);cursor:pointer;font-family:inherit;color:var(--text);transition:all 0.15s;display:flex;align-items:center;gap:5px;}
+.tool-btn:hover{border-color:var(--accent);color:var(--accent);}
+.tool-btn.active{background:var(--accent-light);border-color:var(--accent);color:var(--accent);}
+.tool-btn.primary{background:var(--accent);color:#fff;border-color:var(--accent);}
+.tool-btn.primary:hover{background:#0860c4;}
+.tool-btn kbd{font-family:'DM Mono',monospace;font-size:9px;color:var(--dim);margin-left:4px;}
+.toolbar-info{margin-left:auto;font-size:var(--vlx-font-size-xs,11px);color:var(--dim);font-family:'DM Mono',monospace;}
+
+/* ─── Grid Container ─── */
+.grid-wrap{overflow-x:auto;background:var(--surface);border-bottom:1px solid var(--border);}
+.grid-table{width:100%;border-collapse:collapse;font-size:var(--vlx-font-size-sm,13px);white-space:nowrap;}
+.grid-table th{position:sticky;top:0;background:var(--header-bg);padding:var(--vlx-cell-padding,8px 12px);text-align:left;font-weight:600;font-size:var(--vlx-font-size-xs,11px);text-transform:uppercase;letter-spacing:0.3px;color:var(--dim);border-bottom:2px solid var(--border);cursor:pointer;user-select:none;transition:color 0.15s;}
+.grid-table th:hover{color:var(--accent);}
+.grid-table th.sorted{color:var(--accent);}
+.grid-table th.bookmarked{border-top:2px solid var(--accent);}
+.grid-table td{padding:var(--vlx-cell-padding,6px 12px);border-bottom:1px solid #eef1f4;height:var(--vlx-row-height,36px);vertical-align:middle;transition:background 0.1s;}
+.grid-table tr:hover td{background:var(--row-hover);}
+.grid-table tr.selected td{background:var(--accent-light);}
+.grid-table tr.visited td{border-left:3px solid var(--green);}
+
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:500;}
+.badge-active{background:var(--green-bg);color:var(--green);}
+.badge-leave{background:var(--yellow-bg);color:var(--yellow);}
+.badge-terminated{background:var(--red-bg);color:var(--red);}
+.badge-dept{background:#f0f0f5;color:#444;font-size:10px;}
+.badge-remote{background:var(--purple-bg);color:var(--purple);}
+.badge-office{background:#f0f0f5;color:var(--dim);}
+
+.avatar{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;}
+.emp-name{display:flex;align-items:center;gap:8px;font-weight:500;}
+
+/* ─── Status Bar ─── */
+.status-bar{position:fixed;bottom:0;left:0;right:0;height:28px;background:var(--surface);border-top:1px solid var(--border);padding:0 24px;display:flex;align-items:center;justify-content:space-between;font-size:10px;color:var(--dim);font-family:'DM Mono',monospace;z-index:50;}
+
+/* ─── Shared View Toast ─── */
+.share-toast{position:fixed;bottom:40px;left:50%;transform:translateX(-50%);background:var(--text);color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;z-index:100;opacity:0;transition:opacity 0.3s;pointer-events:none;max-width:500px;text-align:center;}
+.share-toast.show{opacity:1;}
+
+/* ─── Filter chips ─── */
+.filter-chips{padding:6px 24px;background:#fafbfc;border-bottom:1px solid var(--border);display:none;gap:6px;align-items:center;font-size:12px;flex-wrap:wrap;}
+.filter-chips.active{display:flex;}
+.filter-chip{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;background:var(--accent-light);border:1px solid #a8d8f0;border-radius:3px;font-size:11px;color:var(--accent);}
+.filter-chip button{background:none;border:none;cursor:pointer;font-size:13px;color:var(--accent);padding:0 2px;line-height:1;}
+.filter-chip button:hover{color:var(--red);}
+.filter-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--dim);margin-right:4px;}
+
+/* Chrome display for density */
+.chrome{display:var(--vlx-chrome-display,block);}
+.help-text{display:var(--vlx-help-display,none);font-size:11px;color:var(--dim);margin-top:2px;}
+
+/* ─── Column Search Overlay (Ctrl+G) ─── */
+.col-search-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:99998;opacity:0;transition:opacity .15s;backdrop-filter:blur(2px);display:none;}
+.col-search-overlay.open{display:block;opacity:1;}
+.col-search{position:fixed;top:16%;left:50%;transform:translateX(-50%);width:min(440px,90vw);max-height:420px;background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:0 20px 50px rgba(0,0,0,.12);z-index:99999;display:none;flex-direction:column;overflow:hidden;font-family:'DM Sans',sans-serif;}
+.col-search.open{display:flex;}
+.col-search-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.col-search-header .cs-icon{font-size:16px;color:var(--accent);}
+.col-search-header .cs-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--dim);}
+.col-search-header .cs-hint{margin-left:auto;font-size:10px;color:var(--dim);font-family:'DM Mono',monospace;}
+.col-search input{width:100%;background:transparent;border:none;outline:none;color:var(--text);font-size:15px;padding:12px 16px;font-family:inherit;border-bottom:1px solid var(--border);}
+.col-search input::placeholder{color:#9ca3af;}
+.col-search-results{flex:1;overflow-y:auto;padding:4px 0;}
+.col-search-item{display:flex;align-items:center;padding:8px 16px;cursor:pointer;gap:10px;transition:background 0.1s;font-size:13px;}
+.col-search-item:hover,.col-search-item.active{background:var(--accent-light);}
+.col-search-item .cs-col-name{flex:1;font-weight:500;}
+.col-search-item .cs-bookmark{color:var(--accent);font-size:14px;}
+.col-search-item .cs-col-idx{font-family:'DM Mono',monospace;font-size:10px;color:var(--dim);background:var(--bg);padding:1px 6px;border-radius:3px;}
+.col-search-item .cs-hidden{font-size:10px;color:var(--dim);font-style:italic;}
+.col-search-footer{padding:8px 16px;border-top:1px solid var(--border);font-size:10px;color:var(--dim);display:flex;gap:16px;}
+.col-search-footer kbd{font-family:'DM Mono',monospace;padding:1px 5px;background:var(--bg);border:1px solid var(--border);border-radius:2px;font-size:9px;}
+
+/* Column highlight flash */
+@keyframes col-flash{0%{background:var(--accent-light);}100%{background:transparent;}}
+.grid-table th.col-highlight,.grid-table td.col-highlight{animation:col-flash 1.5s ease-out;}
+
+@media(max-width:768px){.feature-banner{display:none;}.toolbar{padding:8px 12px;}}
+</style>
+</head>
+<body>
+
+<!-- ═══ App Bar ═══ -->
+<div class="app-bar">
+  <h1><span class="icon">👥</span> PeopleOps — Employee Directory</h1>
+  <div class="app-bar-right">
+    <span class="chrome" style="font-size:12px;color:var(--dim);">Acme Corp · HR Portal</span>
+    <span class="density-pill" id="densityLabel" onclick="ctrlk.density.cycle()">Comfortable</span>
+    <span class="ctrlk-badge" onclick="ctrlk.palette.toggle()">⚡ Ctrl+K</span>
+  </div>
+</div>
+
+<!-- ═══ Feature Banner ═══ -->
+<div class="feature-banner">
+  <span class="fb-tag">CtrlK Active</span>
+  <span class="fb-item"><kbd>Ctrl+K</kbd> Command Palette</span>
+  <span class="fb-item"><kbd>Ctrl+G</kbd> Jump to Column</span>
+  <span class="fb-item"><kbd>Ctrl+D</kbd> Cycle Density</span>
+  <span class="fb-item"><kbd>Ctrl+/</kbd> All Shortcuts</span>
+  <span class="fb-item"><kbd>Alt+1-5</kbd> Quick Views</span>
+  <span class="fb-item"><kbd>Ctrl+←→</kbd> Next/Prev Bookmark</span>
+  <span class="fb-item"><kbd>Ctrl+Shift+S</kbd> Share View</span>
+</div>
+
+<!-- ═══ Column Search Overlay (Ctrl+G) ═══ -->
+<div class="col-search-overlay" id="colSearchOverlay"></div>
+<div class="col-search" id="colSearch">
+  <div class="col-search-header">
+    <span class="cs-icon">🔎</span>
+    <span class="cs-label">Jump to Column</span>
+    <span class="cs-hint">Ctrl+G · Right-click headers to bookmark</span>
+  </div>
+  <input type="text" id="colSearchInput" placeholder="Search columns by name..." autocomplete="off" spellcheck="false" />
+  <div class="col-search-results" id="colSearchResults"></div>
+  <div class="col-search-footer">
+    <span><kbd>↑↓</kbd> navigate</span>
+    <span><kbd>↵</kbd> jump to column</span>
+    <span><kbd>Ctrl+←→</kbd> bookmarks</span>
+    <span><kbd>Esc</kbd> close</span>
+  </div>
+</div>
+
+<!-- ═══ Filter Chips ═══ -->
+<div class="filter-chips" id="filterChips">
+  <span class="filter-label">Filters</span>
+</div>
+
+<!-- ═══ Toolbar ═══ -->
+<div class="toolbar">
+  <div class="toolbar-group">
+    <button class="tool-btn active" id="viewAllBtn" onclick="setView('all')">All <span id="totalCount">200</span></button>
+    <button class="tool-btn" id="viewActiveBtn" onclick="setView('active')">Active</button>
+    <button class="tool-btn" id="viewLeaveBtn" onclick="setView('leave')">On Leave</button>
+    <button class="tool-btn" id="viewRemoteBtn" onclick="setView('remote')">Remote</button>
+  </div>
+  <div class="toolbar-sep"></div>
+  <div class="toolbar-group">
+    <button class="tool-btn" onclick="ctrlk.commands.execute('view.eng')">Engineering <kbd>Alt+1</kbd></button>
+    <button class="tool-btn" onclick="ctrlk.commands.execute('view.sales')">Sales <kbd>Alt+2</kbd></button>
+    <button class="tool-btn" onclick="ctrlk.commands.execute('view.hr')">HR <kbd>Alt+3</kbd></button>
+  </div>
+  <div class="toolbar-sep"></div>
+  <button class="tool-btn" onclick="colSearchOpen()">🔎 Jump to Column <kbd>Ctrl+G</kbd></button>
+  <button class="tool-btn" onclick="ctrlk.commands.execute('selection.clear')">Clear Selection</button>
+  <button class="tool-btn primary" onclick="ctrlk.commands.execute('share.link')">🔗 Share View <kbd>Ctrl+Shift+S</kbd></button>
+  <div class="toolbar-info">
+    <span id="selectionInfo">0 selected</span> · <span id="viewInfo">200 employees</span>
+  </div>
+</div>
+
+<!-- ═══ Grid ═══ -->
+<div class="grid-wrap" style="height:calc(100vh - 220px);overflow-y:auto;">
+  <table class="grid-table" id="grid">
+    <thead id="gridHead"></thead>
+    <tbody id="gridBody"></tbody>
+  </table>
+</div>
+
+<!-- ═══ Status Bar ═══ -->
+<div class="status-bar">
+  <div>
+    <span id="statusFilter">No filters</span> · <span id="statusDensity">density: comfortable</span>
+  </div>
+  <div>
+    <span id="statusSelection">0 selected</span> · <span>⚡ CtrlK IOUX</span>
+  </div>
+</div>
+
+<!-- ═══ Share Toast ═══ -->
+<div class="share-toast" id="shareToast"></div>
+
+<script>
+// ═══════════════════════════════════════════════
+// MOCK DATA — 200 employees across departments
+// ═══════════════════════════════════════════════
+const DEPTS = ['Engineering','Sales','Marketing','HR','Finance','Operations','Legal','Product','Design','Support'];
+const TITLES = {
+  Engineering: ['Software Engineer','Sr. Engineer','Staff Engineer','Tech Lead','Engineering Manager','DevOps Engineer','QA Engineer','Principal Engineer'],
+  Sales: ['Account Executive','Sales Rep','Sr. Account Exec','Sales Manager','VP Sales','BDR','Solutions Engineer'],
+  Marketing: ['Marketing Analyst','Content Writer','SEO Specialist','Marketing Manager','Growth Lead','Brand Designer'],
+  HR: ['HR Specialist','Recruiter','HR Manager','People Ops Lead','Benefits Coordinator','HRBP'],
+  Finance: ['Financial Analyst','Accountant','Controller','FP&A Manager','AP Specialist','Tax Analyst'],
+  Operations: ['Operations Analyst','Supply Chain Mgr','Facilities Coord','Ops Manager','Procurement Lead'],
+  Legal: ['Legal Counsel','Paralegal','Compliance Officer','Contract Manager','IP Attorney'],
+  Product: ['Product Manager','Sr. PM','Product Analyst','VP Product','APM','Product Designer'],
+  Design: ['UI Designer','UX Researcher','Visual Designer','Design Lead','Motion Designer'],
+  Support: ['Support Agent','Support Lead','Customer Success','Escalation Eng','Support Manager'],
+};
+const LOCATIONS = ['New York','San Francisco','London','Berlin','Singapore','Sydney','Toronto','Austin','Seattle','Boston','Chicago','Denver','Portland','Miami','Dublin'];
+const FIRST = ['Alice','Bob','Carol','David','Emma','Frank','Grace','Henry','Iris','Jack','Kate','Leo','Mia','Noah','Olivia','Paul','Quinn','Ruby','Sam','Tina','Uma','Victor','Wendy','Xander','Yara','Zach','Aiden','Bella','Caleb','Diana','Ethan','Fiona','Gavin','Hazel','Ivan','Julia','Kevin','Luna','Max','Nora','Oscar','Penny','Raj','Sofia','Tyler','Uma','Vera','Will','Xena','Yuki','Zoe','Amit','Bianca','Chloe','Derek','Elena','Felix','Gina','Hugo','Isla','Jake'];
+const LAST = ['Smith','Johnson','Williams','Brown','Jones','Garcia','Miller','Davis','Rodriguez','Martinez','Anderson','Taylor','Thomas','Moore','Jackson','Martin','Lee','Perez','Thompson','White','Harris','Clark','Lewis','Robinson','Walker','Young','Allen','King','Wright','Scott','Hill','Green','Adams','Baker','Nelson','Carter','Mitchell','Campbell','Roberts','Turner','Parker','Evans','Edwards','Collins','Stewart','Sanchez','Morris','Rogers','Reed','Cook','Morgan','Bell','Murphy','Bailey','Rivera','Cooper','Richardson','Cox','Howard','Ward'];
+const STATUSES = ['Active','Active','Active','Active','Active','Active','Active','Active','On Leave','Terminated'];
+const WORK_MODES = ['Office','Office','Office','Remote','Remote','Hybrid'];
+
+const COLUMNS = [
+  {id:'select',header:'',width:40},
+  {id:'empId',header:'Emp ID',width:80},
+  {id:'name',header:'Full Name',width:200},
+  {id:'email',header:'Email',width:220},
+  {id:'department',header:'Department',width:130},
+  {id:'title',header:'Job Title',width:180},
+  {id:'status',header:'Status',width:100},
+  {id:'workMode',header:'Work Mode',width:100},
+  {id:'location',header:'Location',width:130},
+  {id:'manager',header:'Manager',width:150},
+  {id:'startDate',header:'Start Date',width:110},
+  {id:'salary',header:'Salary',width:100},
+  {id:'band',header:'Band',width:60},
+  {id:'tenure',header:'Tenure',width:80},
+  {id:'phone',header:'Phone',width:130},
+  {id:'team',header:'Team',width:120},
+  {id:'floor',header:'Floor',width:60},
+  {id:'deskId',header:'Desk',width:70},
+  {id:'emergencyContact',header:'Emergency Contact',width:150},
+  {id:'lastReview',header:'Last Review',width:110},
+  {id:'nextReview',header:'Next Review',width:110},
+  {id:'certifications',header:'Certifications',width:120},
+  {id:'languages',header:'Languages',width:120},
+  {id:'equipment',header:'Equipment',width:130},
+  {id:'notes',header:'Notes',width:150},
+];
+
+function rnd(arr) { return arr[Math.floor(Math.random()*arr.length)]; }
+function rndDate(startYear, endYear) { const y = startYear + Math.floor(Math.random()*(endYear-startYear)); const m = String(Math.floor(Math.random()*12)+1).padStart(2,'0'); const d = String(Math.floor(Math.random()*28)+1).padStart(2,'0'); return `${y}-${m}-${d}`; }
+function rndPhone() { return `+1 (${Math.floor(Math.random()*900)+100}) ${Math.floor(Math.random()*900)+100}-${Math.floor(Math.random()*9000)+1000}`; }
+
+const COLORS = ['#0969da','#1a7f37','#cf222e','#8250df','#9a6700','#bf3989','#0550ae','#116329','#a40e26','#6639ba'];
+function avatarColor(name) { let h = 0; for(let i=0;i<name.length;i++) h = name.charCodeAt(i)+((h<<5)-h); return COLORS[Math.abs(h)%COLORS.length]; }
+
+const employees = [];
+for(let i = 0; i < 200; i++) {
+  const first = rnd(FIRST);
+  const last = rnd(LAST);
+  const dept = rnd(DEPTS);
+  const status = rnd(STATUSES);
+  const title = rnd(TITLES[dept]);
+  const loc = rnd(LOCATIONS);
+  const mode = status === 'Terminated' ? 'N/A' : rnd(WORK_MODES);
+  const band = Math.floor(Math.random()*5)+1;
+  const salary = (40 + band*15 + Math.floor(Math.random()*20))*1000;
+  const mgrFirst = rnd(FIRST); const mgrLast = rnd(LAST);
+  const startDate = rndDate(2015,2024);
+  const startYear = parseInt(startDate.slice(0,4));
+  const tenure = 2026 - startYear;
+
+  employees.push({
+    empId: `EMP-${String(1000+i).slice(1)}`,
+    name: `${first} ${last}`,
+    firstName: first,
+    lastName: last,
+    email: `${first.toLowerCase()}.${last.toLowerCase()}@acme.com`,
+    department: dept,
+    title,
+    status,
+    workMode: mode,
+    location: loc,
+    manager: `${mgrFirst} ${mgrLast}`,
+    startDate,
+    salary,
+    band: `L${band}`,
+    tenure: `${tenure}y`,
+    phone: rndPhone(),
+    team: `${dept} - ${['Alpha','Beta','Gamma','Delta','Core','Platform'][Math.floor(Math.random()*6)]}`,
+    floor: status === 'Terminated' ? '-' : String(Math.floor(Math.random()*8)+1),
+    deskId: status === 'Terminated' ? '-' : `${String.fromCharCode(65+Math.floor(Math.random()*8))}${Math.floor(Math.random()*40)+1}`,
+    emergencyContact: `${rnd(FIRST)} ${rnd(LAST)}`,
+    lastReview: rndDate(2024,2025),
+    nextReview: rndDate(2025,2026),
+    certifications: [['PMP','AWS','CISSP','CPA','PHR','SHRM','Scrum Master','Six Sigma','Google Analytics','HubSpot'][Math.floor(Math.random()*10)], Math.random()>0.5 ? ['Agile','ITIL','SOC2','GDPR'][Math.floor(Math.random()*4)] : ''].filter(Boolean).join(', ') || '—',
+    languages: [['English'],['English','Spanish'],['English','Mandarin'],['English','French'],['English','German'],['English','Hindi'],['English','Japanese'],['English','Portuguese']][Math.floor(Math.random()*8)].join(', '),
+    equipment: ['MacBook Pro','ThinkPad X1','MacBook Air','Dell XPS','Surface Pro'][Math.floor(Math.random()*5)],
+    notes: Math.random() > 0.7 ? ['High performer','Promotion candidate','Transfer request','New hire onboarding','PIP in progress','Relocation approved'][Math.floor(Math.random()*6)] : '—',
+  });
+}
+
+// ═══════════════════════════════════════════════
+// GRID RENDERING
+// ═══════════════════════════════════════════════
+let visibleColumns = COLUMNS.map(c => c.id);
+let currentFilter = 'all';
+let sortCol = null, sortDir = 'asc';
+let selectedRows = new Set();
+let filteredData = [...employees];
+let bookmarkedCols = new Set(['name','department','status','location','salary']);
+
+function renderHeader() {
+  const head = document.getElementById('gridHead');
+  head.innerHTML = '<tr>' + COLUMNS.filter(c => visibleColumns.includes(c.id)).map(col => {
+    const sorted = sortCol === col.id ? ` sorted` : '';
+    const bookmarked = bookmarkedCols.has(col.id) ? ' bookmarked' : '';
+    const arrow = sortCol === col.id ? (sortDir === 'asc' ? ' ↑' : ' ↓') : '';
+    if (col.id === 'select') return `<th style="width:40px"><input type="checkbox" onchange="toggleSelectAll(this.checked)" /></th>`;
+    return `<th class="${sorted}${bookmarked}" style="min-width:${col.width}px" onclick="sortBy('${col.id}')" title="Click to sort · Right-click to bookmark">${col.header}${arrow}</th>`;
+  }).join('') + '</tr>';
+
+  // Right-click to bookmark
+  head.querySelectorAll('th').forEach(th => {
+    th.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      const colId = COLUMNS.find(c => c.header === th.textContent.replace(/\s[↑↓]$/, ''))?.id;
+      if (colId && colId !== 'select') {
+        bookmarkedCols.has(colId) ? bookmarkedCols.delete(colId) : bookmarkedCols.add(colId);
+        renderHeader();
+        notify(bookmarkedCols.has(colId) ? `Bookmarked: ${colId}` : `Unbookmarked: ${colId}`);
+      }
+    });
+  });
+}
+
+function renderBody() {
+  const body = document.getElementById('gridBody');
+  body.innerHTML = filteredData.map(emp => {
+    const sel = selectedRows.has(emp.empId) ? ' selected' : '';
+    const statusBadge = emp.status === 'Active' ? 'badge-active' : emp.status === 'On Leave' ? 'badge-leave' : 'badge-terminated';
+    const modeBadge = emp.workMode === 'Remote' ? 'badge-remote' : 'badge-office';
+    const color = avatarColor(emp.name);
+    const initials = emp.firstName[0] + emp.lastName[0];
+
+    const cells = {
+      select: `<td><input type="checkbox" ${selectedRows.has(emp.empId)?'checked':''} onchange="toggleSelect('${emp.empId}',this.checked)" /></td>`,
+      empId: `<td style="font-family:'DM Mono',monospace;color:var(--accent);font-size:12px;">${emp.empId}</td>`,
+      name: `<td><span class="emp-name"><span class="avatar" style="background:${color}">${initials}</span>${emp.name}</span></td>`,
+      email: `<td style="font-size:12px;color:var(--dim);">${emp.email}</td>`,
+      department: `<td><span class="badge badge-dept">${emp.department}</span></td>`,
+      title: `<td>${emp.title}</td>`,
+      status: `<td><span class="badge ${statusBadge}">${emp.status}</span></td>`,
+      workMode: `<td><span class="badge ${modeBadge}">${emp.workMode}</span></td>`,
+      location: `<td>${emp.location}</td>`,
+      manager: `<td style="font-size:12px;">${emp.manager}</td>`,
+      startDate: `<td style="font-family:'DM Mono',monospace;font-size:12px;">${emp.startDate}</td>`,
+      salary: `<td style="font-family:'DM Mono',monospace;font-size:12px;">$${emp.salary.toLocaleString()}</td>`,
+      band: `<td style="text-align:center;font-weight:600;">${emp.band}</td>`,
+      tenure: `<td style="font-family:'DM Mono',monospace;font-size:12px;">${emp.tenure}</td>`,
+      phone: `<td style="font-size:12px;color:var(--dim);">${emp.phone}</td>`,
+      team: `<td style="font-size:12px;">${emp.team}</td>`,
+      floor: `<td style="text-align:center;">${emp.floor}</td>`,
+      deskId: `<td style="font-family:'DM Mono',monospace;font-size:12px;">${emp.deskId}</td>`,
+      emergencyContact: `<td style="font-size:12px;">${emp.emergencyContact}</td>`,
+      lastReview: `<td style="font-family:'DM Mono',monospace;font-size:12px;">${emp.lastReview}</td>`,
+      nextReview: `<td style="font-family:'DM Mono',monospace;font-size:12px;">${emp.nextReview}</td>`,
+      certifications: `<td style="font-size:12px;">${emp.certifications}</td>`,
+      languages: `<td style="font-size:12px;">${emp.languages}</td>`,
+      equipment: `<td style="font-size:12px;">${emp.equipment}</td>`,
+      notes: `<td style="font-size:12px;color:${emp.notes!=='—'?'var(--accent)':'var(--dim)'};">${emp.notes}</td>`,
+    };
+
+    return `<tr class="${sel}" data-id="${emp.empId}">${visibleColumns.map(id => cells[id]||'').join('')}</tr>`;
+  }).join('');
+
+  updateStatus();
+}
+
+function sortBy(colId) {
+  if (sortCol === colId) { sortDir = sortDir === 'asc' ? 'desc' : 'asc'; }
+  else { sortCol = colId; sortDir = 'asc'; }
+  filteredData.sort((a, b) => {
+    let va = a[colId]||'', vb = b[colId]||'';
+    if (typeof va === 'number') return sortDir === 'asc' ? va-vb : vb-va;
+    return sortDir === 'asc' ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
+  });
+  renderHeader(); renderBody();
+}
+
+function setView(filter) {
+  currentFilter = filter;
+  filteredData = filter === 'all' ? [...employees]
+    : filter === 'active' ? employees.filter(e => e.status === 'Active')
+    : filter === 'leave' ? employees.filter(e => e.status === 'On Leave')
+    : filter === 'remote' ? employees.filter(e => e.workMode === 'Remote')
+    : employees.filter(e => e.department === filter);
+
+  if (sortCol) sortBy(sortCol);
+  else renderBody();
+
+  document.querySelectorAll('.tool-btn[id^="view"]').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById(`view${filter.charAt(0).toUpperCase()+filter.slice(1)}Btn`);
+  if (btn) btn.classList.add('active');
+
+  updateFilterChips();
+  updateStatus();
+}
+
+function setDeptView(dept) {
+  currentFilter = dept;
+  filteredData = employees.filter(e => e.department === dept);
+  if (sortCol) { filteredData.sort((a,b) => { let va=a[sortCol]||'',vb=b[sortCol]||''; return sortDir==='asc'?String(va).localeCompare(String(vb)):String(vb).localeCompare(String(va)); }); }
+  renderBody(); updateFilterChips(); updateStatus();
+  document.querySelectorAll('.tool-btn[id^="view"]').forEach(b => b.classList.remove('active'));
+}
+
+function toggleSelect(id, checked) {
+  checked ? selectedRows.add(id) : selectedRows.delete(id);
+  renderBody();
+}
+function toggleSelectAll(checked) {
+  filteredData.forEach(e => checked ? selectedRows.add(e.empId) : selectedRows.delete(e.empId));
+  renderBody();
+}
+function clearSelection() { selectedRows.clear(); renderBody(); }
+
+function updateStatus() {
+  document.getElementById('viewInfo').textContent = `${filteredData.length} employees`;
+  document.getElementById('selectionInfo').textContent = `${selectedRows.size} selected`;
+  document.getElementById('totalCount').textContent = employees.length;
+  document.getElementById('statusSelection').textContent = `${selectedRows.size} selected`;
+  document.getElementById('statusFilter').textContent = currentFilter === 'all' ? 'No filters' : `Filter: ${currentFilter}`;
+}
+
+function updateFilterChips() {
+  const container = document.getElementById('filterChips');
+  if (currentFilter === 'all') { container.classList.remove('active'); return; }
+  container.classList.add('active');
+  container.innerHTML = `<span class="filter-label">Filters</span><span class="filter-chip">${currentFilter}<button onclick="setView('all')">×</button></span>`;
+}
+
+function showColumns(colIds) {
+  visibleColumns = ['select', ...colIds];
+  renderHeader(); renderBody();
+  notify(`Showing ${colIds.length} columns`);
+}
+
+function showAllColumns() {
+  visibleColumns = COLUMNS.map(c => c.id);
+  renderHeader(); renderBody();
+  notify('All columns visible');
+}
+
+function notify(msg) {
+  const t = document.getElementById('shareToast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ═══════════════════════════════════════════════
+// CTRLK RUNTIME — Inline minimal version
+// ═══════════════════════════════════════════════
+(function(){
+  const bus = { _l:new Map(), on(e,h){if(!this._l.has(e))this._l.set(e,new Set());this._l.get(e).add(h);return()=>this._l.get(e)?.delete(h);}, emit(e,d){const l=this._l.get(e);if(l)for(const h of l)try{h(d,e)}catch(err){}}, off(){this._l.clear();} };
+  const cmds = new Map();
+  const register = (d) => { cmds.set(d.id, d); return () => cmds.delete(d.id); };
+  const execute = (id,...args) => { const c = cmds.get(id); if(c?.execute){const r=c.execute(...args);bus.emit('command:executed',{id});return r;}};
+  const search = (q) => { const ql=(q||'').toLowerCase().trim();const all=[...cmds.values()];if(!ql)return all.slice(0,20);return all.filter(c=>{const t=(c.title||'').toLowerCase();return t.includes(ql)||c.id.toLowerCase().includes(ql);}).slice(0,15);};
+
+  // Palette
+  const style = document.createElement('style');
+  style.textContent = `.ctrlk-po{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:99998;opacity:0;transition:opacity .15s;backdrop-filter:blur(3px);pointer-events:none}.ctrlk-po.v{opacity:1;pointer-events:auto}.ctrlk-p{position:fixed;top:16%;left:50%;transform:translateX(-50%) scale(.96);width:min(540px,92vw);max-height:440px;background:#fff;border:1px solid #d8dee4;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.15);z-index:99999;display:flex;flex-direction:column;overflow:hidden;font-family:'DM Sans',sans-serif;opacity:0;transition:opacity .15s,transform .15s;pointer-events:none}.ctrlk-p.v{opacity:1;transform:translateX(-50%) scale(1);pointer-events:auto}.ctrlk-pi{width:100%;background:0;border:0;outline:0;color:#1f2937;font-size:15px;padding:14px 18px;font-family:inherit;border-bottom:1px solid #d8dee4}.ctrlk-pi::placeholder{color:#9ca3af}.ctrlk-pr{flex:1;overflow-y:auto;padding:6px 0}.ctrlk-pc{padding:8px 16px 4px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:#9ca3af}.ctrlk-px{display:flex;align-items:center;padding:8px 18px;cursor:pointer;gap:10px;transition:background .1s;border-radius:0}.ctrlk-px:hover,.ctrlk-px.s{background:#f0f6ff}.ctrlk-px-i{width:20px;text-align:center;font-size:14px}.ctrlk-px-t{font-size:13px;color:#1f2937;flex:1}.ctrlk-px-k{font-family:'DM Mono',monospace;font-size:10px;color:#9ca3af;padding:2px 6px;background:#f6f8fa;border:1px solid #d8dee4;border-radius:3px}`;
+  document.head.appendChild(style);
+  const overlay=document.createElement('div');overlay.className='ctrlk-po';
+  const palette=document.createElement('div');palette.className='ctrlk-p';
+  palette.innerHTML='<input class="ctrlk-pi" placeholder="Search commands..." autocomplete="off" spellcheck="false"/><div class="ctrlk-pr"></div>';
+  const input=palette.querySelector('.ctrlk-pi'),list=palette.querySelector('.ctrlk-pr');
+  document.body.appendChild(overlay);document.body.appendChild(palette);
+  let open=false,idx=0,results=[];
+  const show=()=>{if(open)return;open=true;idx=0;input.value='';overlay.classList.add('v');palette.classList.add('v');requestAnimationFrame(()=>{input.focus();render();});};
+  const hide=()=>{if(!open)return;open=false;overlay.classList.remove('v');palette.classList.remove('v');};
+  overlay.onclick=hide;
+  function render(){results=search(input.value);if(!results.length){list.innerHTML='<div style="padding:20px;text-align:center;color:#9ca3af;font-size:13px">No commands found</div>';return;}
+    const groups=new Map();for(const c of results){const cat=c.category||'General';if(!groups.has(cat))groups.set(cat,[]);groups.get(cat).push(c);}
+    let h='',gi=0;for(const[cat,items]of groups){h+=`<div class="ctrlk-pc">${cat}</div>`;for(const c of items){h+=`<div class="ctrlk-px${gi===idx?' s':''}" data-i="${gi}"><div class="ctrlk-px-i">${c.icon||'›'}</div><div class="ctrlk-px-t">${c.title}</div>${c.shortcut?`<span class="ctrlk-px-k">${c.shortcut}</span>`:''}</div>`;gi++;}}
+    list.innerHTML=h;list.querySelectorAll('.ctrlk-px').forEach(el=>{el.addEventListener('click',()=>{const c=results[+el.dataset.i];hide();if(c)execute(c.id);});el.addEventListener('mouseenter',()=>{idx=+el.dataset.i;hilite();});});}
+  function hilite(){list.querySelectorAll('.ctrlk-px').forEach((el,i)=>el.classList.toggle('s',i===idx));}
+  input.addEventListener('input',()=>{idx=0;render();});
+  palette.addEventListener('keydown',e=>{if(e.key==='ArrowDown'){e.preventDefault();idx=Math.min(idx+1,results.length-1);hilite();}else if(e.key==='ArrowUp'){e.preventDefault();idx=Math.max(idx-1,0);hilite();}else if(e.key==='Enter'){e.preventDefault();if(results[idx]){const c=results[idx];hide();execute(c.id);}}else if(e.key==='Escape'){e.preventDefault();e.stopPropagation();hide();}});
+
+  // Shortcuts
+  document.addEventListener('keydown', e => {
+    if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();open?hide():show();}
+    if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='g'&&!open){e.preventDefault();colSearchOpen();}
+    if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='d'&&!open&&!colSearchIsOpen){e.preventDefault();execute('ctrlk.density.cycle');}
+    if((e.ctrlKey||e.metaKey)&&e.key==='/'&&!open){e.preventDefault();notify('Ctrl+K: Palette · Ctrl+G: Column Search · Ctrl+D: Density · Ctrl+←→: Bookmarks · Alt+1-5: Views');}
+    if(e.altKey&&e.key==='1'){e.preventDefault();execute('view.eng');}
+    if(e.altKey&&e.key==='2'){e.preventDefault();execute('view.sales');}
+    if(e.altKey&&e.key==='3'){e.preventDefault();execute('view.hr');}
+    if(e.altKey&&e.key==='4'){e.preventDefault();execute('view.ops');}
+    if(e.altKey&&e.key==='5'){e.preventDefault();execute('view.all');}
+    if((e.ctrlKey||e.metaKey)&&e.shiftKey&&e.key.toLowerCase()==='s'){e.preventDefault();execute('share.link');}
+    // Ctrl+Right/Left: jump between bookmarked columns
+    if((e.ctrlKey||e.metaKey)&&e.key==='ArrowRight'&&!open&&!colSearchIsOpen){e.preventDefault();jumpToNextBookmark(1);}
+    if((e.ctrlKey||e.metaKey)&&e.key==='ArrowLeft'&&!open&&!colSearchIsOpen){e.preventDefault();jumpToNextBookmark(-1);}
+  });
+
+  // ─── Column Search (Ctrl+G) ───
+  let colSearchIsOpen = false;
+  let colSearchIdx = 0;
+  let colSearchResults = [];
+  const csOverlay = document.getElementById('colSearchOverlay');
+  const csPanel = document.getElementById('colSearch');
+  const csInput = document.getElementById('colSearchInput');
+  const csList = document.getElementById('colSearchResults');
+
+  function colSearchOpen() {
+    colSearchIsOpen = true;
+    colSearchIdx = 0;
+    csInput.value = '';
+    csOverlay.classList.add('open');
+    csPanel.classList.add('open');
+    requestAnimationFrame(() => { csInput.focus(); colSearchRender(); });
+  }
+
+  function colSearchClose() {
+    colSearchIsOpen = false;
+    csOverlay.classList.remove('open');
+    csPanel.classList.remove('open');
+  }
+
+  csOverlay.addEventListener('click', colSearchClose);
+
+  function colSearchRender() {
+    const q = (csInput.value || '').toLowerCase().trim();
+    // Get all columns except 'select'
+    const allCols = COLUMNS.filter(c => c.id !== 'select');
+
+    if (!q) {
+      // Show bookmarked first, then all
+      const bm = allCols.filter(c => bookmarkedCols.has(c.id));
+      const rest = allCols.filter(c => !bookmarkedCols.has(c.id));
+      colSearchResults = [...bm, ...rest];
+    } else {
+      colSearchResults = allCols.filter(c =>
+        c.header.toLowerCase().includes(q) || c.id.toLowerCase().includes(q)
+      );
+    }
+
+    if (!colSearchResults.length) {
+      csList.innerHTML = '<div style="padding:20px;text-align:center;color:var(--dim);font-size:13px;">No columns matching "' + csInput.value + '"</div>';
+      return;
+    }
+
+    csList.innerHTML = colSearchResults.map((col, i) => {
+      const isBookmarked = bookmarkedCols.has(col.id);
+      const isVisible = visibleColumns.includes(col.id);
+      const colIdx = COLUMNS.findIndex(c => c.id === col.id);
+      return `<div class="col-search-item ${i === colSearchIdx ? 'active' : ''}" data-col-i="${i}">
+        ${isBookmarked ? '<span class="cs-bookmark">★</span>' : '<span style="width:20px;display:inline-block;"></span>'}
+        <span class="cs-col-name">${col.header}</span>
+        ${!isVisible ? '<span class="cs-hidden">hidden</span>' : ''}
+        <span class="cs-col-idx">Col ${colIdx}</span>
+      </div>`;
+    }).join('');
+
+    csList.querySelectorAll('.col-search-item').forEach(el => {
+      el.addEventListener('click', () => {
+        const ci = +el.dataset.colI;
+        colSearchJump(colSearchResults[ci]);
+        colSearchClose();
+      });
+      el.addEventListener('mouseenter', () => {
+        colSearchIdx = +el.dataset.colI;
+        colSearchHilite();
+      });
+    });
+  }
+
+  function colSearchHilite() {
+    csList.querySelectorAll('.col-search-item').forEach((el, i) => el.classList.toggle('active', i === colSearchIdx));
+    const active = csList.querySelector('.col-search-item.active');
+    if (active) active.scrollIntoView({ block: 'nearest' });
+  }
+
+  csInput.addEventListener('input', () => { colSearchIdx = 0; colSearchRender(); });
+
+  csPanel.addEventListener('keydown', e => {
+    if (e.key === 'ArrowDown') { e.preventDefault(); colSearchIdx = Math.min(colSearchIdx + 1, colSearchResults.length - 1); colSearchHilite(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); colSearchIdx = Math.max(colSearchIdx - 1, 0); colSearchHilite(); }
+    else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (colSearchResults[colSearchIdx]) {
+        colSearchJump(colSearchResults[colSearchIdx]);
+        colSearchClose();
+      }
+    }
+    else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); colSearchClose(); }
+  });
+
+  function colSearchJump(col) {
+    // Make sure column is visible
+    if (!visibleColumns.includes(col.id)) {
+      visibleColumns.push(col.id);
+      renderHeader();
+      renderBody();
+    }
+
+    // Find the column index in the rendered table
+    const colIndex = visibleColumns.indexOf(col.id);
+    if (colIndex === -1) return;
+
+    // Scroll the grid container to bring the column into view
+    const gridWrap = document.querySelector('.grid-wrap');
+    const headerCells = document.querySelectorAll('.grid-table thead th');
+    if (headerCells[colIndex]) {
+      const cell = headerCells[colIndex];
+      const wrapRect = gridWrap.getBoundingClientRect();
+      const cellRect = cell.getBoundingClientRect();
+      // Scroll horizontally so the column is centered
+      const scrollLeft = gridWrap.scrollLeft + (cellRect.left - wrapRect.left) - (wrapRect.width / 2) + (cellRect.width / 2);
+      gridWrap.scrollTo({ left: Math.max(0, scrollLeft), behavior: 'smooth' });
+    }
+
+    // Highlight the column with a flash animation
+    setTimeout(() => {
+      highlightColumn(colIndex);
+    }, 300);
+
+    notify(`Jumped to: ${col.header} (column ${COLUMNS.findIndex(c => c.id === col.id)})`);
+  }
+
+  function highlightColumn(colIndex) {
+    // Add flash class to all cells in that column
+    const table = document.getElementById('grid');
+    const rows = table.querySelectorAll('tr');
+    rows.forEach(row => {
+      const cells = row.children;
+      if (cells[colIndex]) {
+        cells[colIndex].classList.remove('col-highlight');
+        void cells[colIndex].offsetWidth; // force reflow
+        cells[colIndex].classList.add('col-highlight');
+      }
+    });
+  }
+
+  // Bookmark navigation: Ctrl+Right/Left jumps between bookmarked columns
+  let currentBookmarkFocus = -1;
+  function jumpToNextBookmark(direction) {
+    const bmCols = COLUMNS.filter(c => c.id !== 'select' && bookmarkedCols.has(c.id));
+    if (bmCols.length === 0) { notify('No bookmarked columns. Right-click a column header to bookmark.'); return; }
+
+    currentBookmarkFocus += direction;
+    if (currentBookmarkFocus >= bmCols.length) currentBookmarkFocus = 0;
+    if (currentBookmarkFocus < 0) currentBookmarkFocus = bmCols.length - 1;
+
+    colSearchJump(bmCols[currentBookmarkFocus]);
+  }
+
+  // Density
+  const densityLevels=['compact','comfortable','spacious'];
+  const densityVars={
+    compact:{'--vlx-font-size':'12px','--vlx-font-size-sm':'11px','--vlx-font-size-xs':'10px','--vlx-cell-padding':'2px 8px','--vlx-row-height':'28px','--vlx-chrome-display':'none','--vlx-help-display':'none'},
+    comfortable:{'--vlx-font-size':'14px','--vlx-font-size-sm':'13px','--vlx-font-size-xs':'11px','--vlx-cell-padding':'6px 12px','--vlx-row-height':'36px','--vlx-chrome-display':'block','--vlx-help-display':'none'},
+    spacious:{'--vlx-font-size':'16px','--vlx-font-size-sm':'14px','--vlx-font-size-xs':'12px','--vlx-cell-padding':'10px 14px','--vlx-row-height':'48px','--vlx-chrome-display':'block','--vlx-help-display':'block'},
+  };
+  let curDensity=1;
+  function cycleDensity(){curDensity=(curDensity+1)%3;const l=densityLevels[curDensity];for(const[p,v]of Object.entries(densityVars[l]))document.documentElement.style.setProperty(p,v);document.getElementById('densityLabel').textContent=l.charAt(0).toUpperCase()+l.slice(1);document.getElementById('statusDensity').textContent=`density: ${l}`;notify(`Density: ${l}`);}
+
+  // Share
+  function shareLink(){
+    const state = { filter: currentFilter, sort: sortCol, sortDir, columns: visibleColumns.filter(c=>c!=='select'), selected: [...selectedRows], bookmarks: [...bookmarkedCols] };
+    const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(state)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+    const link = window.location.href.split('#')[0] + '#ctrlk=' + encoded;
+    navigator.clipboard?.writeText(link);
+    notify(`View link copied! Share it with your team.\n${link.length} chars`);
+  }
+
+  // Register commands
+  register({id:'ctrlk.palette',title:'Command Palette',category:'CtrlK',icon:'🔍',shortcut:'Ctrl+K',execute:show});
+  register({id:'ctrlk.colsearch',title:'Jump to Column',category:'CtrlK',icon:'🔎',shortcut:'Ctrl+G',execute:colSearchOpen});
+  register({id:'ctrlk.density.cycle',title:'Cycle Density',category:'CtrlK',icon:'📐',shortcut:'Ctrl+D',execute:cycleDensity});
+  register({id:'ctrlk.bookmark.next',title:'Next Bookmarked Column',category:'CtrlK',icon:'→',shortcut:'Ctrl+→',execute:()=>jumpToNextBookmark(1)});
+  register({id:'ctrlk.bookmark.prev',title:'Previous Bookmarked Column',category:'CtrlK',icon:'←',shortcut:'Ctrl+←',execute:()=>jumpToNextBookmark(-1)});
+
+  register({id:'view.all',title:'Show All Employees',category:'Views',icon:'👥',shortcut:'Alt+5',execute:()=>setView('all')});
+  register({id:'view.active',title:'Show Active Only',category:'Views',icon:'✅',execute:()=>setView('active')});
+  register({id:'view.leave',title:'Show On Leave',category:'Views',icon:'🏖',execute:()=>setView('leave')});
+  register({id:'view.remote',title:'Show Remote Workers',category:'Views',icon:'🏠',execute:()=>setView('remote')});
+  register({id:'view.eng',title:'Engineering Department',category:'Department Views',icon:'⚙',shortcut:'Alt+1',execute:()=>setDeptView('Engineering')});
+  register({id:'view.sales',title:'Sales Department',category:'Department Views',icon:'💼',shortcut:'Alt+2',execute:()=>setDeptView('Sales')});
+  register({id:'view.hr',title:'HR Department',category:'Department Views',icon:'🤝',shortcut:'Alt+3',execute:()=>setDeptView('HR')});
+  register({id:'view.ops',title:'Operations Department',category:'Department Views',icon:'🔧',shortcut:'Alt+4',execute:()=>setDeptView('Operations')});
+  register({id:'view.marketing',title:'Marketing Department',category:'Department Views',icon:'📢',execute:()=>setDeptView('Marketing')});
+  register({id:'view.finance',title:'Finance Department',category:'Department Views',icon:'💰',execute:()=>setDeptView('Finance')});
+  register({id:'view.legal',title:'Legal Department',category:'Department Views',icon:'⚖',execute:()=>setDeptView('Legal')});
+  register({id:'view.product',title:'Product Department',category:'Department Views',icon:'📦',execute:()=>setDeptView('Product')});
+  register({id:'view.design',title:'Design Department',category:'Department Views',icon:'🎨',execute:()=>setDeptView('Design')});
+  register({id:'view.support',title:'Support Department',category:'Department Views',icon:'🎧',execute:()=>setDeptView('Support')});
+
+  register({id:'cols.people',title:'Columns: People Overview',category:'Column Profiles',icon:'👤',execute:()=>showColumns(['empId','name','department','title','status','location','workMode'])});
+  register({id:'cols.compensation',title:'Columns: Compensation',category:'Column Profiles',icon:'💵',execute:()=>showColumns(['empId','name','department','title','band','salary','tenure','startDate'])});
+  register({id:'cols.contact',title:'Columns: Contact Info',category:'Column Profiles',icon:'📞',execute:()=>showColumns(['empId','name','email','phone','location','floor','deskId','emergencyContact'])});
+  register({id:'cols.review',title:'Columns: Review Cycle',category:'Column Profiles',icon:'📋',execute:()=>showColumns(['empId','name','department','manager','lastReview','nextReview','band','notes'])});
+  register({id:'cols.all',title:'Show All Columns',category:'Column Profiles',icon:'📊',execute:showAllColumns});
+
+  register({id:'sort.name',title:'Sort by Name',category:'Sort',icon:'🔤',execute:()=>sortBy('name')});
+  register({id:'sort.dept',title:'Sort by Department',category:'Sort',icon:'🏢',execute:()=>sortBy('department')});
+  register({id:'sort.salary',title:'Sort by Salary',category:'Sort',icon:'💰',execute:()=>sortBy('salary')});
+  register({id:'sort.tenure',title:'Sort by Tenure',category:'Sort',icon:'📅',execute:()=>sortBy('tenure')});
+  register({id:'sort.status',title:'Sort by Status',category:'Sort',icon:'🔄',execute:()=>sortBy('status')});
+
+  register({id:'selection.clear',title:'Clear Selection',category:'Selection',icon:'✕',execute:clearSelection});
+  register({id:'selection.all',title:'Select All Visible',category:'Selection',icon:'☑',execute:()=>{filteredData.forEach(e=>selectedRows.add(e.empId));renderBody();}});
+  register({id:'selection.invert',title:'Invert Selection',category:'Selection',icon:'🔄',execute:()=>{filteredData.forEach(e=>{selectedRows.has(e.empId)?selectedRows.delete(e.empId):selectedRows.add(e.empId);});renderBody();}});
+
+  register({id:'share.link',title:'Share Current View (Copy Link)',category:'Share',icon:'🔗',shortcut:'Ctrl+Shift+S',execute:shareLink});
+
+  register({id:'export.csv',title:'Export Visible to CSV',category:'Export',icon:'📄',execute:()=>notify('Exporting '+filteredData.length+' rows to CSV...')});
+  register({id:'export.pdf',title:'Export Report PDF',category:'Export',icon:'📑',execute:()=>notify('Generating PDF report...')});
+
+  // Expose for toolbar buttons
+  window.ctrlk = { commands: { execute }, density: { cycle: cycleDensity }, palette: { toggle: () => open ? hide() : show() } };
+  window.colSearchOpen = colSearchOpen;
+  console.log('%c⚡ CtrlK IOUX %cactive on Employee Directory %c· Press Ctrl+K', 'color:#0969da;font-weight:bold;', 'color:#1a7f37;', 'color:#656d76;');
+})();
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+renderHeader();
+renderBody();
+
+// Check for shared view in URL
+(function(){
+  const hash = window.location.hash?.slice(1) || '';
+  if (hash.startsWith('ctrlk=')) {
+    try {
+      const encoded = hash.slice(6);
+      const base64 = encoded.replace(/-/g,'+').replace(/_/g,'/');
+      const padded = base64 + '='.repeat((4-base64.length%4)%4);
+      const json = decodeURIComponent(escape(atob(padded)));
+      const state = JSON.parse(json);
+      if (state.columns) showColumns(state.columns);
+      if (state.filter && state.filter !== 'all') {
+        if (DEPTS.includes(state.filter)) setDeptView(state.filter);
+        else setView(state.filter);
+      }
+      if (state.sort) { sortCol = state.sort; sortDir = state.sortDir || 'asc'; sortBy(sortCol); }
+      if (state.selected) { state.selected.forEach(id => selectedRows.add(id)); renderBody(); }
+      if (state.bookmarks) { bookmarkedCols = new Set(state.bookmarks); renderHeader(); }
+      window.history.replaceState(null, '', window.location.pathname);
+      notify('Shared view applied!');
+    } catch(e) { console.warn('Failed to apply shared view', e); }
+  }
+})();
+</script>
+</body>
+</html>

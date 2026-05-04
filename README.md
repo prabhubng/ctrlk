@@ -6,7 +6,7 @@ CtrlK is an interaction layer that sits between your users and your application.
 
 > An **IOUX** (Integrated Operational UX) is to application operators what an IDE is to developers.
 
-[![npm](https://img.shields.io/npm/v/ctrlk)](https://www.npmjs.com/package/ctrlk)
+[![npm](https://img.shields.io/npm/v/@ctrlk/core)](https://www.npmjs.com/package/@ctrlk/core)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Tests](https://img.shields.io/badge/tests-150%20passing-brightgreen)](#)
 
@@ -17,14 +17,14 @@ CtrlK is an interaction layer that sits between your users and your application.
 ### Pattern A — Drop-in (30 seconds)
 
 ```html
-<script src="https://unpkg.com/ctrlk/dist/ctrlk.runtime.min.js"></script>
+<script src="https://unpkg.com/@ctrlk/core/dist/ctrlk.runtime.min.js"></script>
 <!-- That's it. Ctrl+K is now live. -->
 ```
 
 ### Pattern B — Programmatic
 
 ```js
-import ctrlk from 'ctrlk';
+import ctrlk from '@ctrlk/core';
 
 ctrlk.init({ palette: true, density: true, autoDiscover: true });
 
@@ -54,7 +54,7 @@ useCtrlkCommand({
 ## Install
 
 ```bash
-npm install ctrlk
+npm install @ctrlk/core
 
 # Framework adapters
 npm install @ctrlk/react        # React hooks + Provider
@@ -159,6 +159,6 @@ Enterprise software users spend 4-8 hours daily in data-heavy applications. They
 
 ## License
 
-MIT — Created by [Prabhu Raja](https://github.com/prabhubng), [LinkedIn](https://www.linkedin.com/in/prabhuraja/).
+MIT — Created by [Prabhu](https://github.com/prabhubng)
 
-Enterprise features and support available from [NeuralWeaves](https://neuralweaves.com).
+Enterprise features and support available from [Neural Weaves Pvt Ltd](https://neuralweaves.com).

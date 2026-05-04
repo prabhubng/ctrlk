@@ -18,10 +18,10 @@
   "homepage": "https://ctrlk.dev",
   "repository": {
     "type": "git",
-    "url": "https://github.com/prabhuignoto/ctrlk"
+    "url": "https://github.com/prabhubng/ctrlk"
   },
   "bugs": {
-    "url": "https://github.com/prabhuignoto/ctrlk/issues"
+    "url": "https://github.com/prabhubng/ctrlk/issues"
   },
   "keywords": [
     "ioux", "enterprise-ux", "opux", "command-palette", "keyboard-shortcuts",
