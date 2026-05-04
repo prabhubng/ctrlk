@@ -161,4 +161,4 @@ Enterprise software users spend 4-8 hours daily in data-heavy applications. They
 
 MIT — Created by [Prabhu](https://github.com/prabhubng)
 
-Enterprise features and support available from [Prabhu Raja](https://neuralweaves.com).
+Enterprise features and support available from [NeuralWeaves](https://neuralweaves.com).
