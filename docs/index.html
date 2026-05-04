@@ -214,9 +214,9 @@ section{padding:100px 40px;max-width:1100px;margin:0 auto;}
     <a href="#install" class="btn-primary">Get Started</a>
     <a href="#demo" class="btn-secondary">See It In Action</a>
   </div>
-  <div class="hero-install" onclick="navigator.clipboard?.writeText('npm i ctrlk');this.querySelector('.copy-hint').textContent='Copied!';">
+  <div class="hero-install" onclick="navigator.clipboard?.writeText('npm i @ctrlk/core');this.querySelector('.copy-hint').textContent='Copied!';">
     <span class="prompt">$</span>
-    <span class="cmd">npm i ctrlk</span>
+    <span class="cmd">npm i @ctrlk/core</span>
     <span class="copy-hint">Click to copy</span>
   </div>
   <div class="hero-stats">
@@ -708,7 +708,7 @@ document.querySelectorAll('[data-reveal]').forEach(el => observer.observe(el));
   register({ id:'nav.install', title:'Go to: Install', icon:'§', execute:()=>document.getElementById('install').scrollIntoView({behavior:'smooth'}) });
   register({ id:'nav.top', title:'Back to Top', icon:'↑', execute:()=>window.scrollTo({top:0,behavior:'smooth'}) });
   register({ id:'action.github', title:'Open GitHub', icon:'📦', execute:()=>window.open('https://github.com/prabhuignoto/ctrlk','_blank') });
-  register({ id:'action.npm', title:'Copy npm install', icon:'📋', execute:()=>{navigator.clipboard?.writeText('npm i ctrlk');notify('Copied: npm i ctrlk');} });
+  register({ id:'action.npm', title:'Copy npm install', icon:'📋', execute:()=>{navigator.clipboard?.writeText('npm i @ctrlk/core');notify('Copied: npm i @ctrlk/core');} });
   register({ id:'action.problems-doc', title:'Read Full Problem Statement', icon:'📄', execute:()=>window.open('docs/problem-statement.html','_blank') });
   register({ id:'ctrlk.shortcuts', title:'Show Shortcuts', icon:'⌨', shortcut:'Ctrl+/', execute:()=>notify('Ctrl+K: Palette · Ctrl+D: Density · Ctrl+/: Shortcuts') });
 

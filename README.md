@@ -159,6 +159,6 @@ Enterprise software users spend 4-8 hours daily in data-heavy applications. They
 
 ## License
 
-MIT — Created by [Prabhu](https://github.com/prabhubng)
+MIT — Created by [Prabhu Raja](https://github.com/prabhubng), [LinkedIn](https://www.linkedin.com/in/prabhuraja/)
 
-Enterprise features and support available from [NeuralWeaves](https://neuralweaves.com).
+Enterprise features and support available from [NeuralWeaves Technologies](https://neuralweaves.com).

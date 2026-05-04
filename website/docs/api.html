@@ -184,7 +184,7 @@ npm install @ctrlk/ag-grid     <span class="cm"># AG Grid adapter</span></pre></
 
 <h4>Programmatic Setup (Pattern B)</h4>
 <div class="code"><div class="code-h"><span class="fn">app.js</span><span class="lang">JavaScript</span></div>
-<pre><span class="kw">import</span> ctrlk <span class="kw">from</span> <span class="str">'ctrlk'</span>;
+<pre><span class="kw">import</span> ctrlk <span class="kw">from</span> <span class="str">'@ctrlk/core'</span>;
 
 <span class="cm">// Initialize with options</span>
 ctrlk.<span class="fn">init</span>({
@@ -645,7 +645,7 @@ ctrlk.commands.<span class="fn">register</span>({
 <h4>Setup</h4>
 <div class="code"><div class="code-h"><span class="fn">App.jsx</span><span class="lang">React</span></div>
 <pre><span class="kw">import</span> { <span class="ty">CtrlKProvider</span> } <span class="kw">from</span> <span class="str">'@ctrlk/react'</span>;
-<span class="kw">import</span> ctrlk <span class="kw">from</span> <span class="str">'ctrlk'</span>;
+<span class="kw">import</span> ctrlk <span class="kw">from</span> <span class="str">'@ctrlk/core'</span>;
 
 <span class="kw">function</span> <span class="fn">App</span>() {
   <span class="kw">return</span> (
@@ -731,7 +731,7 @@ ctrlk.commands.<span class="fn">register</span>({
 
 <div class="code"><div class="code-h"><span class="fn">composables/useCtrlk.js</span><span class="lang">Vue 3</span></div>
 <pre><span class="kw">import</span> { <span class="ty">onMounted</span>, <span class="ty">onUnmounted</span> } <span class="kw">from</span> <span class="str">'vue'</span>;
-<span class="kw">import</span> ctrlk <span class="kw">from</span> <span class="str">'ctrlk'</span>;
+<span class="kw">import</span> ctrlk <span class="kw">from</span> <span class="str">'@ctrlk/core'</span>;
 
 <span class="kw">export function</span> <span class="fn">useCtrlkCommand</span>(def) {
   <span class="kw">let</span> unregister;
