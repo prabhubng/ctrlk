@@ -7,7 +7,7 @@
  * Drop-in: <script src="ctrlk.runtime.js"></script>
  * The command palette opens with Ctrl+K. Zero config.
  * 
- * Built: 2026-05-04T10:13:33.153Z
+ * Built: 2026-05-06T09:01:28.697Z
  */
 (function(global) {
 'use strict';

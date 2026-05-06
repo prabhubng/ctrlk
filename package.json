@@ -13,7 +13,7 @@
     "test:phase3": "node test/phase3.js",
     "test:share": "node test/share.js"
   },
-  "author": "Prabhu <prabhuswamiji@gmail.com>",
+  "author": "Prabhu Raja <prabhuswamiji@gmail.com>",
   "license": "MIT",
   "homepage": "https://ctrlk.dev",
   "repository": {

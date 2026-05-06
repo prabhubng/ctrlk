@@ -28,7 +28,7 @@ const CtrlKContext = createContext(null);
  * Provider — wraps your app with the ctrlk instance.
  * 
  * Usage:
- *   import ctrlk from 'ctrlk';
+ *   import ctrlk from '@ctrlk/core';
  *   <CtrlKProvider instance={ctrlk}> ... </CtrlKProvider>
  * 
  * Or without an instance (auto-discovers the global `window.ctrlk`):
