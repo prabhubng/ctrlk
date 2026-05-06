@@ -161,11 +161,12 @@ yarn add ctrlk
 <span class="cm"># CDN (Pattern A drop-in)</span>
 &lt;script src="https://unpkg.com/@ctrlk/core/dist/ctrlk.runtime.min.js"&gt;&lt;/script&gt;</pre></div>
 
-<p>Framework-specific packages:</p>
+<p>Framework and grid adapter packages:</p>
 <div class="code"><div class="code-h"><span class="fn">terminal</span><span class="lang">Shell</span></div>
 <pre>npm install @ctrlk/react       <span class="cm"># React hooks + Provider</span>
 npm install @ctrlk/angular     <span class="cm"># Service + directives</span>
-npm install @ctrlk/ag-grid     <span class="cm"># AG Grid adapter</span></pre></div>
+npm install @ctrlk/ag-grid     <span class="cm"># AG Grid adapter</span>
+npm install @ctrlk/devextreme  <span class="cm"># DevExtreme adapter</span></pre></div>
 
 
 <!-- ─── QUICK START ─── -->
@@ -776,19 +777,37 @@ gridOptions.<span class="fn">onGridReady</span> = (params) => {
 <h2 id="devextreme">DevExtreme Adapter <span class="badge badge-adapter">Adapter</span></h2>
 
 <div class="code"><div class="code-h"><span class="fn">setup</span><span class="lang">JavaScript</span></div>
-<pre><span class="kw">const</span> grid = <span class="kw">new</span> DevExpress.ui.<span class="fn">dxDataGrid</span>(el, { ... });
+<pre><span class="kw">import</span> { <span class="ty">DevExtremeAdapter</span> } <span class="kw">from</span> <span class="str">'@ctrlk/devextreme'</span>;
 
-<span class="cm">// DevExtreme has a built-in state() method</span>
-<span class="kw">const</span> adapter = {
-  <span class="fn">captureState</span>: () => grid.<span class="fn">state</span>(),
-  <span class="fn">restoreState</span>: (s) => grid.<span class="fn">state</span>(s),
-  <span class="fn">setColumnVisible</span>: (f, v) => grid.<span class="fn">columnOption</span>(f, <span class="str">'visible'</span>, v),
-  <span class="fn">ensureColumnVisible</span>: (f) => {
-    <span class="kw">const</span> idx = grid.<span class="fn">getVisibleColumnIndex</span>(f);
-    grid.<span class="fn">getScrollable</span>()?.<span class="fn">scrollToElement</span>(/*...*/);
-  },
-};
+<span class="kw">const</span> grid = <span class="kw">new</span> DevExpress.ui.<span class="fn">dxDataGrid</span>(el, { ... });
+<span class="kw">const</span> adapter = <span class="kw">new</span> <span class="fn">DevExtremeAdapter</span>(grid, { <span class="prop">keyExpr</span>: <span class="str">'id'</span> });
 ctrlk.views.<span class="fn">setGridAdapter</span>(adapter);</pre></div>
+
+<h4>API Translation</h4>
+<table>
+<thead><tr><th>CtrlK Operation</th><th>DevExtreme API Called</th></tr></thead>
+<tbody>
+<tr><td>Capture state</td><td><code>columnOption()</code> per field</td></tr>
+<tr><td>Restore state</td><td><code>columnOption()</code> per field</td></tr>
+<tr><td>Show/hide column</td><td><code>columnOption(field, 'visible', bool)</code></td></tr>
+<tr><td>Scroll to column</td><td><code>getCellElement()</code> + <code>scrollToElement()</code></td></tr>
+<tr><td>Set sort</td><td><code>columnOption(field, 'sortOrder')</code></td></tr>
+<tr><td>Get selection</td><td><code>getSelectedRowKeys()</code></td></tr>
+<tr><td>Export</td><td><code>exportToExcel()</code> or manual CSV</td></tr>
+</tbody>
+</table>
+
+<h4>DevExtreme-Specific Features</h4>
+<table>
+<thead><tr><th>Method</th><th>Description</th></tr></thead>
+<tbody>
+<tr><td><code>getGrouping()</code> / <code>setGrouping(colIds)</code></td><td>Column grouping with group headers</td></tr>
+<tr><td><code>getTotalSummary()</code></td><td>Footer aggregate rows (sum, avg, count)</td></tr>
+<tr><td><code>expandDetail(key)</code> / <code>collapseDetail(key)</code></td><td>Master-detail row expansion</td></tr>
+<tr><td><code>hasChanges()</code> / <code>saveChanges()</code></td><td>Batch editing support</td></tr>
+<tr><td><code>setDensity(level)</code></td><td>Compact / comfortable / spacious via CSS</td></tr>
+</tbody>
+</table>
 
 
 <!-- ═══════════════════════════════════════ -->
