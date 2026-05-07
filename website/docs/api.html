@@ -84,7 +84,7 @@ td code{font-size:11px;}
 <!-- SIDEBAR -->
 <!-- ═══════════════════════════════════════ -->
 <aside class="sidebar">
-  <div class="sb-logo">ctrl<span>K</span> <span class="sb-version">v1.1</span></div>
+  <div class="sb-logo">ctrl<span>K</span> <span class="sb-version">v2.0</span></div>
 
   <div class="sb-group">Getting Started</div>
   <a class="sb-link" href="#introduction">Introduction</a>
@@ -96,7 +96,6 @@ td code{font-size:11px;}
   <a class="sb-link" href="#eventbus">EventBus</a>
   <a class="sb-link" href="#commandregistry">CommandRegistry</a>
   <a class="sb-link" href="#shortcutengine">ShortcutEngine</a>
-  <a class="sb-link" href="#commandpalette">CommandPalette</a>
   <a class="sb-link" href="#densitycontroller">DensityController</a>
   <a class="sb-link" href="#autodiscovery">AutoDiscovery</a>
 
@@ -141,7 +140,7 @@ td code{font-size:11px;}
 
 <!-- ─── INTRODUCTION ─── -->
 <h1 id="introduction">CtrlK Documentation</h1>
-<p class="subtitle">The first IOUX (Integrated Operational UX) for enterprise web apps. 19 modules, 150 tests, zero dependencies.</p>
+<p class="subtitle">Headless IOUX engine for enterprise web apps. 19 modules, 150 tests, zero dependencies. Your framework, your UI, your theme.</p>
 
 <p>CtrlK is an <strong>interaction layer</strong> that sits between your users and your application. It adds command palette, keyboard shortcuts, saved views, persistent selections, field navigation, macros, undo, and shareable view links — on top of any existing enterprise web app. No redesign required.</p>
 
@@ -152,16 +151,9 @@ td code{font-size:11px;}
 <h2 id="install">Installation</h2>
 
 <div class="code"><div class="code-h"><span class="fn">terminal</span><span class="lang">Shell</span></div>
-<pre><span class="cm"># npm</span>
-npm install @ctrlk/core
+<pre>npm install @ctrlk/core</pre></div>
 
-<span class="cm"># yarn</span>
-yarn add ctrlk
-
-<span class="cm"># CDN (Pattern A drop-in)</span>
-&lt;script src="https://unpkg.com/@ctrlk/core/dist/ctrlk.runtime.min.js"&gt;&lt;/script&gt;</pre></div>
-
-<p>Framework and grid adapter packages:</p>
+<p>Grid and framework adapter packages:</p>
 <div class="code"><div class="code-h"><span class="fn">terminal</span><span class="lang">Shell</span></div>
 <pre>npm install @ctrlk/react       <span class="cm"># React hooks + Provider</span>
 npm install @ctrlk/angular     <span class="cm"># Service + directives</span>
@@ -172,55 +164,45 @@ npm install @ctrlk/devextreme  <span class="cm"># DevExtreme adapter</span></pre
 <!-- ─── QUICK START ─── -->
 <h2 id="quick-start">Quick Start</h2>
 
-<h4>30-Second Setup (Pattern A)</h4>
-<div class="code"><div class="code-h"><span class="fn">index.html</span><span class="lang">HTML</span></div>
-<pre><span class="cm">&lt;!-- Add before &lt;/body&gt;. That's it. --&gt;</span>
-&lt;<span class="kw">script</span> <span class="ty">src</span>=<span class="str">"ctrlk.runtime.min.js"</span>&gt;&lt;/<span class="kw">script</span>&gt;
-
-<span class="cm">&lt;!-- Result:
-  · Ctrl+K opens command palette
-  · All buttons auto-discovered as commands
-  · Ctrl+D cycles density
-  · Every section and link is searchable --&gt;</span></pre></div>
-
-<h4>Programmatic Setup (Pattern B)</h4>
-<div class="code"><div class="code-h"><span class="fn">app.js</span><span class="lang">JavaScript</span></div>
+<div class="code"><div class="code-h"><span class="fn">app.ts</span><span class="lang">TypeScript</span></div>
 <pre><span class="kw">import</span> ctrlk <span class="kw">from</span> <span class="str">'@ctrlk/core'</span>;
 
-<span class="cm">// Initialize with options</span>
-ctrlk.<span class="fn">init</span>({
-  <span class="prop">palette</span>: <span class="kw">true</span>,          <span class="cm">// Enable command palette UI</span>
-  <span class="prop">density</span>: <span class="kw">true</span>,          <span class="cm">// Enable density controller</span>
-  <span class="prop">autoDiscover</span>: <span class="kw">true</span>,     <span class="cm">// Auto-register DOM elements</span>
-  <span class="prop">session</span>: <span class="kw">true</span>,          <span class="cm">// Enable session tracking</span>
-  <span class="prop">macros</span>: <span class="kw">true</span>,           <span class="cm">// Enable macro recording</span>
-  <span class="prop">history</span>: <span class="kw">true</span>,          <span class="cm">// Enable undo/redo</span>
+<span class="cm">// Initialize the headless engine</span>
+ctrlk.<span class="fn">init</span>({ <span class="prop">palette</span>: <span class="kw">true</span>, <span class="prop">density</span>: <span class="kw">true</span> });
+
+<span class="cm">// Register commands</span>
+ctrlk.commands.<span class="fn">register</span>({
+  <span class="prop">id</span>: <span class="str">'deals.refresh'</span>,
+  <span class="prop">title</span>: <span class="str">'Refresh Deals'</span>,
+  <span class="prop">shortcut</span>: <span class="str">'Ctrl+R'</span>,
+  <span class="prop">category</span>: <span class="str">'Deals'</span>,
+  <span class="fn">execute</span>: () => refreshGrid(),
 });
 
-<span class="cm">// Register a command</span>
-ctrlk.commands.<span class="fn">register</span>({
-  <span class="prop">id</span>: <span class="str">'filter.active'</span>,
-  <span class="prop">title</span>: <span class="str">'Show Active Only'</span>,
-  <span class="prop">shortcut</span>: <span class="str">'Alt+A'</span>,
-  <span class="prop">category</span>: <span class="str">'Filters'</span>,
-  <span class="prop">icon</span>: <span class="str">'✅'</span>,
-  <span class="fn">execute</span>: () => applyFilter(<span class="str">'active'</span>),
+<span class="cm">// When Ctrl+K fires, YOUR app renders YOUR palette</span>
+ctrlk.<span class="fn">onPaletteRequest</span>(({ commands, search, execute }) => {
+  openMyPaletteDialog({ commands, search, execute });
 });</pre></div>
 
 
 <!-- ─── INTEGRATION PATTERNS ─── -->
-<h2 id="patterns">Integration Patterns</h2>
+<h2 id="patterns">Integration</h2>
 
-<table>
-<thead><tr><th>Pattern</th><th>Setup Time</th><th>Integration Depth</th><th>Best For</th></tr></thead>
-<tbody>
-<tr><td><strong>A — Drop-In</strong></td><td>30 seconds</td><td>Auto-discovery only</td><td>Quick evaluation, legacy apps</td></tr>
-<tr><td><strong>B — Declarative</strong></td><td>1-2 hours</td><td>Custom commands + views</td><td>Most applications</td></tr>
-<tr><td><strong>C — Framework</strong></td><td>Half day</td><td>Hooks, directives, adapters</td><td>React/Angular/Vue apps with grid libraries</td></tr>
-</tbody>
-</table>
+<p>CtrlK is headless — it emits events, your app renders. Register commands and shortcuts through the engine, then subscribe to events to show your own UI components using your existing design system.</p>
 
-<p>Each pattern extends the previous. Start with A, evolve to C over time. No migration or rewrite needed.</p>
+<div class="code"><div class="code-h"><span class="fn">integration</span><span class="lang">TypeScript</span></div>
+<pre><span class="cm">// 1. Init the engine</span>
+ctrlk.<span class="fn">init</span>({ <span class="prop">palette</span>: <span class="kw">true</span>, <span class="prop">density</span>: <span class="kw">true</span> });
+
+<span class="cm">// 2. Connect your grid</span>
+ctrlk.<span class="fn">connectGrid</span>(<span class="kw">new</span> <span class="fn">DevExtremeAdapter</span>(grid, { <span class="prop">keyExpr</span>: <span class="str">'dealId'</span> }));
+
+<span class="cm">// 3. Register app commands</span>
+ctrlk.commands.<span class="fn">register</span>({ <span class="prop">id</span>: <span class="str">'nav.deals'</span>, ... });
+
+<span class="cm">// 4. Subscribe to UI events — render with YOUR components</span>
+ctrlk.<span class="fn">onPaletteRequest</span>(req => showMyPalette(req));
+ctrlk.<span class="fn">onFieldJumpRequest</span>(req => showMyFieldSearch(req));</pre></div>
 
 
 <!-- ═══════════════════════════════════════ -->
@@ -308,21 +290,32 @@ ctrlk.commands.<span class="fn">register</span>({
 <p>Events emitted: <span class="event-tag">shortcut:fired</span> <span class="event-tag">shortcut:chord-started</span></p>
 
 
-<h2 id="commandpalette">CommandPalette <span class="badge badge-core">Core</span></h2>
-<p>The Ctrl+K searchable command UI. Renders a floating overlay with fuzzy search, keyboard navigation, category grouping, and shortcut display.</p>
+<h2 id="eventhooks">Event Hooks <span class="badge badge-core">Core</span></h2>
+<p>Convenience methods for subscribing to the most common events. Each returns an unsubscribe function. Your app uses these to render its own UI when shortcuts fire.</p>
 
 <table>
-<thead><tr><th>Method</th><th>Description</th></tr></thead>
+<thead><tr><th>Method</th><th>Fires When</th><th>Payload</th></tr></thead>
 <tbody>
-<tr><td><code>inject()</code></td><td>Create and inject the palette DOM elements into the page.</td></tr>
-<tr><td><code>show()</code></td><td>Open the palette.</td></tr>
-<tr><td><code>hide()</code></td><td>Close the palette.</td></tr>
-<tr><td><code>toggle()</code></td><td>Toggle open/close.</td></tr>
-<tr><td><code>isOpen()</code></td><td>Returns <code>true</code> if palette is currently visible.</td></tr>
+<tr><td><code>onPaletteRequest(cb)</code></td><td>Ctrl+K pressed</td><td><code>{ commands, search(q), execute(id) }</code></td></tr>
+<tr><td><code>onFieldJumpRequest(cb)</code></td><td>Ctrl+G pressed</td><td><code>{ fields, search(q), focus(id) }</code></td></tr>
+<tr><td><code>onShortcutsRequest(cb)</code></td><td>Ctrl+/ pressed</td><td><code>{ shortcuts }</code></td></tr>
+<tr><td><code>onDensityChange(cb)</code></td><td>Density cycles</td><td><code>{ level, previous }</code></td></tr>
+<tr><td><code>onViewSaved(cb)</code></td><td>View saved</td><td><code>{ name, slot, shortcut, remaining }</code></td></tr>
+<tr><td><code>onViewLoaded(cb)</code></td><td>View loaded</td><td><code>{ name }</code></td></tr>
+<tr><td><code>onCommandExecuted(cb)</code></td><td>Any command runs</td><td><code>{ id, result }</code></td></tr>
 </tbody>
 </table>
 
-<p>Events emitted: <span class="event-tag">palette:opened</span> <span class="event-tag">palette:closed</span> <span class="event-tag">palette:selected</span></p>
+<div class="code"><div class="code-h"><span class="fn">example</span><span class="lang">TypeScript</span></div>
+<pre><span class="cm">// Subscribe — returns unsubscribe function</span>
+<span class="kw">const</span> unsub = ctrlk.<span class="fn">onPaletteRequest</span>(({ commands, search, execute }) => {
+  <span class="cm">// Render your palette component</span>
+  <span class="cm">// Use search(query) to filter commands</span>
+  <span class="cm">// Use execute(commandId) to run a command</span>
+});
+
+<span class="cm">// Later: clean up</span>
+<span class="fn">unsub</span>();</pre></div>
 
 
 <h2 id="densitycontroller">DensityController <span class="badge badge-core">Core</span></h2>
@@ -353,7 +346,7 @@ ctrlk.commands.<span class="fn">register</span>({
 
 
 <h2 id="autodiscovery">AutoDiscovery <span class="badge badge-core">Core</span></h2>
-<p>Scans the DOM and auto-registers elements as commands. Buttons get their text content as the title, links get their href, sections get navigation commands. This is what makes Pattern A work with zero configuration.</p>
+<p>Scans the DOM and auto-registers elements as commands. Buttons get their text content as the title, links get their href, sections get navigation commands.</p>
 
 <table>
 <thead><tr><th>Method</th><th>Description</th></tr></thead>
@@ -364,7 +357,7 @@ ctrlk.commands.<span class="fn">register</span>({
 </tbody>
 </table>
 
-<div class="tip"><strong>Pattern A in one sentence:</strong> include the script → AutoDiscovery scans all <code>&lt;button&gt;</code>, <code>&lt;a&gt;</code>, and <code>[data-ctrlk]</code> elements → registers them as searchable commands in the palette.</div>
+<div class="tip"><strong>Auto-registers <code>&lt;button&gt;</code>, <code>&lt;a&gt;</code>, and <code>[data-ctrlk]</code> elements</strong> as searchable commands. Enable with <code>autoDiscover: true</code> in init options.</div>
 
 
 <!-- ═══════════════════════════════════════ -->
@@ -847,8 +840,9 @@ ctrlk.views.<span class="fn">setGridAdapter</span>(adapter);</pre></div>
 <tr><td><code>command:registered</code></td><td>CommandRegistry</td><td><code>{ id, title }</code></td></tr>
 <tr><td><code>command:executed</code></td><td>CommandRegistry</td><td><code>{ id, result }</code></td></tr>
 <tr><td><code>shortcut:fired</code></td><td>ShortcutEngine</td><td><code>{ shortcut, commandId }</code></td></tr>
-<tr><td><code>palette:opened</code></td><td>CommandPalette</td><td>—</td></tr>
-<tr><td><code>palette:closed</code></td><td>CommandPalette</td><td>—</td></tr>
+<tr><td><code>palette:requested</code></td><td>Event Hooks</td><td><code>{ commands, search(q), execute(id) }</code></td></tr>
+<tr><td><code>field-jump:requested</code></td><td>Event Hooks</td><td><code>{ fields, search(q), focus(id) }</code></td></tr>
+<tr><td><code>shortcuts:requested</code></td><td>Event Hooks</td><td><code>{ shortcuts }</code></td></tr>
 <tr><td><code>density:changed</code></td><td>DensityController</td><td><code>{ level, previous }</code></td></tr>
 <tr><td><code>view:saved</code></td><td>ViewStateManager</td><td><code>{ name, slot, shortcut, remaining, evicted }</code></td></tr>
 <tr><td><code>view:loaded</code></td><td>ViewStateManager</td><td><code>{ name }</code></td></tr>

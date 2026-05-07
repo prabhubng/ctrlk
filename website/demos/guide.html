@@ -119,7 +119,7 @@ pre.code-body{padding:16px;font-family:'JetBrains Mono',monospace;font-size:12.5
 <div class="guide-section" id="demo1">
   <span class="section-tag">Demo 1</span>
   <h2 class="section-title">Vanilla JS — HR Employee Directory</h2>
-  <p class="section-subtitle">Pattern A drop-in. Add CtrlK to any existing page with zero build step. Shows column profiles, density control, view sharing.</p>
+  <p class="section-subtitle">Vanilla JS integration. Shows column profiles, density control, view sharing.</p>
   <div class="tech-stack">
     <span class="tech-pill">Vanilla JS</span>
     <span class="tech-pill">HTML Table</span>
@@ -137,7 +137,7 @@ pre.code-body{padding:16px;font-family:'JetBrains Mono',monospace;font-size:12.5
 
 <span class="cm">&lt;!-- Ctrl+K now opens command palette automatically. --&gt;</span>
 <span class="cm">&lt;!-- All &lt;button&gt; elements are auto-discovered as commands. --&gt;</span></pre></div>
-    <div class="tip"><strong>Zero-config result:</strong> Command palette opens with Ctrl+K. Every button on the page becomes a searchable command. Density control (Ctrl+D) is active. This is Pattern A.</div>
+    <div class="tip"><strong>Result:</strong> Ctrl+K, Ctrl+G, Ctrl+D shortcuts are active. Commands are searchable. Density control works.</div>
   </div>
 
   <div class="step" data-step="2">
@@ -268,7 +268,7 @@ ctrlk.keys.<span class="fn">bind</span>(<span class="str">'Ctrl+G'</span>, <span
 <div class="guide-section" id="demo2">
   <span class="section-tag">Demo 2</span>
   <h2 class="section-title">React — Support Ticket Queue</h2>
-  <p class="section-subtitle">Pattern C deep integration using React hooks. Shows session tracking with batch review progress, selection with batch actions.</p>
+  <p class="section-subtitle">React 18 integration with hooks. Shows session tracking with batch review progress, selection with batch actions.</p>
   <div class="tech-stack">
     <span class="tech-pill">React 18</span>
     <span class="tech-pill">Hooks (useState, useMemo)</span>
@@ -742,7 +742,7 @@ ctrlk.keys.<span class="fn">bind</span>(<span class="str">'Ctrl+G'</span>, <span
   │                          │
   │  <span class="ty">CommandRegistry</span>         │     All actions are commands
   │  <span class="ty">ShortcutEngine</span>          │     Scope-aware key binding
-  │  <span class="ty">CommandPalette</span>          │     Ctrl+K search UI
+  │  <span class="ty">Event Hooks             │     onPaletteRequest, onFieldJumpRequest
   │  <span class="ty">ViewStateManager</span>        │     Named views + auto-save
   │  <span class="ty">SelectionModel</span>          │     Cross-page persistent sets
   │  <span class="ty">FieldRegistry</span>           │     Field nav + dirty tracking

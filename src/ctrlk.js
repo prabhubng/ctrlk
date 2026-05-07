@@ -1,19 +1,18 @@
 /**
- * ╔══════════════════════════════════════════════╗
- * ║           C T R L K   v1.0.0                 ║
- * ║  Power-User Runtime for Enterprise Web Apps  ║
- * ╠══════════════════════════════════════════════╣
- * ║  ctrlk.dev · MIT License                    ║
- * ╚══════════════════════════════════════════════╝
+ * CtrlK v2.0.0 — Headless IOUX Engine
+ * Zero DOM. Zero styles. Pure event-driven.
+ * ctrlk.dev · MIT License · Prabhu Raja
  *
- * 19 modules. 142 tests. Zero dependencies.
- * The first IOUX (Integrated Operational UX) for enterprise web apps.
+ * When Ctrl+K fires, this emits 'palette:requested'.
+ * YOUR app shows YOUR palette component.
+ *
+ * @module @ctrlk/core
+ * @author Prabhu Raja
  */
 
 import { EventBus } from './core/event-bus.js';
 import { CommandRegistry } from './core/command-registry.js';
 import { ShortcutEngine } from './keys/shortcut-engine.js';
-import { CommandPalette } from './palette/command-palette.js';
 import { DensityController } from './density/density-controller.js';
 import { AutoDiscovery } from './core/auto-discover.js';
 import { ViewStateManager } from './views/view-state-manager.js';
@@ -31,7 +30,6 @@ class CtrlK {
     this.bus = new EventBus();
     this.commands = new CommandRegistry(this.bus);
     this.keys = new ShortcutEngine(this.bus, this.commands);
-    this.palette = new CommandPalette(this.bus, this.commands);
     this.density = new DensityController(this.bus);
     this.views = new ViewStateManager(this.bus);
     this.selection = new SelectionModel(this.bus);
@@ -44,92 +42,62 @@ class CtrlK {
     this.share = new ViewShare(this.bus, this.views);
     this._autoDiscovery = new AutoDiscovery(this.commands, this.keys, this.bus);
     this._initialized = false;
-    this._version = '1.0.0';
+    this._version = '2.0.0';
   }
 
-  /**
-   * Initialize the runtime.
-   * @param {Object} [options]
-   * @param {boolean} [options.autoDiscover=true]
-   * @param {boolean} [options.palette=true]
-   * @param {boolean} [options.density=true]
-   * @param {boolean} [options.macros=true]
-   * @param {boolean} [options.history=true]
-   * @param {boolean} [options.session=true]
-   * @param {boolean} [options.debug=false]
-   * @param {string} [options.paletteShortcut='Ctrl+K']
-   * @param {string} [options.densityCycleShortcut='Ctrl+D']
-   */
   init(options = {}) {
     if (this._initialized) { console.warn('[CtrlK] Already initialized'); return this; }
     const {
       autoDiscover = true, palette = true, density = true,
       macros = true, history = true, session = true, debug = false,
-      paletteShortcut = 'Ctrl+K', densityCycleShortcut = 'Ctrl+D',
+      paletteShortcut = 'Ctrl+K',
+      densityCycleShortcut = 'Ctrl+D',
+      fieldJumpShortcut = 'Ctrl+G',
     } = options;
 
     if (debug) this.bus.setDebug(true);
-
-    // Attach keyboard engine
     this.keys.attach();
+    this._registerBuiltins({ paletteShortcut, densityCycleShortcut, fieldJumpShortcut });
 
-    // Register built-in commands
-    this._registerBuiltins(options);
-
-    // Palette
-    if (palette) { this.palette.inject(); this.keys.bind(paletteShortcut, 'ctrlk.palette'); }
-
-    // Density
+    if (palette) this.keys.bind(paletteShortcut, 'ctrlk.palette');
     if (density) { this.density.init(); this.keys.bind(densityCycleShortcut, 'ctrlk.density.cycle'); }
+    this.keys.bind(fieldJumpShortcut, 'ctrlk.field-jump');
+    this.keys.bind('Ctrl+/', 'ctrlk.shortcuts');
 
-    // Views
     this.views.init();
-
-    // Selection
     this.selection.init();
-
-    // Fields
     this.fields.init();
-
-    // Column Nav
     this.columnNav.init();
-
-    // Focus
     this.focus.attach();
     this.focus.discover();
-
-    // Session
     if (session) this.session.init();
-
-    // Macros
     if (macros) this.macro.init();
-
-    // History
     if (history) this.history.init();
-
-    // Share
     this.share.init();
-
-    // Auto-discovery
     if (autoDiscover) this._autoDiscovery.start();
 
     this._initialized = true;
     this.bus.emit('ctrlk:initialized', { version: this._version, options });
-    console.log(`%c⚡ CtrlK v${this._version} %cinitialized %c· Ctrl+K for command palette`, 'color:#e8a44a;font-weight:bold;', 'color:#5a9e6f;', 'color:#5a5f74;');
     return this;
   }
 
-  /**
-   * Connect a grid adapter (AG Grid, DevExtreme, Kendo, etc.)
-   * Wires it into views, selection, and columnNav automatically.
-   * @param {Object} adapter - GridAdapter implementation
-   */
+  /** Connect a grid adapter. Wires into views, selection, columns. */
   connectGrid(adapter) {
     this.views.setGridAdapter(adapter);
-    this.selection.setGridAdapter(adapter);
-    this.columnNav.setGridAdapter(adapter);
-    this.bus.emit('ctrlk:grid-connected', {});
+    if (this.selection.setGridAdapter) this.selection.setGridAdapter(adapter);
+    if (this.columnNav.setGridAdapter) this.columnNav.setGridAdapter(adapter);
+    this.bus.emit('ctrlk:grid-connected', { adapter });
   }
+
+  // Event hooks — convenience API. Each returns unsubscribe function.
+  onPaletteRequest(callback) { return this.bus.on('palette:requested', callback); }
+  onFieldJumpRequest(callback) { return this.bus.on('field-jump:requested', callback); }
+  onShortcutsRequest(callback) { return this.bus.on('shortcuts:requested', callback); }
+  onDensityChange(callback) { return this.bus.on('density:changed', callback); }
+  onViewSaved(callback) { return this.bus.on('view:saved', callback); }
+  onViewLoaded(callback) { return this.bus.on('view:loaded', callback); }
+  onCommandExecuted(callback) { return this.bus.on('command:executed', callback); }
+  on(event, handler) { return this.bus.on(event, handler); }
 
   destroy() {
     this.keys.detach();
@@ -141,44 +109,53 @@ class CtrlK {
     this._initialized = false;
   }
 
-  on(event, handler) { return this.bus.on(event, handler); }
   get version() { return this._version; }
 
-  _registerBuiltins(opts) {
-    this.commands.register({ id: 'ctrlk.palette', title: 'Command Palette', category: 'CtrlK', icon: '🔍', shortcut: opts.paletteShortcut || 'Ctrl+K', execute: () => this.palette.toggle() });
-    this.commands.register({ id: 'ctrlk.density.cycle', title: 'Cycle Density', category: 'CtrlK', icon: '📐', shortcut: opts.densityCycleShortcut || 'Ctrl+D', execute: () => this.density.cycle() });
-    this.commands.register({ id: 'ctrlk.density.compact', title: 'Density: Compact', category: 'CtrlK', icon: '▪', execute: () => this.density.set('compact') });
-    this.commands.register({ id: 'ctrlk.density.comfortable', title: 'Density: Comfortable', category: 'CtrlK', icon: '▫', execute: () => this.density.set('comfortable') });
-    this.commands.register({ id: 'ctrlk.density.spacious', title: 'Density: Spacious', category: 'CtrlK', icon: '⬜', execute: () => this.density.set('spacious') });
-    this.commands.register({ id: 'ctrlk.shortcuts', title: 'Show Keyboard Shortcuts', category: 'CtrlK', icon: '⌨', shortcut: 'Ctrl+/', execute: () => this._showShortcutOverlay() });
-    this.commands.register({ id: 'ctrlk.rescan', title: 'Rescan Page', category: 'CtrlK', icon: '🔄', execute: () => { this._autoDiscovery.rescan(); this.focus.discover(); this.fields.discover(); } });
-    this.commands.register({ id: 'ctrlk.debug', title: 'Toggle Debug Mode', category: 'CtrlK', icon: '🐛', execute: () => { const c = this.bus._debug; this.bus.setDebug(!c); console.log(`[CtrlK] Debug: ${!c ? 'ON' : 'OFF'}`); } });
-    this.keys.bind('Ctrl+/', 'ctrlk.shortcuts');
-  }
+  _registerBuiltins({ paletteShortcut, densityCycleShortcut, fieldJumpShortcut }) {
+    // Palette — emits event, no DOM
+    this.commands.register({
+      id: 'ctrlk.palette', title: 'Command Palette', category: 'CtrlK',
+      shortcut: paletteShortcut,
+      execute: () => {
+        this.bus.emit('palette:requested', {
+          commands: this.commands.list(),
+          search: (q) => this.commands.search(q),
+          execute: (id) => this.commands.execute(id),
+        });
+      },
+    });
 
-  _showShortcutOverlay() {
-    const existing = document.getElementById('ctrlk-shortcut-overlay');
-    if (existing) { existing.remove(); return; }
-    const shortcuts = this.keys.getAll();
-    const grouped = new Map();
-    for (const s of shortcuts) { if (!grouped.has(s.category)) grouped.set(s.category, []); grouped.get(s.category).push(s); }
-    let html = '';
-    for (const [cat, items] of grouped) {
-      html += `<div style="margin-bottom:16px;"><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#6b6e82;margin-bottom:6px;">${cat}</div>`;
-      for (const item of items) {
-        const keys = item.combo.split('+').map(k => `<span style="display:inline-block;padding:2px 6px;font-size:11px;background:#12131a;border:1px solid #2a2b38;border-radius:3px;margin-right:2px;color:#8a8da2;">${k}</span>`).join('');
-        html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;"><span style="color:#c8ccd8;font-size:13px;">${item.title}</span><span>${keys}</span></div>`;
-      }
-      html += '</div>';
-    }
-    const overlay = document.createElement('div'); overlay.id = 'ctrlk-shortcut-overlay';
-    overlay.style.cssText = 'position:fixed;top:0;right:0;bottom:0;width:340px;background:#1a1b23;border-left:1px solid #2a2b38;z-index:99997;overflow-y:auto;padding:20px;font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;box-shadow:-10px 0 40px rgba(0,0,0,.4);animation:ctrlk-slide .2s ease;';
-    const style = document.createElement('style'); style.textContent = '@keyframes ctrlk-slide{from{transform:translateX(100%)}to{transform:translateX(0)}}';
-    overlay.appendChild(style);
-    overlay.innerHTML += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;"><span style="font-size:16px;color:#e8eaf0;">Keyboard Shortcuts</span><button onclick="this.closest('#ctrlk-shortcut-overlay').remove()" style="background:none;border:1px solid #2a2b38;color:#6b6e82;padding:4px 8px;cursor:pointer;border-radius:3px;font-size:11px;">ESC</button></div>${html}`;
-    document.body.appendChild(overlay);
-    const close = (e) => { if (e.key === 'Escape') { overlay.remove(); document.removeEventListener('keydown', close); } };
-    document.addEventListener('keydown', close);
+    // Field jump — emits event, no DOM
+    this.commands.register({
+      id: 'ctrlk.field-jump', title: 'Jump to Field', category: 'CtrlK',
+      shortcut: fieldJumpShortcut,
+      execute: () => {
+        this.bus.emit('field-jump:requested', {
+          fields: this.fields.list ? this.fields.list() : [],
+          search: (q, opts) => this.fields.search ? this.fields.search(q, opts) : [],
+          focus: (id) => this.fields.focus ? this.fields.focus(id) : null,
+        });
+      },
+    });
+
+    // Shortcuts — emits event, no DOM
+    this.commands.register({
+      id: 'ctrlk.shortcuts', title: 'Keyboard Shortcuts', category: 'CtrlK',
+      shortcut: 'Ctrl+/',
+      execute: () => {
+        this.bus.emit('shortcuts:requested', {
+          shortcuts: this.keys.getAll ? this.keys.getAll() : [],
+        });
+      },
+    });
+
+    // Density — works directly via CSS vars, no UI
+    this.commands.register({ id: 'ctrlk.density.cycle', title: 'Cycle Density', category: 'CtrlK', shortcut: densityCycleShortcut, execute: () => this.density.cycle() });
+    this.commands.register({ id: 'ctrlk.density.compact', title: 'Density: Compact', category: 'CtrlK', execute: () => this.density.set('compact') });
+    this.commands.register({ id: 'ctrlk.density.comfortable', title: 'Density: Comfortable', category: 'CtrlK', execute: () => this.density.set('comfortable') });
+    this.commands.register({ id: 'ctrlk.density.spacious', title: 'Density: Spacious', category: 'CtrlK', execute: () => this.density.set('spacious') });
+    this.commands.register({ id: 'ctrlk.rescan', title: 'Rescan Page', category: 'CtrlK', execute: () => { this._autoDiscovery.rescan(); this.focus.discover(); if (this.fields.discover) this.fields.discover(); } });
+    this.commands.register({ id: 'ctrlk.debug', title: 'Toggle Debug', category: 'CtrlK', execute: () => { const d = this.bus._debug; this.bus.setDebug(!d); } });
   }
 }
 
@@ -186,7 +163,7 @@ const ctrlk = new CtrlK();
 
 export {
   ctrlk, CtrlK,
-  EventBus, CommandRegistry, ShortcutEngine, CommandPalette, DensityController, AutoDiscovery,
+  EventBus, CommandRegistry, ShortcutEngine, DensityController, AutoDiscovery,
   ViewStateManager, SelectionModel, FieldRegistry,
   ColumnNavigator, FocusNavigator, SessionTracker,
   MacroEngine, HistoryManager, ViewShare,

@@ -492,6 +492,11 @@ function notify(msg) {
   input.addEventListener('input',()=>{idx=0;render();});
   palette.addEventListener('keydown',e=>{if(e.key==='ArrowDown'){e.preventDefault();idx=Math.min(idx+1,results.length-1);hilite();}else if(e.key==='ArrowUp'){e.preventDefault();idx=Math.max(idx-1,0);hilite();}else if(e.key==='Enter'){e.preventDefault();if(results[idx]){const c=results[idx];hide();execute(c.id);}}else if(e.key==='Escape'){e.preventDefault();e.stopPropagation();hide();}});
 
+  // Capture-phase interceptor — prevents Chrome from stealing Ctrl+K/G/D
+  document.addEventListener("keydown", e => {
+    if((e.ctrlKey||e.metaKey) && ['k','g','d'].includes(e.key.toLowerCase())){e.preventDefault();}
+  }, true);
+
   // Shortcuts
   document.addEventListener('keydown', e => {
     if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();open?hide():show();}

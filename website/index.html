@@ -310,7 +310,7 @@ section{padding:100px 40px;max-width:1100px;margin:0 auto;}
   <p class="section-desc" data-reveal>Like an IDE integrates editing, compiling, and debugging — an IOUX integrates commands, views, shortcuts, macros, and history into an operational workspace. CtrlK produces no visible elements by default. Your app controls appearance. CtrlK controls operability. Works with React, Angular, Vue, AG Grid, DevExtreme, Bootstrap, Tailwind, or none of them.</p>
 
   <div class="module-grid">
-    <div class="module-card" data-reveal><div class="mc-icon">🔍</div><div class="mc-name">CommandPalette</div><div class="mc-desc">Ctrl+K searchable command UI</div><span class="mc-phase core">Core</span></div>
+    <div class="module-card" data-reveal><div class="mc-icon">🔍</div><div class="mc-name">Event Hooks</div><div class="mc-desc">onPaletteRequest, onFieldJumpRequest, onDensityChange</div><span class="mc-phase core">Core</span></div>
     <div class="module-card" data-reveal><div class="mc-icon">⌨</div><div class="mc-name">ShortcutEngine</div><div class="mc-desc">Scope-aware keys + chord sequences</div><span class="mc-phase core">Core</span></div>
     <div class="module-card" data-reveal><div class="mc-icon">📐</div><div class="mc-name">DensityController</div><div class="mc-desc">Compact / comfortable / spacious</div><span class="mc-phase core">Core</span></div>
     <div class="module-card" data-reveal><div class="mc-icon">🔄</div><div class="mc-name">AutoDiscovery</div><div class="mc-desc">Drop-in: auto-register DOM elements</div><span class="mc-phase core">Core</span></div>
@@ -410,7 +410,7 @@ ctrlk.share.<span class="fn">startBroadcast</span>();
 <section id="demos">
   <div class="section-label" data-reveal>See It Work</div>
   <h2 class="section-title" data-reveal>5 live demos, 4 frameworks, 2 grid libraries</h2>
-  <p class="section-desc" data-reveal>Each demo is a self-contained application running CtrlK. Open any of them and press <code>Ctrl+K</code>. Every demo has column search (<code>Ctrl+G</code>), density control (<code>Ctrl+D</code>), and shareable view links (<code>Ctrl+Shift+S</code>).</p>
+  <p class="section-desc" data-reveal>Each demo showcases CtrlK capabilities. Open any of them and press <code>Ctrl+K</code>. Every demo has column search (<code>Ctrl+G</code>), density control (<code>Ctrl+D</code>), and shareable view links (<code>Ctrl+Shift+S</code>).</p>
 
   <div class="module-grid" style="grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-top:24px;">
     <a href="demos/demo-hr-directory.html" style="text-decoration:none;" class="module-card" data-reveal>
@@ -487,78 +487,79 @@ ctrlk.share.<span class="fn">startBroadcast</span>();
 <!-- ═══════ CODE EXAMPLES ═══════ -->
 <section id="install">
   <div class="section-label" data-reveal>Add the IOUX Layer</div>
-  <h2 class="section-title" data-reveal>Three integration patterns</h2>
-  <p class="section-desc" data-reveal>Start with Pattern A in 30 seconds — drop in the script, get a command palette immediately. Evolve to Pattern C over months with framework-native hooks and directives. No migration, no rewrite — each pattern extends the previous.</p>
+  <h2 class="section-title" data-reveal>Headless engine. Your UI.</h2>
+  <p class="section-desc" data-reveal>CtrlK is a pure engine — zero DOM, zero styles. When a shortcut fires, the engine emits an event. Your app catches it and renders its own palette, search panel, or dialog using your existing design system.</p>
 
   <div class="code-section" data-reveal>
     <div class="code-block">
-      <div class="code-block-header"><span>Pattern A — Drop-In (30 seconds)</span><span class="code-block-lang">HTML</span></div>
-      <pre><span class="cm">&lt;!-- Add to any page. Zero config. --&gt;</span>
-&lt;<span class="kw">script</span> <span class="ty">src</span>=<span class="str">"ctrlk.runtime.js"</span>&gt;&lt;/<span class="kw">script</span>&gt;
-
-<span class="cm">&lt;!-- Ctrl+K now opens command palette.
-     All buttons auto-discovered.
-     Density control active. --&gt;</span></pre>
-    </div>
-    <div class="code-block">
-      <div class="code-block-header"><span>Pattern B — Declarative</span><span class="code-block-lang">JavaScript</span></div>
+      <div class="code-block-header"><span>Init + Register Commands</span><span class="code-block-lang">TypeScript</span></div>
       <pre><span class="kw">import</span> ctrlk <span class="kw">from</span> <span class="str">'@ctrlk/core'</span>;
 
+ctrlk.<span class="fn">init</span>({ <span class="ty">palette</span>: <span class="kw">true</span>, <span class="ty">density</span>: <span class="kw">true</span> });
+
 ctrlk.commands.<span class="fn">register</span>({
-  <span class="ty">id</span>: <span class="str">'filter.failed'</span>,
-  <span class="ty">title</span>: <span class="str">'Show Failed Only'</span>,
-  <span class="ty">shortcut</span>: <span class="str">'Alt+F'</span>,
-  <span class="fn">execute</span>: () => setFilter(<span class="str">'failed'</span>),
+  <span class="ty">id</span>: <span class="str">'deals.refresh'</span>,
+  <span class="ty">title</span>: <span class="str">'Refresh Deals'</span>,
+  <span class="ty">shortcut</span>: <span class="str">'Ctrl+R'</span>,
+  <span class="fn">execute</span>: () => refreshGrid(),
 });
 
-<span class="cm">// Save complete app state as a named view</span>
-ctrlk.views.<span class="fn">save</span>(<span class="str">'Monday Surveillance'</span>);
+<span class="cm">// Ctrl+K emits event — you render your own palette</span>
+ctrlk.<span class="fn">onPaletteRequest</span>(({ search, execute }) => {
+  openMyPaletteDialog({ search, execute });
+});</pre>
+    </div>
+    <div class="code-block">
+      <div class="code-block-header"><span>Angular + DevExtreme Service</span><span class="code-block-lang">Angular</span></div>
+      <pre><span class="kw">import</span> { <span class="ty">DevExtremeAdapter</span> }
+  <span class="kw">from</span> <span class="str">'@ctrlk/devextreme'</span>;
 
-<span class="cm">// Select by expression — no clicks</span>
-ctrlk.selection.<span class="fn">where</span>(
-  row => row.spread > <span class="num">500</span>
+<span class="cm">// Wire grid — commands, views, columns connected</span>
+<span class="kw">const</span> adapter = <span class="kw">new</span> <span class="fn">DevExtremeAdapter</span>(
+  grid.instance,
+  { <span class="ty">keyExpr</span>: <span class="str">'dealId'</span> }
+);
+ctrlk.<span class="fn">connectGrid</span>(adapter);
+
+<span class="cm">// Subscribe via RxJS in your service</span>
+ctrlk.<span class="fn">onPaletteRequest</span>(req =>
+  zone.<span class="fn">run</span>(() => palette$.<span class="fn">next</span>(req))
 );</pre>
     </div>
   </div>
 
   <div class="code-section" data-reveal style="margin-top:16px;">
     <div class="code-block">
-      <div class="code-block-header"><span>Pattern C — React Hooks</span><span class="code-block-lang">React</span></div>
-      <pre><span class="kw">import</span> { <span class="ty">useCtrlkCommand</span>, <span class="ty">useCtrlkView</span> }
-  <span class="kw">from</span> <span class="str">'@ctrlk/react'</span>;
+      <div class="code-block-header"><span>React Hook</span><span class="code-block-lang">React</span></div>
+      <pre><span class="kw">function</span> <span class="fn">useCtrlkPalette</span>() {
+  <span class="kw">const</span> [open, setOpen] = <span class="fn">useState</span>(<span class="kw">false</span>);
+  <span class="kw">const</span> [req, setReq] = <span class="fn">useState</span>(<span class="kw">null</span>);
 
-<span class="kw">function</span> <span class="fn">SurveillanceGrid</span>() {
-  <span class="fn">useCtrlkCommand</span>({
-    <span class="ty">id</span>: <span class="str">'grid.refresh'</span>,
-    <span class="ty">title</span>: <span class="str">'Refresh Data'</span>,
-    <span class="ty">shortcut</span>: <span class="str">'Ctrl+R'</span>,
-    <span class="fn">execute</span>: () => fetchData(),
-    <span class="fn">undo</span>: (prev) => setData(prev),
-  });
+  <span class="fn">useEffect</span>(() => {
+    <span class="kw">return</span> ctrlk.<span class="fn">onPaletteRequest</span>((r) => {
+      setReq(r);
+      setOpen(<span class="kw">true</span>);
+    });
+  }, []);
 
-  <span class="kw">const</span> [filters, setFilters] =
-    <span class="fn">useCtrlkView</span>(<span class="str">'grid.filters'</span>, {});
-
-  <span class="kw">return</span> &lt;<span class="ty">Grid</span> filters={filters} /&gt;;
+  <span class="kw">return</span> { open, req, close: () => setOpen(<span class="kw">false</span>) };
 }</pre>
     </div>
     <div class="code-block">
-      <div class="code-block-header"><span>Pattern C — Angular Directives</span><span class="code-block-lang">Angular</span></div>
-      <pre><span class="cm">&lt;!-- Register commands from templates --&gt;</span>
-&lt;<span class="kw">button</span>
-  <span class="ty">ctrlkCommand</span>=<span class="str">"export.csv"</span>
-  <span class="ty">ctrlkCommandTitle</span>=<span class="str">"Export CSV"</span>
-  <span class="ty">ctrlkCommandShortcut</span>=<span class="str">"Ctrl+Shift+E"</span>
-  (<span class="fn">click</span>)=<span class="str">"exportCsv()"</span>&gt;
-  Export
-&lt;/<span class="kw">button</span>&gt;
+      <div class="code-block-header"><span>Vue 3 Composable</span><span class="code-block-lang">Vue</span></div>
+      <pre><span class="kw">export function</span> <span class="fn">useCtrlkPalette</span>() {
+  <span class="kw">const</span> open = <span class="fn">ref</span>(<span class="kw">false</span>);
+  <span class="kw">const</span> req = <span class="fn">ref</span>(<span class="kw">null</span>);
 
-<span class="cm">&lt;!-- Register fields for jump-to --&gt;</span>
-&lt;<span class="kw">input</span>
-  <span class="ty">ctrlkField</span>=<span class="str">"patient.name"</span>
-  <span class="ty">ctrlkFieldLabel</span>=<span class="str">"Patient Name"</span>
-  <span class="ty">ctrlkFieldSection</span>=<span class="str">"Demographics"</span>
-  [(<span class="fn">ngModel</span>)]=<span class="str">"patient.name"</span> /&gt;</pre>
+  <span class="fn">onMounted</span>(() => {
+    ctrlk.<span class="fn">onPaletteRequest</span>((r) => {
+      req.value = r;
+      open.value = <span class="kw">true</span>;
+    });
+  });
+
+  <span class="kw">return</span> { open, req };
+}</pre>
     </div>
   </div>
 </section>
@@ -668,6 +669,11 @@ document.querySelectorAll('[data-reveal]').forEach(el => observer.observe(el));
     else if(e.key==='Enter'){e.preventDefault();if(results[idx]){const c=results[idx];hide();execute(c.id);}}
     else if(e.key==='Escape'){e.preventDefault();e.stopPropagation();hide();}
   });
+
+  // Capture-phase interceptor — prevents Chrome from stealing Ctrl+K/D
+  document.addEventListener("keydown", e => {
+    if((e.ctrlKey||e.metaKey) && ['k','d'].includes(e.key.toLowerCase())){e.preventDefault();}
+  }, true);
 
   // Keyboard shortcut listener
   document.addEventListener('keydown', e => {

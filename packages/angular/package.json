@@ -1,6 +1,6 @@
 {
   "name": "@ctrlk/angular",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "description": "Angular service and directives for CtrlK — the first IOUX for enterprise web apps",
   "main": "ctrlk-angular.ts",
   "type": "module",
@@ -14,7 +14,7 @@
   },
   "keywords": ["ctrlk", "ioux", "angular", "directives", "service", "command-palette", "enterprise-ux"],
   "peerDependencies": {
-    "@ctrlk/core": ">=1.0.0",
+    "@ctrlk/core": ">=2.0.0",
     "@angular/core": ">=14.0.0"
   },
   "files": ["ctrlk-angular.ts", "README.md"]

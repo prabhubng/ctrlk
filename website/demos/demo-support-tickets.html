@@ -264,6 +264,10 @@ function csgJump(col){
   toast(`Sorted by: ${col.name}`);
 }
 
+// Capture-phase interceptor — prevents Chrome from stealing Ctrl+K/G/D
+document.addEventListener("keydown", e => {
+  if((e.ctrlKey||e.metaKey) && ['k','g','d'].includes(e.key.toLowerCase())){e.preventDefault();}
+}, true);
 document.addEventListener('keydown',e=>{
   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();palOpen?palHide():palShow();}
   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='g'&&!palOpen){e.preventDefault();csgShow();}

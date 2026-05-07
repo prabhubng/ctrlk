@@ -1,6 +1,6 @@
 {
   "name": "ctrlk",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "description": "The first IOUX (Integrated Operational UX) for enterprise web apps",
   "main": "dist/ctrlk.runtime.js",
   "module": "src/ctrlk.js",

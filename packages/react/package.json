@@ -1,6 +1,6 @@
 {
   "name": "@ctrlk/react",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "description": "React hooks and Provider for CtrlK — the first IOUX for enterprise web apps",
   "main": "index.jsx",
   "type": "module",
@@ -14,7 +14,7 @@
   },
   "keywords": ["ctrlk", "ioux", "react", "hooks", "command-palette", "enterprise-ux"],
   "peerDependencies": {
-    "@ctrlk/core": ">=1.0.0",
+    "@ctrlk/core": ">=2.0.0",
     "react": ">=16.8.0"
   },
   "files": ["index.jsx", "README.md"]

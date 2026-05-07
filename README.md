@@ -2,7 +2,7 @@
 
 **The first IOUX for enterprise web apps.**
 
-CtrlK is an interaction layer that sits between your users and your application. Command palette, keyboard shortcuts, saved views, persistent selections, field navigation, macros, undo, and shareable view links — on top of any existing enterprise web app. No redesign required.
+CtrlK is a headless interaction engine that adds commands, keyboard shortcuts, saved views, field navigation, macros, and shareable state to any enterprise web application. It provides the logic — your app provides the UI using your own framework and design system.
 
 > An **IOUX** (Integrated Operational UX) is to application operators what an IDE is to developers.
 
@@ -12,43 +12,33 @@ CtrlK is an interaction layer that sits between your users and your application.
 
 ---
 
-## Quick Start
+## How It Works
 
-### Pattern A — Drop-in (30 seconds)
+CtrlK is headless — zero DOM, zero styles. When a shortcut fires, the engine emits an event. Your app catches it and renders its own component.
 
-```html
-<script src="https://unpkg.com/@ctrlk/core/dist/ctrlk.runtime.min.js"></script>
-<!-- That's it. Ctrl+K is now live. -->
-```
-
-### Pattern B — Programmatic
-
-```js
+```typescript
 import ctrlk from '@ctrlk/core';
 
-ctrlk.init({ palette: true, density: true, autoDiscover: true });
+ctrlk.init({ palette: true, density: true });
 
+// Register commands
 ctrlk.commands.register({
-  id: 'filter.active',
-  title: 'Show Active Only',
-  shortcut: 'Alt+A',
-  category: 'Filters',
-  execute: () => applyFilter('active'),
-});
-```
-
-### Pattern C — Framework Integration
-
-```js
-// React
-import { useCtrlkCommand } from '@ctrlk/react';
-
-useCtrlkCommand({
-  id: 'grid.refresh',
-  title: 'Refresh Data',
+  id: 'deals.refresh',
+  title: 'Refresh Deals',
   shortcut: 'Ctrl+R',
-  execute: () => fetchData(),
-}, []);
+  category: 'Deals',
+  execute: () => refreshGrid(),
+});
+
+// When Ctrl+K fires — YOUR app renders YOUR palette component
+ctrlk.onPaletteRequest(({ commands, search, execute }) => {
+  openMyPaletteDialog({ commands, search, execute });
+});
+
+// When Ctrl+G fires — YOUR app renders YOUR field search
+ctrlk.onFieldJumpRequest(({ fields, search, focus }) => {
+  openMyFieldJumpDialog({ fields, search, focus });
+});
 ```
 
 ## Install
@@ -56,108 +46,155 @@ useCtrlkCommand({
 ```bash
 npm install @ctrlk/core
 
+# Grid adapters
+npm install @ctrlk/ag-grid      # AG Grid v28-31+
+npm install @ctrlk/devextreme   # DevExtreme v21+
+
 # Framework adapters
-npm install @ctrlk/react        # React hooks + Provider
-npm install @ctrlk/angular      # Service + directives
-npm install @ctrlk/ag-grid      # AG Grid adapter
-npm install @ctrlk/devextreme   # DevExtreme adapter
+npm install @ctrlk/react        # React hooks
+npm install @ctrlk/angular      # Angular service + directives
+```
+
+## Framework Integration
+
+### Angular + DevExtreme
+
+```typescript
+import { Injectable, NgZone } from '@angular/core';
+import ctrlk from '@ctrlk/core';
+import { DevExtremeAdapter } from '@ctrlk/devextreme';
+import { Subject } from 'rxjs';
+
+@Injectable({ providedIn: 'root' })
+export class CtrlkService {
+  readonly paletteRequested$ = new Subject();
+
+  init() {
+    ctrlk.init({ palette: true, density: true });
+    ctrlk.onPaletteRequest((req) => this.paletteRequested$.next(req));
+  }
+
+  bridgeGrid(gridInstance, keyExpr = 'id') {
+    ctrlk.connectGrid(new DevExtremeAdapter(gridInstance, { keyExpr }));
+  }
+}
+```
+
+### React
+
+```tsx
+import ctrlk from '@ctrlk/core';
+import { useEffect, useState } from 'react';
+
+function useCtrlkPalette() {
+  const [open, setOpen] = useState(false);
+  const [request, setRequest] = useState(null);
+
+  useEffect(() => {
+    return ctrlk.onPaletteRequest((req) => {
+      setRequest(req);
+      setOpen(true);
+    });
+  }, []);
+
+  return { open, request, close: () => setOpen(false) };
+}
+```
+
+### Vue 3
+
+```javascript
+import { ref, onMounted, onUnmounted } from 'vue';
+import ctrlk from '@ctrlk/core';
+
+export function useCtrlkPalette() {
+  const open = ref(false);
+  const request = ref(null);
+  let unsub;
+
+  onMounted(() => {
+    unsub = ctrlk.onPaletteRequest((req) => {
+      request.value = req;
+      open.value = true;
+    });
+  });
+  onUnmounted(() => unsub?.());
+
+  return { open, request, close: () => (open.value = false) };
+}
 ```
 
 ## What's Inside
 
 **19 modules. 150 tests. Zero dependencies. 125 KB minified.**
 
-### Core
-| Module | What it does |
-|--------|-------------|
-| **EventBus** | Internal event system — all modules communicate through this |
-| **CommandRegistry** | Central registry of all commands with search and execute |
+### Engine
+| Module | Purpose |
+|--------|---------|
+| **CommandRegistry** | Register, search, and execute commands |
 | **ShortcutEngine** | Scope-aware keyboard shortcuts with chord support |
-| **CommandPalette** | The Ctrl+K searchable command UI |
-| **DensityController** | Compact / comfortable / spacious density cycling |
-| **AutoDiscovery** | Scans DOM, auto-registers buttons and links as commands |
-
-### State
-| Module | What it does |
-|--------|-------------|
-| **ViewStateManager** | Save, restore, share complete view states (max 5, LRU eviction) |
-| **SelectionModel** | Cross-page persistent selections with named sets and set operations |
-| **FieldRegistry** | Field-level navigation, dirty tracking, pinning, completeness |
-| **GridAdapter** | Abstract interface that grid-specific adapters implement |
-
-### Power
-| Module | What it does |
-|--------|-------------|
-| **MacroEngine** | Record, parameterize, and replay command sequences |
-| **HistoryManager** | Application-level undo/redo with branching |
-| **ActiveFilterBar** | Dismissible filter chips for active filters |
+| **ViewStateManager** | Save, load, share named view configurations (LRU, slots) |
+| **FieldRegistry** | Field-level search, focus, dirty tracking, completeness |
+| **SelectionModel** | Cross-page persistent selections with set operations |
+| **DensityController** | Compact / comfortable / spacious via CSS custom properties |
+| **MacroEngine** | Record and replay command sequences |
+| **HistoryManager** | Application-level undo/redo |
 
 ### Navigation
-| Module | What it does |
-|--------|-------------|
-| **ColumnNavigator** | Column search (Ctrl+G), bookmarks, horizontal jump |
-| **FocusNavigator** | F6 zone navigation between toolbar, grid, sidebar |
-| **SessionTracker** | Batch review progress — "12/30 reviewed" |
+| Module | Purpose |
+|--------|---------|
+| **ColumnNavigator** | Column search, bookmarks, horizontal jump |
+| **FocusNavigator** | F6 zone navigation between UI areas |
+| **SessionTracker** | Batch review progress tracking |
 
-### Share
-| Module | What it does |
-|--------|-------------|
-| **ViewShare** | Shareable view links (URL, stored, live) — 3 tiers |
-
-## Framework Support
-
-| Framework | Package | Status |
-|-----------|---------|--------|
-| React | `@ctrlk/react` | 7 hooks + Provider |
-| Angular | `@ctrlk/angular` | Service + 4 directives |
-| Vue 3 | — | Composables (coming) |
+### Sharing
+| Module | Purpose |
+|--------|---------|
+| **ViewShare** | Shareable view links via URL encoding, stored sharing, live sharing |
 
 ## Grid Adapters
 
-| Grid Library | Package | Status |
-|-------------|---------|--------|
-| AG Grid v28-31+ | `@ctrlk/ag-grid` | Full adapter (670 lines) |
-| DevExtreme v21+ | `@ctrlk/devextreme` | Full adapter (977 lines) |
-| Kendo | — | Coming |
+| Library | Package | Lines |
+|---------|---------|-------|
+| AG Grid v28-31+ | `@ctrlk/ag-grid` | 670 |
+| DevExtreme v21+ | `@ctrlk/devextreme` | 977 |
 
-CtrlK works **alongside** your grid library — it doesn't replace it. The adapter translates between CtrlK's commands and your grid's API.
+The DevExtreme adapter includes grouping, summary, master-detail, and batch editing support beyond the standard GridAdapter interface.
+
+## Event Hooks
+
+| Hook | Fires When | Payload |
+|------|-----------|---------|
+| `onPaletteRequest(cb)` | Ctrl+K pressed | `{ commands, search(q), execute(id) }` |
+| `onFieldJumpRequest(cb)` | Ctrl+G pressed | `{ fields, search(q), focus(id) }` |
+| `onShortcutsRequest(cb)` | Ctrl+/ pressed | `{ shortcuts }` |
+| `onDensityChange(cb)` | Density cycles | `{ level, previous }` |
+| `onViewSaved(cb)` | View saved | `{ name, slot, shortcut }` |
+| `onViewLoaded(cb)` | View loaded | `{ name }` |
+| `onCommandExecuted(cb)` | Command runs | `{ id, result }` |
+
+Each returns an unsubscribe function.
 
 ## Default Shortcuts
 
 | Shortcut | Action |
 |----------|--------|
-| `Ctrl+K` | Open command palette |
-| `Ctrl+G` | Jump to column / field |
+| `Ctrl+K` | Palette request |
+| `Ctrl+G` | Field jump request |
 | `Ctrl+D` | Cycle density |
 | `Ctrl+1` – `Ctrl+5` | Load saved view by slot |
 | `Ctrl+Shift+S` | Share current view |
-| `Alt+N` | Next unreviewed / empty |
+| `Ctrl+/` | Shortcuts request |
 | `Ctrl+Z` / `Ctrl+Y` | Undo / Redo |
-| `F6` | Next focus zone |
 
 All shortcuts are customizable.
 
-## Live Demos
-
-- [HR Employee Directory](https://ctrlk.dev/demos/demo-hr-directory.html) — Vanilla JS, 25 columns
-- [Support Ticket Queue](https://ctrlk.dev/demos/demo-support-tickets.html) — React 18, batch review
-- [Patient Record](https://ctrlk.dev/demos/demo-patient-record.html) — Vue 3, field navigation
-- [Inventory (AG Grid)](https://ctrlk.dev/demos/demo-inventory-aggrid.html) — AG Grid v31, saved views
-- [Inventory (DevExtreme)](https://ctrlk.dev/demos/demo-inventory-devextreme.html) — Same app, different grid
-
 ## Documentation
 
-- [API Reference](https://ctrlk.dev/docs/api.html) — Full developer documentation
-- [Problem Statement](https://ctrlk.dev/docs/problem-statement.html) — The OpUX Failure Catalog
-- [Implementation Guide](https://ctrlk.dev/demos/guide.html) — Step-by-step for all 5 demos
-
-## The OpUX Thesis
-
-Enterprise software users spend 4-8 hours daily in data-heavy applications. They develop workflows, mental models, and muscle memory — but most enterprise UIs treat them like tourists. CtrlK treats them like residents.
-
-**OpUX** (Operational UX) is the discipline of designing for these power users. An IOUX is the implementation layer.
+- [API Reference](https://ctrlk.dev/docs/api.html)
+- [Live Demos](https://ctrlk.dev)
+- [GitHub](https://github.com/prabhubng/ctrlk)
 
 ## License
 
 MIT — Created by [Prabhu Raja](https://github.com/prabhubng)
-

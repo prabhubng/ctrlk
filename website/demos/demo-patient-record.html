@@ -515,6 +515,11 @@ regCmd({id:'share',title:'Share Current View',category:'Share',icon:'🔗',short
   }, 500);
 })();
 
+// Capture-phase interceptor — prevents Chrome from stealing Ctrl+K/G
+document.addEventListener("keydown", e => {
+  if((e.ctrlKey||e.metaKey) && ['k','g'].includes(e.key.toLowerCase())){e.preventDefault();}
+}, true);
+
 // Keyboard shortcuts
 document.addEventListener('keydown',e=>{
   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();palOpen?palHide():palShow();}
