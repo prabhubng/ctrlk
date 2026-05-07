@@ -197,7 +197,7 @@ section{padding:100px 40px;max-width:1100px;margin:0 auto;}
     <a href="#demos">Demos</a>
     <a href="docs/api.html">Docs</a>
     <a href="#install">Install</a>
-    <a href="https://github.com/prabhuignoto/ctrlk">GitHub</a>
+    <a href="https://github.com/prabhubng/ctrlk">GitHub</a>
     <span class="nav-kbd" onclick="openPalette()">Ctrl+K</span>
     <a href="#install" class="nav-cta">Get Started</a>
   </div>
@@ -594,7 +594,7 @@ ctrlk.selection.<span class="fn">where</span>(
   <div class="footer-logo">ctrl<span style="color:var(--accent)">K</span></div>
   <div>The first IOUX (Integrated Operational UX) for enterprise web apps</div>
   <div class="footer-links">
-    <a href="https://github.com/prabhuignoto/ctrlk">GitHub</a>
+    <a href="https://github.com/prabhubng/ctrlk">GitHub</a>
     <a href="docs/problem-statement.html">Problem Statement</a>
     <a href="docs/api.html">API Reference</a>
     <a href="demos/guide.html">Implementation Guide</a>
@@ -707,7 +707,7 @@ document.querySelectorAll('[data-reveal]').forEach(el => observer.observe(el));
   register({ id:'nav.demo', title:'Go to: Live Demo', icon:'§', execute:()=>document.getElementById('demo').scrollIntoView({behavior:'smooth'}) });
   register({ id:'nav.install', title:'Go to: Install', icon:'§', execute:()=>document.getElementById('install').scrollIntoView({behavior:'smooth'}) });
   register({ id:'nav.top', title:'Back to Top', icon:'↑', execute:()=>window.scrollTo({top:0,behavior:'smooth'}) });
-  register({ id:'action.github', title:'Open GitHub', icon:'📦', execute:()=>window.open('https://github.com/prabhuignoto/ctrlk','_blank') });
+  register({ id:'action.github', title:'Open GitHub', icon:'📦', execute:()=>window.open('https://github.com/prabhubng/ctrlk','_blank') });
   register({ id:'action.npm', title:'Copy npm install', icon:'📋', execute:()=>{navigator.clipboard?.writeText('npm i @ctrlk/core');notify('Copied: npm i @ctrlk/core');} });
   register({ id:'action.problems-doc', title:'Read Full Problem Statement', icon:'📄', execute:()=>window.open('docs/problem-statement.html','_blank') });
   register({ id:'ctrlk.shortcuts', title:'Show Shortcuts', icon:'⌨', shortcut:'Ctrl+/', execute:()=>notify('Ctrl+K: Palette · Ctrl+D: Density · Ctrl+/: Shortcuts') });
