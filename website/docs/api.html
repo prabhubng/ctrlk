@@ -194,15 +194,20 @@ ctrlk.<span class="fn">onPaletteRequest</span>(({ commands, search, execute }) =
 <pre><span class="cm">// 1. Init the engine</span>
 ctrlk.<span class="fn">init</span>({ <span class="prop">palette</span>: <span class="kw">true</span>, <span class="prop">density</span>: <span class="kw">true</span> });
 
-<span class="cm">// 2. Connect your grid</span>
-ctrlk.<span class="fn">connectGrid</span>(<span class="kw">new</span> <span class="fn">DevExtremeAdapter</span>(grid, { <span class="prop">keyExpr</span>: <span class="str">'dealId'</span> }));
+<span class="cm">// 2. Connect your grid — returns a disconnect function</span>
+<span class="kw">const</span> disconnect = ctrlk.<span class="fn">connectGrid</span>(
+  <span class="kw">new</span> <span class="fn">DevExtremeAdapter</span>(grid, { <span class="prop">keyExpr</span>: <span class="str">'dealId'</span> })
+);
 
 <span class="cm">// 3. Register app commands</span>
 ctrlk.commands.<span class="fn">register</span>({ <span class="prop">id</span>: <span class="str">'nav.deals'</span>, ... });
 
 <span class="cm">// 4. Subscribe to UI events — render with YOUR components</span>
 ctrlk.<span class="fn">onPaletteRequest</span>(req => showMyPalette(req));
-ctrlk.<span class="fn">onFieldJumpRequest</span>(req => showMyFieldSearch(req));</pre></div>
+ctrlk.<span class="fn">onFieldJumpRequest</span>(req => showMyFieldSearch(req));
+
+<span class="cm">// 5. On component destroy — clean up grid subscriptions</span>
+<span class="fn">disconnect</span>();</pre></div>
 
 
 <!-- ═══════════════════════════════════════ -->
@@ -748,8 +753,10 @@ ctrlk.<span class="fn">onFieldJumpRequest</span>(req => showMyFieldSearch(req));
 <pre><span class="kw">import</span> { <span class="ty">AgGridAdapter</span> } <span class="kw">from</span> <span class="str">'@ctrlk/ag-grid'</span>;
 
 gridOptions.<span class="fn">onGridReady</span> = (params) => {
-  <span class="kw">const</span> adapter = <span class="kw">new</span> <span class="fn">AgGridAdapter</span>(params.api);
-  ctrlk.views.<span class="fn">setGridAdapter</span>(adapter);
+  <span class="kw">const</span> disconnect = ctrlk.<span class="fn">connectGrid</span>(
+    <span class="kw">new</span> <span class="fn">AgGridAdapter</span>(params.api)
+  );
+  <span class="cm">// Call disconnect() when component unmounts</span>
 };</pre></div>
 
 <h4>API Translation</h4>
@@ -773,8 +780,10 @@ gridOptions.<span class="fn">onGridReady</span> = (params) => {
 <pre><span class="kw">import</span> { <span class="ty">DevExtremeAdapter</span> } <span class="kw">from</span> <span class="str">'@ctrlk/devextreme'</span>;
 
 <span class="kw">const</span> grid = <span class="kw">new</span> DevExpress.ui.<span class="fn">dxDataGrid</span>(el, { ... });
-<span class="kw">const</span> adapter = <span class="kw">new</span> <span class="fn">DevExtremeAdapter</span>(grid, { <span class="prop">keyExpr</span>: <span class="str">'id'</span> });
-ctrlk.views.<span class="fn">setGridAdapter</span>(adapter);</pre></div>
+<span class="kw">const</span> disconnect = ctrlk.<span class="fn">connectGrid</span>(
+  <span class="kw">new</span> <span class="fn">DevExtremeAdapter</span>(grid, { <span class="prop">keyExpr</span>: <span class="str">'id'</span> })
+);
+<span class="cm">// Call disconnect() when component unmounts</span></pre></div>
 
 <h4>API Translation</h4>
 <table>

@@ -3,6 +3,7 @@
   "version": "2.0.0",
   "description": "AG Grid adapter for CtrlK — the first IOUX for enterprise web apps",
   "main": "ag-grid-adapter.js",
+  "types": "index.d.ts",
   "type": "module",
   "author": "Prabhu Raja <prabhuswamiji@gmail.com>",
   "license": "MIT",
@@ -17,5 +18,5 @@
     "@ctrlk/core": ">=2.0.0",
     "ag-grid-community": ">=28.0.0"
   },
-  "files": ["ag-grid-adapter.js", "README.md"]
+  "files": ["index.d.ts", "ag-grid-adapter.js", "README.md"]
 }

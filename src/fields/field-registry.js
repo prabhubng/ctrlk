@@ -71,6 +71,9 @@ export class FieldRegistry {
 
     /** @type {boolean} Edit mode active */
     this._editing = false;
+
+    /** @type {string[]} Configurable section display order */
+    this._sectionOrder = [];
   }
 
   /**
@@ -204,6 +207,7 @@ export class FieldRegistry {
 
   /**
    * Get fields grouped by section.
+   * Respects configured section order (via setSectionOrder).
    * @returns {Map<string, FieldDefinition[]>}
    */
   getGrouped() {
@@ -214,7 +218,81 @@ export class FieldRegistry {
       if (!groups.has(field.section)) groups.set(field.section, []);
       groups.get(field.section).push(field);
     }
+
+    // Re-order by configured section order
+    if (this._sectionOrder.length > 0) {
+      const ordered = new Map();
+      for (const sec of this._sectionOrder) {
+        if (groups.has(sec)) ordered.set(sec, groups.get(sec));
+      }
+      // Append any sections not in the configured order
+      for (const [sec, fields] of groups) {
+        if (!ordered.has(sec)) ordered.set(sec, fields);
+      }
+      return ordered;
+    }
+
     return groups;
+  }
+
+  /**
+   * Get all registered fields in order. Alias for getAll().
+   * @returns {FieldDefinition[]}
+   */
+  list() {
+    return this.getAll();
+  }
+
+  /**
+   * Set the display order for sections.
+   * Sections not in this list appear after ordered sections, sorted alphabetically.
+   * @param {string[]} sections - Section names in desired display order
+   */
+  setSectionOrder(sections) {
+    this._sectionOrder = [...sections];
+    this._bus.emit('field:section-order-changed', { sections: this._sectionOrder });
+  }
+
+  /**
+   * Get the configured section order.
+   * @returns {string[]}
+   */
+  getSectionOrder() {
+    return [...this._sectionOrder];
+  }
+
+  /**
+   * Search fields and return results pre-grouped by section.
+   * Respects configured section order. Each section's fields are sorted by score.
+   * @param {string} query
+   * @param {Object} [options]
+   * @param {number} [options.limit=100]
+   * @param {boolean} [options.editableOnly=false]
+   * @returns {{ sections: Array<{ name: string, fields: Array<{field: FieldDefinition, score: number}> }>, total: number }}
+   */
+  searchGrouped(query, options = {}) {
+    const { limit = 100, editableOnly = false } = options;
+    const results = this.search(query, { limit, editableOnly });
+
+    // Group by section
+    const bySection = new Map();
+    for (const r of results) {
+      const sec = r.field.section || 'Other';
+      if (!bySection.has(sec)) bySection.set(sec, []);
+      bySection.get(sec).push(r);
+    }
+
+    // Order sections
+    const sectionNames = this._sectionOrder.length > 0
+      ? [...this._sectionOrder.filter(s => bySection.has(s)), ...Array.from(bySection.keys()).filter(s => !this._sectionOrder.includes(s)).sort()]
+      : Array.from(bySection.keys());
+
+    const sections = sectionNames.map(name => ({
+      name,
+      fields: bySection.get(name) || [],
+    })).filter(s => s.fields.length > 0);
+
+    return { sections, total: results.length };
   }
 
   /**

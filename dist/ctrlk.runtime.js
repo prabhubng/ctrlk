@@ -7,7 +7,7 @@
  * Drop-in: <script src="ctrlk.runtime.js"></script>
  * The command palette opens with Ctrl+K. Zero config.
  * 
- * Built: 2026-05-07T06:59:41.848Z
+ * Built: 2026-05-08T05:38:55.739Z
  */
 (function(global) {
 'use strict';
@@ -1920,6 +1920,9 @@ class FieldRegistry {
 
     /** @type {boolean} Edit mode active */
     this._editing = false;
+
+    /** @type {string[]} Configurable section display order */
+    this._sectionOrder = [];
   }
 
   /**
@@ -2053,6 +2056,7 @@ class FieldRegistry {
 
   /**
    * Get fields grouped by section.
+   * Respects configured section order (via setSectionOrder).
    * @returns {Map<string, FieldDefinition[]>}
    */
   getGrouped() {
@@ -2063,7 +2067,81 @@ class FieldRegistry {
       if (!groups.has(field.section)) groups.set(field.section, []);
       groups.get(field.section).push(field);
     }
+
+    // Re-order by configured section order
+    if (this._sectionOrder.length > 0) {
+      const ordered = new Map();
+      for (const sec of this._sectionOrder) {
+        if (groups.has(sec)) ordered.set(sec, groups.get(sec));
+      }
+      // Append any sections not in the configured order
+      for (const [sec, fields] of groups) {
+        if (!ordered.has(sec)) ordered.set(sec, fields);
+      }
+      return ordered;
+    }
+
     return groups;
+  }
+
+  /**
+   * Get all registered fields in order. Alias for getAll().
+   * @returns {FieldDefinition[]}
+   */
+  list() {
+    return this.getAll();
+  }
+
+  /**
+   * Set the display order for sections.
+   * Sections not in this list appear after ordered sections, sorted alphabetically.
+   * @param {string[]} sections - Section names in desired display order
+   */
+  setSectionOrder(sections) {
+    this._sectionOrder = [...sections];
+    this._bus.emit('field:section-order-changed', { sections: this._sectionOrder });
+  }
+
+  /**
+   * Get the configured section order.
+   * @returns {string[]}
+   */
+  getSectionOrder() {
+    return [...this._sectionOrder];
+  }
+
+  /**
+   * Search fields and return results pre-grouped by section.
+   * Respects configured section order. Each section's fields are sorted by score.
+   * @param {string} query
+   * @param {Object} [options]
+   * @param {number} [options.limit=100]
+   * @param {boolean} [options.editableOnly=false]
+   * @returns {{ sections: Array<{ name: string, fields: Array<{field: FieldDefinition, score: number}> }>, total: number }}
+   */
+  searchGrouped(query, options = {}) {
+    const { limit = 100, editableOnly = false } = options;
+    const results = this.search(query, { limit, editableOnly });
+
+    // Group by section
+    const bySection = new Map();
+    for (const r of results) {
+      const sec = r.field.section || 'Other';
+      if (!bySection.has(sec)) bySection.set(sec, []);
+      bySection.get(sec).push(r);
+    }
+
+    // Order sections
+    const sectionNames = this._sectionOrder.length > 0
+      ? [...this._sectionOrder.filter(s => bySection.has(s)), ...Array.from(bySection.keys()).filter(s => !this._sectionOrder.includes(s)).sort()]
+      : Array.from(bySection.keys());
+
+    const sections = sectionNames.map(name => ({
+      name,
+      fields: bySection.get(name) || [],
+    })).filter(s => s.fields.length > 0);
+
+    return { sections, total: results.length };
   }
 
   /**
@@ -6236,6 +6314,7 @@ class CtrlK {
     this.history = new HistoryManager(this.bus, this.commands);
     this.share = new ViewShare(this.bus, this.views);
     this._autoDiscovery = new AutoDiscovery(this.commands, this.keys, this.bus);
+    this._gridAdapter = null;
     this._initialized = false;
     this._version = '2.0.0';
   }
@@ -6276,12 +6355,46 @@ class CtrlK {
     return this;
   }
 
-  /** Connect a grid adapter. Wires into views, selection, columns. */
+  /**
+   * Connect a grid adapter. Wires into views, selection, columns.
+   * Auto-disconnects any previous adapter.
+   * @returns {Function} disconnect — call when the grid component unmounts
+   */
   connectGrid(adapter) {
+    // Auto-disconnect previous adapter if one exists
+    if (this._gridAdapter) {
+      this.disconnectGrid();
+    }
+
+    this._gridAdapter = adapter;
     this.views.setGridAdapter(adapter);
     if (this.selection.setGridAdapter) this.selection.setGridAdapter(adapter);
     if (this.columnNav.setGridAdapter) this.columnNav.setGridAdapter(adapter);
     this.bus.emit('ctrlk:grid-connected', { adapter });
+
+    // Return disconnect function for framework cleanup
+    return () => this.disconnectGrid();
+  }
+
+  /**
+   * Disconnect the current grid adapter. Cleans up event subscriptions.
+   * Safe to call multiple times.
+   */
+  disconnectGrid() {
+    if (!this._gridAdapter) return;
+
+    // Call adapter's destroy to clean up grid event listeners
+    if (this._gridAdapter.destroy) {
+      try { this._gridAdapter.destroy(); } catch (e) { /* silent */ }
+    }
+
+    // Clear references from all subsystems
+    this.views.setGridAdapter(null);
+    if (this.selection.setGridAdapter) this.selection.setGridAdapter(null);
+    if (this.columnNav.setGridAdapter) this.columnNav.setGridAdapter(null);
+
+    this.bus.emit('ctrlk:grid-disconnected', { adapter: this._gridAdapter });
+    this._gridAdapter = null;
   }
 
   // Event hooks — convenience API. Each returns unsubscribe function.
@@ -6295,6 +6408,7 @@ class CtrlK {
   on(event, handler) { return this.bus.on(event, handler); }
 
   destroy() {
+    this.disconnectGrid();
     this.keys.detach();
     this.focus.detach();
     this._autoDiscovery.stop();
@@ -6328,7 +6442,11 @@ class CtrlK {
         this.bus.emit('field-jump:requested', {
           fields: this.fields.list ? this.fields.list() : [],
           search: (q, opts) => this.fields.search ? this.fields.search(q, opts) : [],
+          searchGrouped: (q, opts) => this.fields.searchGrouped ? this.fields.searchGrouped(q, opts) : { sections: [], total: 0 },
           focus: (id) => this.fields.focus ? this.fields.focus(id) : null,
+          setSectionOrder: (order) => this.fields.setSectionOrder ? this.fields.setSectionOrder(order) : null,
+          discover: () => this.fields.discover ? this.fields.discover() : null,
+          getCompleteness: () => this.fields.getCompleteness ? this.fields.getCompleteness() : null,
         });
       },
     });

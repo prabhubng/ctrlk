@@ -41,6 +41,7 @@ class CtrlK {
     this.history = new HistoryManager(this.bus, this.commands);
     this.share = new ViewShare(this.bus, this.views);
     this._autoDiscovery = new AutoDiscovery(this.commands, this.keys, this.bus);
+    this._gridAdapter = null;
     this._initialized = false;
     this._version = '2.0.0';
   }
@@ -81,12 +82,46 @@ class CtrlK {
     return this;
   }
 
-  /** Connect a grid adapter. Wires into views, selection, columns. */
+  /**
+   * Connect a grid adapter. Wires into views, selection, columns.
+   * Auto-disconnects any previous adapter.
+   * @returns {Function} disconnect — call when the grid component unmounts
+   */
   connectGrid(adapter) {
+    // Auto-disconnect previous adapter if one exists
+    if (this._gridAdapter) {
+      this.disconnectGrid();
+    }
+
+    this._gridAdapter = adapter;
     this.views.setGridAdapter(adapter);
     if (this.selection.setGridAdapter) this.selection.setGridAdapter(adapter);
     if (this.columnNav.setGridAdapter) this.columnNav.setGridAdapter(adapter);
     this.bus.emit('ctrlk:grid-connected', { adapter });
+
+    // Return disconnect function for framework cleanup
+    return () => this.disconnectGrid();
+  }
+
+  /**
+   * Disconnect the current grid adapter. Cleans up event subscriptions.
+   * Safe to call multiple times.
+   */
+  disconnectGrid() {
+    if (!this._gridAdapter) return;
+
+    // Call adapter's destroy to clean up grid event listeners
+    if (this._gridAdapter.destroy) {
+      try { this._gridAdapter.destroy(); } catch (e) { /* silent */ }
+    }
+
+    // Clear references from all subsystems
+    this.views.setGridAdapter(null);
+    if (this.selection.setGridAdapter) this.selection.setGridAdapter(null);
+    if (this.columnNav.setGridAdapter) this.columnNav.setGridAdapter(null);
+
+    this.bus.emit('ctrlk:grid-disconnected', { adapter: this._gridAdapter });
+    this._gridAdapter = null;
   }
 
   // Event hooks — convenience API. Each returns unsubscribe function.
@@ -100,6 +135,7 @@ class CtrlK {
   on(event, handler) { return this.bus.on(event, handler); }
 
   destroy() {
+    this.disconnectGrid();
     this.keys.detach();
     this.focus.detach();
     this._autoDiscovery.stop();
@@ -133,7 +169,11 @@ class CtrlK {
         this.bus.emit('field-jump:requested', {
           fields: this.fields.list ? this.fields.list() : [],
           search: (q, opts) => this.fields.search ? this.fields.search(q, opts) : [],
+          searchGrouped: (q, opts) => this.fields.searchGrouped ? this.fields.searchGrouped(q, opts) : { sections: [], total: 0 },
           focus: (id) => this.fields.focus ? this.fields.focus(id) : null,
+          setSectionOrder: (order) => this.fields.setSectionOrder ? this.fields.setSectionOrder(order) : null,
+          discover: () => this.fields.discover ? this.fields.discover() : null,
+          getCompleteness: () => this.fields.getCompleteness ? this.fields.getCompleteness() : null,
         });
       },
     });

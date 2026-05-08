@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CtrlK — Stack Implementation Guides</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#fff;--surface:#f9fafb;--border:#e5e7eb;--text:#1f2937;--dim:#6b7280;--accent:#4f46e5;--accent-bg:#eef2ff;--accent-border:#c7d2fe;--green:#059669;--green-bg:#ecfdf5;--yellow:#d97706;--red:#dc2626;--sidebar-w:260px;--code-bg:#1e1e2e;--code-text:#cdd6f4;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:15px;line-height:1.7;}
+
+/* ─── Layout ─── */
+.layout{display:flex;min-height:100vh;}
+.sidebar{width:var(--sidebar-w);position:fixed;top:0;left:0;bottom:0;background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;padding:16px 0;z-index:10;flex-shrink:0;}
+.content{margin-left:var(--sidebar-w);flex:1;max-width:780px;padding:32px 40px 80px;}
+
+/* ─── Sidebar ─── */
+.sb-logo{padding:0 20px 16px;font-size:18px;font-weight:800;border-bottom:1px solid var(--border);margin-bottom:8px;}
+.sb-logo span{color:var(--accent);}
+.sb-version{font-size:11px;font-weight:400;color:var(--dim);margin-left:6px;}
+.sb-group{padding:14px 20px 4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--dim);}
+.sb-link{display:block;padding:4px 20px 4px 28px;font-size:13px;color:var(--dim);text-decoration:none;border-left:2px solid transparent;transition:all 0.15s;}
+.sb-link:hover{color:var(--text);background:var(--bg);}
+.sb-link.active{color:var(--accent);border-left-color:var(--accent);font-weight:600;background:var(--accent-bg);}
+.sb-link.l2{padding-left:40px;font-size:12px;}
+
+/* ─── Content ─── */
+h1{font-size:32px;font-weight:800;letter-spacing:-0.03em;margin-bottom:8px;}
+h2{font-size:24px;font-weight:700;letter-spacing:-0.02em;margin-top:48px;margin-bottom:12px;padding-top:24px;border-top:1px solid var(--border);scroll-margin-top:24px;}
+h2:first-of-type{border-top:none;margin-top:32px;}
+h3{font-size:18px;font-weight:700;margin-top:32px;margin-bottom:8px;scroll-margin-top:24px;}
+h4{font-size:14px;font-weight:700;margin-top:20px;margin-bottom:4px;color:var(--accent);}
+p{margin-bottom:12px;}
+.subtitle{font-size:17px;color:var(--dim);margin-bottom:24px;line-height:1.6;}
+
+/* ─── Code ─── */
+code{font-family:'JetBrains Mono',monospace;font-size:0.85em;background:var(--surface);padding:2px 6px;border-radius:3px;color:var(--accent);}
+.code{background:var(--code-bg);border-radius:8px;overflow:hidden;margin:12px 0;}
+.code-h{padding:6px 16px;background:#181825;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #313244;}
+.code-h .fn{font-family:'JetBrains Mono',monospace;font-size:11px;color:#a6adc8;}
+.code-h .lang{font-family:'JetBrains Mono',monospace;font-size:10px;color:#585b70;text-transform:uppercase;letter-spacing:1px;}
+pre{padding:14px 16px;font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.7;color:var(--code-text);overflow-x:auto;white-space:pre;margin:0;}
+pre .kw{color:#cba6f7;} pre .fn{color:#89b4fa;} pre .str{color:#a6e3a1;} pre .cm{color:#585b70;} pre .num{color:#fab387;} pre .ty{color:#89dceb;} pre .prop{color:#f9e2af;}
+
+/* ─── Tables ─── */
+table{width:100%;border-collapse:collapse;font-size:13px;margin:12px 0;}
+th{background:var(--surface);padding:8px 12px;text-align:left;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:var(--dim);border-bottom:2px solid var(--border);}
+td{padding:8px 12px;border-bottom:1px solid #f3f4f6;vertical-align:top;}
+td:first-child{font-weight:500;white-space:nowrap;}
+td code{font-size:11px;}
+
+/* ─── Callouts ─── */
+.note{background:var(--accent-bg);border-left:3px solid var(--accent);padding:10px 16px;font-size:13px;color:#3730a3;border-radius:0 6px 6px 0;margin:12px 0;line-height:1.6;}
+.note strong{font-weight:700;}
+.warn{background:#fef3c7;border-left:3px solid var(--yellow);padding:10px 16px;font-size:13px;color:#92400e;border-radius:0 6px 6px 0;margin:12px 0;line-height:1.6;}
+.tip{background:var(--green-bg);border-left:3px solid var(--green);padding:10px 16px;font-size:13px;color:#065f46;border-radius:0 6px 6px 0;margin:12px 0;line-height:1.6;}
+
+/* ─── Badges ─── */
+.badge{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:10px;padding:2px 8px;border-radius:3px;font-weight:600;}
+.badge-core{background:#dbeafe;color:#1e40af;}
+.badge-state{background:#d1fae5;color:#065f46;}
+.badge-power{background:#fef3c7;color:#92400e;}
+.badge-nav{background:#ede9fe;color:#5b21b6;}
+.badge-adapter{background:#fce7f3;color:#9d174d;}
+.badge-new{background:#fee2e2;color:#991b1b;}
+
+.method-sig{font-family:'JetBrains Mono',monospace;font-size:13px;background:var(--surface);padding:8px 14px;border:1px solid var(--border);border-radius:6px;margin:8px 0;color:var(--text);overflow-x:auto;}
+.method-sig .mname{color:var(--accent);font-weight:600;}
+.method-sig .mtype{color:var(--green);}
+.method-sig .mparam{color:var(--yellow);}
+
+.event-tag{font-family:'JetBrains Mono',monospace;font-size:11px;background:#faf5ff;border:1px solid #e9d5ff;padding:1px 8px;border-radius:3px;color:#7c3aed;}
+
+.divider{height:1px;background:var(--border);margin:40px 0;}
+
+@media(max-width:768px){.sidebar{display:none;}.content{margin-left:0;padding:20px 16px;}}
+</style>
+</head>
+<body>
+<div class="layout">
+<aside class="sidebar">
+  <div class="sb-logo">ctrl<span>K</span> <span class="sb-version">v2.0</span></div>
+  <div class="sb-group">Guides</div>
+  <a class="sb-link" href="#overview">Overview</a>
+  <a class="sb-link" href="#install">Install</a>
+
+  <div class="sb-group">Angular + DevExtreme</div>
+  <a class="sb-link" href="#angular-service">Service</a>
+  <a class="sb-link" href="#angular-palette">Palette Component</a>
+  <a class="sb-link" href="#angular-grid">Grid Component</a>
+  <a class="sb-link" href="#angular-fields">Field Jump</a>
+
+  <div class="sb-group">React</div>
+  <a class="sb-link" href="#react-setup">Setup</a>
+  <a class="sb-link" href="#react-palette">Palette Hook</a>
+  <a class="sb-link" href="#react-grid">Grid Integration</a>
+
+  <div class="sb-group">Vue 3</div>
+  <a class="sb-link" href="#vue-setup">Setup</a>
+  <a class="sb-link" href="#vue-palette">Palette Composable</a>
+  <a class="sb-link" href="#vue-grid">Grid Integration</a>
+
+  <div class="sb-group">AG Grid</div>
+  <a class="sb-link" href="#ag-setup">Setup</a>
+  <a class="sb-link" href="#ag-views">Saved Views</a>
+
+  <div class="sb-group">Reference</div>
+  <a class="sb-link" href="#events">Event Payloads</a>
+  <a class="sb-link" href="api.html">API Docs</a>
+</aside>
+
+<main class="content">
+
+<h1 id="overview">Implementation Guides</h1>
+<p class="subtitle">Complete integration examples for each framework and grid library. Copy-paste ready.</p>
+
+<p>CtrlK is headless — it emits events, your app renders the UI. These guides show the complete setup for each stack: install, connect, render palette, handle field jump.</p>
+
+<h2 id="install">Install</h2>
+
+<div class="code"><div class="code-h"><span class="fn">terminal</span><span class="lang">Shell</span></div>
+<pre># Core engine (required)
+npm install @ctrlk/core
+
+# Pick your grid adapter
+npm install @ctrlk/devextreme    # DevExtreme v21+
+npm install @ctrlk/ag-grid       # AG Grid v28-31+
+
+# Pick your framework adapter (optional)
+npm install @ctrlk/angular       # Compiled Angular library (14+)
+npm install @ctrlk/react         # React hooks</pre></div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- ANGULAR + DEVEXTREME -->
+<!-- ═══════════════════════════════════════════════ -->
+
+<h2 id="angular-service" style="border-top-color:var(--red);">Angular + DevExtreme</h2>
+
+<h3>Service</h3>
+<p>The service wraps CtrlK in Angular's DI system and bridges events into RxJS Observables via NgZone. Install the compiled library:</p>
+
+<div class="code"><div class="code-h"><span class="fn">terminal</span><span class="lang">Shell</span></div>
+<pre>npm install @ctrlk/core @ctrlk/angular @ctrlk/devextreme</pre></div>
+
+<p>Add the runtime to <code>angular.json</code>:</p>
+<div class="code"><div class="code-h"><span class="fn">angular.json</span><span class="lang">JSON</span></div>
+<pre>"scripts": [
+  "node_modules/@ctrlk/core/dist/ctrlk.runtime.min.js"
+]</pre></div>
+
+<p>Import the module in your app:</p>
+<div class="code"><div class="code-h"><span class="fn">app.module.ts</span><span class="lang">Angular</span></div>
+<pre><span class="kw">import</span> { <span class="ty">CtrlkModule</span> } <span class="kw">from</span> <span class="str">'@ctrlk/angular'</span>;
+
+@<span class="fn">NgModule</span>({
+  <span class="prop">imports</span>: [<span class="ty">CtrlkModule</span>.<span class="fn">forRoot</span>({ <span class="prop">palette</span>: <span class="kw">true</span>, <span class="prop">density</span>: <span class="kw">true</span> })],
+})</pre></div>
+
+<h3 id="angular-palette">Palette Component</h3>
+<p>Uses your existing DevExtreme DxPopup. Matches your theme. No inline styles.</p>
+
+<div class="code"><div class="code-h"><span class="fn">command-palette.component.ts</span><span class="lang">Angular</span></div>
+<pre><span class="kw">import</span> { <span class="ty">Component</span>, <span class="ty">OnInit</span>, <span class="ty">OnDestroy</span> } <span class="kw">from</span> <span class="str">'@angular/core'</span>;
+<span class="kw">import</span> { <span class="ty">Subscription</span> } <span class="kw">from</span> <span class="str">'rxjs'</span>;
+<span class="kw">import</span> { <span class="ty">CtrlkService</span>, <span class="ty">PaletteRequest</span> } <span class="kw">from</span> <span class="str">'@ctrlk/angular'</span>;
+
+@<span class="fn">Component</span>({
+  <span class="prop">selector</span>: <span class="str">'app-command-palette'</span>,
+  <span class="prop">template</span>: <span class="str">`
+    &lt;dx-popup [visible]="visible" [width]="540" [maxHeight]="440"
+              [showTitle]="false" [shading]="true"
+              [closeOnOutsideClick]="true"
+              (onHidden)="visible = false"&gt;
+      &lt;dx-text-box
+        placeholder="Type a command..."
+        (onValueChanged)="onSearch($event)"
+        (onKeyDown)="onKeyDown($event)"&gt;
+      &lt;/dx-text-box&gt;
+      &lt;dx-list [dataSource]="results"
+               (onItemClick)="onSelect($event)"&gt;
+        &lt;div *dxTemplate="let item of 'item'"&gt;
+          &lt;div style="display:flex;justify-content:space-between"&gt;
+            &lt;span&gt;{{ item.title }}&lt;/span&gt;
+            &lt;span style="font-size:11px;opacity:0.5;font-family:monospace"
+                  *ngIf="item.shortcut"&gt;
+              {{ item.shortcut }}
+            &lt;/span&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/dx-list&gt;
+    &lt;/dx-popup&gt;
+  `</span>,
+})
+<span class="kw">export class</span> <span class="ty">CommandPaletteComponent</span> <span class="kw">implements</span> <span class="ty">OnInit</span>, <span class="ty">OnDestroy</span> {
+  visible = <span class="kw">false</span>;
+  results: <span class="ty">any</span>[] = [];
+  <span class="kw">private</span> sub: <span class="ty">Subscription</span>;
+  <span class="kw">private</span> request: <span class="ty">PaletteRequest</span> | <span class="kw">null</span> = <span class="kw">null</span>;
+
+  <span class="fn">constructor</span>(<span class="kw">private</span> ctrlk: <span class="ty">CtrlkService</span>) {}
+
+  <span class="fn">ngOnInit</span>() {
+    <span class="kw">this</span>.sub = <span class="kw">this</span>.ctrlk.paletteRequested$.<span class="fn">subscribe</span>(req =&gt; {
+      <span class="kw">this</span>.request = req;
+      <span class="kw">this</span>.results = req.commands;
+      <span class="kw">this</span>.visible = <span class="kw">true</span>;
+    });
+  }
+
+  <span class="fn">onSearch</span>(e: <span class="ty">any</span>) {
+    <span class="kw">this</span>.results = <span class="kw">this</span>.request?.<span class="fn">search</span>(e.value || <span class="str">''</span>) || [];
+  }
+
+  <span class="fn">onSelect</span>(e: <span class="ty">any</span>) {
+    <span class="kw">this</span>.request?.<span class="fn">execute</span>(e.itemData.id);
+    <span class="kw">this</span>.visible = <span class="kw">false</span>;
+  }
+
+  <span class="fn">onKeyDown</span>(e: <span class="ty">any</span>) {
+    <span class="kw">if</span> (e.event.key === <span class="str">'Escape'</span>) <span class="kw">this</span>.visible = <span class="kw">false</span>;
+  }
+
+  <span class="fn">ngOnDestroy</span>() { <span class="kw">this</span>.sub?.<span class="fn">unsubscribe</span>(); }
+}</pre></div>
+
+<h3 id="angular-grid">Grid Component</h3>
+<p>Wire the DevExtreme adapter in <code>ngAfterViewInit</code>. The adapter auto-disconnects when a new grid connects or the service is destroyed.</p>
+
+<div class="code"><div class="code-h"><span class="fn">deals-grid.component.ts</span><span class="lang">Angular</span></div>
+<pre><span class="kw">import</span> { <span class="ty">Component</span>, <span class="ty">ViewChild</span>, <span class="ty">AfterViewInit</span>, <span class="ty">OnDestroy</span> } <span class="kw">from</span> <span class="str">'@angular/core'</span>;
+<span class="kw">import</span> { <span class="ty">DxDataGridComponent</span> } <span class="kw">from</span> <span class="str">'devextreme-angular'</span>;
+<span class="kw">import</span> { <span class="ty">DevExtremeAdapter</span> } <span class="kw">from</span> <span class="str">'@ctrlk/devextreme'</span>;
+<span class="kw">import</span> { <span class="ty">CtrlkService</span> } <span class="kw">from</span> <span class="str">'@ctrlk/angular'</span>;
+
+@<span class="fn">Component</span>({
+  <span class="prop">template</span>: <span class="str">`&lt;dx-data-grid #grid [dataSource]="deals" keyExpr="dealId"&gt;
+    &lt;!-- your columns --&gt;
+  &lt;/dx-data-grid&gt;`</span>
+})
+<span class="kw">export class</span> <span class="ty">DealsGridComponent</span> <span class="kw">implements</span> <span class="ty">AfterViewInit</span>, <span class="ty">OnDestroy</span> {
+  @<span class="fn">ViewChild</span>(<span class="str">'grid'</span>) grid: <span class="ty">DxDataGridComponent</span>;
+  <span class="kw">private</span> disconnect: (() =&gt; <span class="kw">void</span>) | <span class="kw">null</span> = <span class="kw">null</span>;
+
+  <span class="fn">constructor</span>(<span class="kw">private</span> ctrlk: <span class="ty">CtrlkService</span>) {}
+
+  <span class="fn">ngAfterViewInit</span>() {
+    <span class="cm">// Connect grid — returns cleanup function</span>
+    <span class="kw">this</span>.disconnect = <span class="kw">this</span>.ctrlk.<span class="fn">connectGrid</span>(
+      <span class="kw">new</span> <span class="fn">DevExtremeAdapter</span>(<span class="kw">this</span>.grid.instance, { <span class="prop">keyExpr</span>: <span class="str">'dealId'</span> })
+    );
+
+    <span class="cm">// Register page-specific commands</span>
+    <span class="kw">this</span>.ctrlk.<span class="fn">registerCommand</span>({
+      <span class="prop">id</span>: <span class="str">'deals.refresh'</span>,
+      <span class="prop">title</span>: <span class="str">'Refresh Deals'</span>,
+      <span class="prop">shortcut</span>: <span class="str">'Ctrl+R'</span>,
+      <span class="prop">category</span>: <span class="str">'Deals'</span>,
+      <span class="fn">execute</span>: () =&gt; <span class="kw">this</span>.grid.instance.<span class="fn">refresh</span>(),
+    });
+  }
+
+  <span class="fn">ngOnDestroy</span>() {
+    <span class="kw">this</span>.disconnect?.();  <span class="cm">// Cleans up adapter event listeners</span>
+  }
+}</pre></div>
+
+<h3 id="angular-fields">Field Jump (Ctrl+G)</h3>
+<p>For detail pages with form fields (issuer detail, deal detail), use the field jump event with section-grouped search:</p>
+
+<div class="code"><div class="code-h"><span class="fn">issuer-detail.component.ts</span><span class="lang">Angular</span></div>
+<pre><span class="kw">import</span> { <span class="ty">CtrlkService</span>, <span class="ty">FieldJumpRequest</span> } <span class="kw">from</span> <span class="str">'@ctrlk/angular'</span>;
+
+@<span class="fn">Component</span>({ <span class="prop">template</span>: <span class="str">`
+  &lt;!-- Add data-ctrlk-field to your KV rows --&gt;
+  &lt;div *ngFor="let field of fields"
+       [attr.data-ctrlk-field]="field.id"
+       [attr.data-ctrlk-label]="field.label"
+       [attr.data-ctrlk-section]="field.section"&gt;
+    &lt;label&gt;{{ field.label }}&lt;/label&gt;
+    &lt;span&gt;{{ field.value }}&lt;/span&gt;
+  &lt;/div&gt;
+
+  &lt;!-- Your field jump popup --&gt;
+  &lt;dx-popup [visible]="jumpOpen" [width]="500" [showTitle]="false"
+            (onHidden)="jumpOpen = false"&gt;
+    &lt;dx-text-box placeholder="Search fields..." (onValueChanged)="onJumpSearch($event)"&gt;&lt;/dx-text-box&gt;
+    &lt;div *ngFor="let section of jumpSections"&gt;
+      &lt;div class="section-header"&gt;{{ section.name }}&lt;/div&gt;
+      &lt;dx-list [dataSource]="section.fields" (onItemClick)="onJumpSelect($event)"&gt;&lt;/dx-list&gt;
+    &lt;/div&gt;
+  &lt;/dx-popup&gt;
+`</span> })
+<span class="kw">export class</span> <span class="ty">IssuerDetailComponent</span> <span class="kw">implements</span> <span class="ty">OnInit</span> {
+  jumpOpen = <span class="kw">false</span>;
+  jumpSections: <span class="ty">any</span>[] = [];
+  <span class="kw">private</span> jumpRequest: <span class="ty">FieldJumpRequest</span> | <span class="kw">null</span> = <span class="kw">null</span>;
+
+  <span class="fn">constructor</span>(<span class="kw">private</span> ctrlk: <span class="ty">CtrlkService</span>) {}
+
+  <span class="fn">ngOnInit</span>() {
+    <span class="cm">// Set section ordering for this page</span>
+    <span class="kw">this</span>.ctrlk.fields.<span class="fn">setSectionOrder</span>([
+      <span class="str">'About Issuer'</span>, <span class="str">'Characteristics'</span>, <span class="str">'Ratings'</span>,
+      <span class="str">'ESG Relevancy'</span>, <span class="str">'Related Deals'</span>, <span class="str">'Active Assets'</span>,
+    ]);
+
+    <span class="kw">this</span>.ctrlk.fieldJumpRequested$.<span class="fn">subscribe</span>(req =&gt; {
+      <span class="kw">this</span>.jumpRequest = req;
+      req.<span class="fn">discover</span>();  <span class="cm">// Re-scan DOM for [data-ctrlk-field]</span>
+      <span class="kw">const</span> { sections } = req.<span class="fn">searchGrouped</span>(<span class="str">''</span>);
+      <span class="kw">this</span>.jumpSections = sections;
+      <span class="kw">this</span>.jumpOpen = <span class="kw">true</span>;
+    });
+  }
+
+  <span class="fn">onJumpSearch</span>(e: <span class="ty">any</span>) {
+    <span class="kw">const</span> { sections } = <span class="kw">this</span>.jumpRequest?.<span class="fn">searchGrouped</span>(e.value || <span class="str">''</span>);
+    <span class="kw">this</span>.jumpSections = sections;
+  }
+
+  <span class="fn">onJumpSelect</span>(e: <span class="ty">any</span>) {
+    <span class="kw">this</span>.jumpRequest?.<span class="fn">focus</span>(e.itemData.field.id);
+    <span class="kw">this</span>.jumpOpen = <span class="kw">false</span>;
+  }
+}</pre></div>
+
+<div class="tip"><strong>Note:</strong> The <code>ctrlk-field-focused</code> CSS class is added to the focused element for 2 seconds. Add this to your global styles: <code>.ctrlk-field-focused { outline: 2px solid var(--accent); outline-offset: 2px; }</code></div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- REACT -->
+<!-- ═══════════════════════════════════════════════ -->
+
+<h2 id="react-setup" style="border-top-color:#3b82f6;">React</h2>
+
+<h3>Setup</h3>
+
+<div class="code"><div class="code-h"><span class="fn">terminal</span><span class="lang">Shell</span></div>
+<pre>npm install @ctrlk/core @ctrlk/react</pre></div>
+
+<div class="code"><div class="code-h"><span class="fn">app.tsx</span><span class="lang">React</span></div>
+<pre><span class="kw">import</span> ctrlk <span class="kw">from</span> <span class="str">'@ctrlk/core'</span>;
+
+<span class="cm">// Initialize once at app startup</span>
+ctrlk.<span class="fn">init</span>({ <span class="prop">palette</span>: <span class="kw">true</span>, <span class="prop">density</span>: <span class="kw">true</span> });</pre></div>
+
+<h3 id="react-palette">Palette Hook</h3>
+
+<div class="code"><div class="code-h"><span class="fn">hooks/useCtrlkPalette.ts</span><span class="lang">React</span></div>
+<pre><span class="kw">import</span> { <span class="ty">useEffect</span>, <span class="ty">useState</span>, <span class="ty">useCallback</span> } <span class="kw">from</span> <span class="str">'react'</span>;
+<span class="kw">import</span> ctrlk <span class="kw">from</span> <span class="str">'@ctrlk/core'</span>;
+
+<span class="kw">export function</span> <span class="fn">useCtrlkPalette</span>() {
+  <span class="kw">const</span> [open, setOpen] = <span class="fn">useState</span>(<span class="kw">false</span>);
+  <span class="kw">const</span> [request, setRequest] = <span class="fn">useState</span>(<span class="kw">null</span>);
+
+  <span class="fn">useEffect</span>(() =&gt; {
+    <span class="kw">return</span> ctrlk.<span class="fn">onPaletteRequest</span>((req) =&gt; {
+      setRequest(req);
+      setOpen(<span class="kw">true</span>);
+    });
+  }, []);
+
+  <span class="kw">const</span> close = <span class="fn">useCallback</span>(() =&gt; setOpen(<span class="kw">false</span>), []);
+  <span class="kw">return</span> { open, request, close };
+}</pre></div>
+
+<div class="code"><div class="code-h"><span class="fn">components/CommandPalette.tsx</span><span class="lang">React</span></div>
+<pre><span class="kw">import</span> { <span class="ty">useState</span> } <span class="kw">from</span> <span class="str">'react'</span>;
+<span class="kw">import</span> { <span class="fn">useCtrlkPalette</span> } <span class="kw">from</span> <span class="str">'../hooks/useCtrlkPalette'</span>;
+
+<span class="cm">// Use any dialog library: Radix, MUI, Headless UI, etc.</span>
+<span class="kw">export function</span> <span class="fn">CommandPalette</span>() {
+  <span class="kw">const</span> { open, request, close } = <span class="fn">useCtrlkPalette</span>();
+  <span class="kw">const</span> [query, setQuery] = <span class="fn">useState</span>(<span class="str">''</span>);
+  <span class="kw">const</span> results = request?.<span class="fn">search</span>(query) || [];
+
+  <span class="kw">if</span> (!open) <span class="kw">return null</span>;
+
+  <span class="kw">return</span> (
+    &lt;<span class="ty">div</span> className=<span class="str">"palette-overlay"</span> onClick={close}&gt;
+      &lt;<span class="ty">div</span> className=<span class="str">"palette"</span> onClick={e =&gt; e.stopPropagation()}&gt;
+        &lt;<span class="ty">input</span>
+          value={query}
+          onChange={e =&gt; setQuery(e.target.value)}
+          placeholder=<span class="str">"Type a command..."</span>
+          autoFocus
+        /&gt;
+        {results.<span class="fn">map</span>(cmd =&gt; (
+          &lt;<span class="ty">div</span>
+            key={cmd.id}
+            className=<span class="str">"palette-item"</span>
+            onClick={() =&gt; { request.<span class="fn">execute</span>(cmd.id); close(); }}&gt;
+            &lt;<span class="ty">span</span>&gt;{cmd.title}&lt;/<span class="ty">span</span>&gt;
+            {cmd.shortcut &amp;&amp; &lt;<span class="ty">kbd</span>&gt;{cmd.shortcut}&lt;/<span class="ty">kbd</span>&gt;}
+          &lt;/<span class="ty">div</span>&gt;
+        ))}
+      &lt;/<span class="ty">div</span>&gt;
+    &lt;/<span class="ty">div</span>&gt;
+  );
+}</pre></div>
+
+<h3 id="react-grid">Grid Integration</h3>
+
+<div class="code"><div class="code-h"><span class="fn">components/DataGrid.tsx</span><span class="lang">React</span></div>
+<pre><span class="kw">import</span> { <span class="ty">useEffect</span>, <span class="ty">useRef</span> } <span class="kw">from</span> <span class="str">'react'</span>;
+<span class="kw">import</span> { <span class="ty">AgGridReact</span> } <span class="kw">from</span> <span class="str">'ag-grid-react'</span>;
+<span class="kw">import</span> { <span class="ty">AgGridAdapter</span> } <span class="kw">from</span> <span class="str">'@ctrlk/ag-grid'</span>;
+<span class="kw">import</span> ctrlk <span class="kw">from</span> <span class="str">'@ctrlk/core'</span>;
+
+<span class="kw">export function</span> <span class="fn">DataGrid</span>({ rowData, columnDefs }) {
+  <span class="kw">const</span> gridRef = <span class="fn">useRef</span>(<span class="kw">null</span>);
+
+  <span class="fn">useEffect</span>(() =&gt; {
+    <span class="kw">if</span> (!gridRef.current?.api) <span class="kw">return</span>;
+
+    <span class="cm">// Connect — returns disconnect function for cleanup</span>
+    <span class="kw">const</span> disconnect = ctrlk.<span class="fn">connectGrid</span>(
+      <span class="kw">new</span> <span class="fn">AgGridAdapter</span>(gridRef.current.api)
+    );
+
+    <span class="cm">// Register grid commands</span>
+    <span class="kw">const</span> unregister = ctrlk.commands.<span class="fn">register</span>({
+      <span class="prop">id</span>: <span class="str">'grid.export'</span>,
+      <span class="prop">title</span>: <span class="str">'Export CSV'</span>,
+      <span class="prop">shortcut</span>: <span class="str">'Ctrl+Shift+E'</span>,
+      <span class="fn">execute</span>: () =&gt; gridRef.current.api.<span class="fn">exportDataAsCsv</span>(),
+    });
+
+    <span class="kw">return</span> () =&gt; { disconnect(); unregister(); };
+  }, [gridRef.current?.api]);
+
+  <span class="kw">return</span> &lt;<span class="ty">AgGridReact</span> ref={gridRef} rowData={rowData} columnDefs={columnDefs} /&gt;;
+}</pre></div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- VUE 3 -->
+<!-- ═══════════════════════════════════════════════ -->
+
+<h2 id="vue-setup" style="border-top-color:#42b883;">Vue 3</h2>
+
+<h3>Setup</h3>
+
+<div class="code"><div class="code-h"><span class="fn">terminal</span><span class="lang">Shell</span></div>
+<pre>npm install @ctrlk/core</pre></div>
+
+<div class="code"><div class="code-h"><span class="fn">main.ts</span><span class="lang">Vue</span></div>
+<pre><span class="kw">import</span> ctrlk <span class="kw">from</span> <span class="str">'@ctrlk/core'</span>;
+ctrlk.<span class="fn">init</span>({ <span class="prop">palette</span>: <span class="kw">true</span>, <span class="prop">density</span>: <span class="kw">true</span> });</pre></div>
+
+<h3 id="vue-palette">Palette Composable</h3>
+
+<div class="code"><div class="code-h"><span class="fn">composables/useCtrlkPalette.ts</span><span class="lang">Vue</span></div>
+<pre><span class="kw">import</span> { <span class="ty">ref</span>, <span class="ty">computed</span>, <span class="ty">onMounted</span>, <span class="ty">onUnmounted</span> } <span class="kw">from</span> <span class="str">'vue'</span>;
+<span class="kw">import</span> ctrlk <span class="kw">from</span> <span class="str">'@ctrlk/core'</span>;
+
+<span class="kw">export function</span> <span class="fn">useCtrlkPalette</span>() {
+  <span class="kw">const</span> open = <span class="fn">ref</span>(<span class="kw">false</span>);
+  <span class="kw">const</span> request = <span class="fn">ref</span>(<span class="kw">null</span>);
+  <span class="kw">const</span> query = <span class="fn">ref</span>(<span class="str">''</span>);
+
+  <span class="kw">const</span> results = <span class="fn">computed</span>(() =&gt;
+    request.value?.<span class="fn">search</span>(query.value) || []
+  );
+
+  <span class="kw">let</span> unsub;
+  <span class="fn">onMounted</span>(() =&gt; {
+    unsub = ctrlk.<span class="fn">onPaletteRequest</span>((req) =&gt; {
+      request.value = req;
+      query.value = <span class="str">''</span>;
+      open.value = <span class="kw">true</span>;
+    });
+  });
+  <span class="fn">onUnmounted</span>(() =&gt; unsub?.());
+
+  <span class="kw">function</span> <span class="fn">select</span>(cmd) {
+    request.value?.<span class="fn">execute</span>(cmd.id);
+    open.value = <span class="kw">false</span>;
+  }
+
+  <span class="kw">return</span> { open, query, results, select, close: () =&gt; (open.value = <span class="kw">false</span>) };
+}</pre></div>
+
+<div class="code"><div class="code-h"><span class="fn">CommandPalette.vue</span><span class="lang">Vue</span></div>
+<pre>&lt;<span class="kw">script</span> setup&gt;
+<span class="kw">import</span> { <span class="fn">useCtrlkPalette</span> } <span class="kw">from</span> <span class="str">'./composables/useCtrlkPalette'</span>;
+<span class="kw">const</span> { open, query, results, select, close } = <span class="fn">useCtrlkPalette</span>();
+&lt;/<span class="kw">script</span>&gt;
+
+&lt;<span class="kw">template</span>&gt;
+  &lt;<span class="ty">Teleport</span> to=<span class="str">"body"</span>&gt;
+    &lt;<span class="ty">div</span> v-if=<span class="str">"open"</span> class=<span class="str">"palette-overlay"</span> @click.self=<span class="str">"close"</span>&gt;
+      &lt;<span class="ty">div</span> class=<span class="str">"palette"</span>&gt;
+        &lt;<span class="ty">input</span> v-model=<span class="str">"query"</span> placeholder=<span class="str">"Type a command..."</span> autofocus /&gt;
+        &lt;<span class="ty">div</span> v-for=<span class="str">"cmd in results"</span> :key=<span class="str">"cmd.id"</span>
+             class=<span class="str">"palette-item"</span>
+             @click=<span class="str">"select(cmd)"</span>&gt;
+          {{ cmd.title }}
+          &lt;<span class="ty">kbd</span> v-if=<span class="str">"cmd.shortcut"</span>&gt;{{ cmd.shortcut }}&lt;/<span class="ty">kbd</span>&gt;
+        &lt;/<span class="ty">div</span>&gt;
+      &lt;/<span class="ty">div</span>&gt;
+    &lt;/<span class="ty">div</span>&gt;
+  &lt;/<span class="ty">Teleport</span>&gt;
+&lt;/<span class="kw">template</span>&gt;</pre></div>
+
+<h3 id="vue-grid">Grid Integration</h3>
+
+<div class="code"><div class="code-h"><span class="fn">composables/useCtrlkGrid.ts</span><span class="lang">Vue</span></div>
+<pre><span class="kw">import</span> { <span class="ty">onMounted</span>, <span class="ty">onUnmounted</span> } <span class="kw">from</span> <span class="str">'vue'</span>;
+<span class="kw">import</span> ctrlk <span class="kw">from</span> <span class="str">'@ctrlk/core'</span>;
+
+<span class="kw">export function</span> <span class="fn">useCtrlkGrid</span>(adapter) {
+  <span class="kw">let</span> disconnect;
+  <span class="fn">onMounted</span>(() =&gt; { disconnect = ctrlk.<span class="fn">connectGrid</span>(adapter); });
+  <span class="fn">onUnmounted</span>(() =&gt; disconnect?.());
+}</pre></div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- AG GRID -->
+<!-- ═══════════════════════════════════════════════ -->
+
+<h2 id="ag-setup" style="border-top-color:#f59e0b;">AG Grid</h2>
+
+<h3>Setup (Framework-Agnostic)</h3>
+
+<div class="code"><div class="code-h"><span class="fn">terminal</span><span class="lang">Shell</span></div>
+<pre>npm install @ctrlk/core @ctrlk/ag-grid</pre></div>
+
+<div class="code"><div class="code-h"><span class="fn">grid.ts</span><span class="lang">TypeScript</span></div>
+<pre><span class="kw">import</span> ctrlk <span class="kw">from</span> <span class="str">'@ctrlk/core'</span>;
+<span class="kw">import</span> { <span class="ty">AgGridAdapter</span> } <span class="kw">from</span> <span class="str">'@ctrlk/ag-grid'</span>;
+
+<span class="kw">const</span> gridOptions = {
+  <span class="fn">onGridReady</span>: (params) =&gt; {
+    <span class="kw">const</span> disconnect = ctrlk.<span class="fn">connectGrid</span>(
+      <span class="kw">new</span> <span class="fn">AgGridAdapter</span>(params.api)
+    );
+
+    <span class="cm">// Register grid commands</span>
+    ctrlk.commands.<span class="fn">register</span>({
+      <span class="prop">id</span>: <span class="str">'grid.sizeToFit'</span>,
+      <span class="prop">title</span>: <span class="str">'Auto-Size Columns'</span>,
+      <span class="prop">shortcut</span>: <span class="str">'Ctrl+Shift+A'</span>,
+      <span class="fn">execute</span>: () =&gt; params.api.<span class="fn">sizeColumnsToFit</span>(),
+    });
+  },
+};</pre></div>
+
+<h3 id="ag-views">Saved Views with AG Grid</h3>
+
+<div class="code"><div class="code-h"><span class="fn">views</span><span class="lang">TypeScript</span></div>
+<pre><span class="cm">// Save the current view (columns, filters, sort)</span>
+ctrlk.views.<span class="fn">save</span>(<span class="str">'Monday Review'</span>);
+
+<span class="cm">// Load a saved view</span>
+ctrlk.views.<span class="fn">load</span>(<span class="str">'Monday Review'</span>);
+
+<span class="cm">// List all saved views with slot shortcuts</span>
+<span class="kw">const</span> slots = ctrlk.views.<span class="fn">getSlots</span>();
+<span class="cm">// [{ name: 'Monday Review', slot: 1, shortcut: 'Ctrl+1' }, ...]</span>
+
+<span class="cm">// Share as URL</span>
+<span class="kw">const</span> link = ctrlk.share.<span class="fn">createLink</span>({ <span class="prop">name</span>: <span class="str">'My View'</span> });
+<span class="cm">// "https://app.com/deals#ctrlk=eyJ..."</span>
+
+<span class="cm">// Apply from URL (on page load)</span>
+ctrlk.share.<span class="fn">applyFromUrl</span>();</pre></div>
+
+<!-- ═══════════════════════════════════════════════ -->
+<!-- EVENT PAYLOADS -->
+<!-- ═══════════════════════════════════════════════ -->
+
+<h2 id="events">Event Payloads Reference</h2>
+
+<table>
+<thead><tr><th>Event Hook</th><th>Payload Shape</th></tr></thead>
+<tbody>
+<tr><td><code>onPaletteRequest</code></td><td><code>{ commands: CommandDef[], search(q): CommandDef[], execute(id): any }</code></td></tr>
+<tr><td><code>onFieldJumpRequest</code></td><td><code>{ fields, search(q), searchGrouped(q): { sections: [{name, fields}] }, focus(id), setSectionOrder(order), discover(), getCompleteness() }</code></td></tr>
+<tr><td><code>onShortcutsRequest</code></td><td><code>{ shortcuts: [{ combo, commandId, title, category }] }</code></td></tr>
+<tr><td><code>onDensityChange</code></td><td><code>{ level: 'compact'|'comfortable'|'spacious', previous }</code></td></tr>
+<tr><td><code>onViewSaved</code></td><td><code>{ name, slot, shortcut, totalSaved, maxViews, remaining, evicted }</code></td></tr>
+<tr><td><code>onViewLoaded</code></td><td><code>{ name }</code></td></tr>
+<tr><td><code>onCommandExecuted</code></td><td><code>{ id, result }</code></td></tr>
+</tbody>
+</table>
+
+<div class="note"><strong>Every hook returns an unsubscribe function.</strong> Call it in your component's cleanup lifecycle (<code>ngOnDestroy</code>, <code>useEffect</code> return, <code>onUnmounted</code>).</div>
+
+<div class="divider"></div>
+
+<p style="text-align:center;color:var(--dim);font-size:13px;padding:24px 0;">
+  <strong>CtrlK</strong> — The first IOUX for enterprise web apps · <a href="https://ctrlk.dev" style="color:var(--accent)">ctrlk.dev</a> · <a href="api.html" style="color:var(--accent)">API Reference</a><br>
+  MIT License · Prabhu Raja
+</p>
+
+</main>
+</div>
+
+<script>
+const sections = document.querySelectorAll('h2[id], h3[id]');
+const links = document.querySelectorAll('.sb-link');
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(s => { if (window.scrollY >= s.offsetTop - 80) current = s.id; });
+  links.forEach(l => { l.classList.toggle('active', l.getAttribute('href') === '#' + current); });
+});
+</script>
+</body>
+</html>

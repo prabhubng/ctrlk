@@ -3,11 +3,15 @@
   "version": "2.0.0",
   "description": "The first IOUX (Integrated Operational UX) for enterprise web apps",
   "main": "dist/ctrlk.runtime.js",
+  "types": "src/index.d.ts",
   "module": "src/ctrlk.js",
   "type": "module",
   "scripts": {
     "build": "node build.js",
     "test": "node test/run-all.js",
+    "test:integration": "npx playwright test",
+    "test:integration:headed": "npx playwright test --headed",
+    "test:integration:ui": "npx playwright test --ui",
     "test:phase1": "node test/phase1.js",
     "test:phase2": "node test/phase2.js",
     "test:phase3": "node test/phase3.js",
@@ -24,12 +28,34 @@
     "url": "https://github.com/prabhubng/ctrlk/issues"
   },
   "keywords": [
-    "ioux", "enterprise-ux", "opux", "command-palette", "keyboard-shortcuts",
-    "saved-views", "ctrl-k", "power-user", "grid-adapter", "ag-grid",
-    "devextreme", "data-grid", "excel-ux", "ux-runtime"
+    "ioux",
+    "enterprise-ux",
+    "opux",
+    "command-palette",
+    "keyboard-shortcuts",
+    "saved-views",
+    "ctrl-k",
+    "power-user",
+    "grid-adapter",
+    "ag-grid",
+    "devextreme",
+    "data-grid",
+    "excel-ux",
+    "ux-runtime"
   ],
-  "files": ["dist/", "src/", "packages/", "README.md", "LICENSE", "CHANGELOG.md"],
+  "files": [
+    "dist/",
+    "src/",
+    "packages/",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
   "engines": {
     "node": ">=16.0.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.59.0",
+    "serve": "^14.0.0"
   }
 }

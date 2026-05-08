@@ -3,19 +3,46 @@
   "version": "2.0.0",
   "description": "Angular service and directives for CtrlK — the first IOUX for enterprise web apps",
   "main": "ctrlk-angular.ts",
+  "types": "index.d.ts",
   "type": "module",
   "author": "Prabhu Raja <prabhuswamiji@gmail.com>",
   "license": "MIT",
   "homepage": "https://ctrlk.dev",
   "repository": {
     "type": "git",
-    "url": "https://github.com/prabhubng/ctrlk",
+    "url": "git+https://github.com/prabhubng/ctrlk.git",
     "directory": "packages/angular"
   },
-  "keywords": ["ctrlk", "ioux", "angular", "directives", "service", "command-palette", "enterprise-ux"],
+  "keywords": [
+    "ctrlk",
+    "ioux",
+    "angular",
+    "directives",
+    "service",
+    "command-palette",
+    "enterprise-ux"
+  ],
   "peerDependencies": {
+    "@angular/common": "^21.2.12",
+    "@angular/core": "^21.2.12",
     "@ctrlk/core": ">=2.0.0",
-    "@angular/core": ">=14.0.0"
+    "rxjs": "^7.8.2"
   },
-  "files": ["ctrlk-angular.ts", "README.md"]
+  "files": [
+    "index.d.ts",
+    "ctrlk-angular.ts",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "bugs": {
+    "url": "https://github.com/prabhubng/ctrlk/issues"
+  },
+  "devDependencies": {
+    "@angular/compiler": "^21.2.12",
+    "@angular/compiler-cli": "^21.2.12",
+    "ng-packagr": "^21.2.3",
+    "typescript": "^5.9.3"
+  }
 }

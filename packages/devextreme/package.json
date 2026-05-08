@@ -3,6 +3,7 @@
   "version": "2.0.0",
   "description": "DevExtreme DataGrid adapter for CtrlK — the first IOUX for enterprise web apps",
   "main": "devextreme-adapter.js",
+  "types": "index.d.ts",
   "type": "module",
   "author": "Prabhu Raja <prabhuswamiji@gmail.com>",
   "license": "MIT",
@@ -17,5 +18,5 @@
     "@ctrlk/core": ">=2.0.0",
     "devextreme": ">=21.0.0"
   },
-  "files": ["devextreme-adapter.js", "README.md"]
+  "files": ["index.d.ts", "devextreme-adapter.js", "README.md"]
 }

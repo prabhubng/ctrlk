@@ -1,0 +1,54 @@
+{
+  "name": "@ctrlk/angular",
+  "version": "2.0.0",
+  "description": "Angular service and directives for CtrlK — the first IOUX for enterprise web apps",
+  "types": "index.d.ts",
+  "type": "module",
+  "author": "Prabhu Raja <prabhuswamiji@gmail.com>",
+  "license": "MIT",
+  "homepage": "https://ctrlk.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/prabhubng/ctrlk.git",
+    "directory": "packages/angular"
+  },
+  "keywords": [
+    "ctrlk",
+    "ioux",
+    "angular",
+    "directives",
+    "service",
+    "command-palette",
+    "enterprise-ux"
+  ],
+  "peerDependencies": {
+    "@angular/core": ">=14.0.0",
+    "@angular/common": ">=14.0.0",
+    "@ctrlk/core": ">=2.0.0",
+    "rxjs": ">=7.0.0"
+  },
+  "files": [
+    "fesm2022/",
+    "types/",
+    "package.json",
+    "README.md"
+  ],
+  "bugs": {
+    "url": "https://github.com/prabhubng/ctrlk/issues"
+  },
+  "module": "fesm2022/ctrlk-angular.mjs",
+  "typings": "types/ctrlk-angular.d.ts",
+  "exports": {
+    "./package.json": {
+      "default": "./package.json"
+    },
+    ".": {
+      "types": "./types/ctrlk-angular.d.ts",
+      "default": "./fesm2022/ctrlk-angular.mjs"
+    }
+  },
+  "sideEffects": false,
+  "dependencies": {
+    "tslib": "^2.3.0"
+  }
+}
