@@ -1,6 +1,6 @@
 {
   "name": "@ctrlk/angular",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Angular service and directives for CtrlK — the first IOUX for enterprise web apps",
   "main": "ctrlk-angular.ts",
   "types": "index.d.ts",

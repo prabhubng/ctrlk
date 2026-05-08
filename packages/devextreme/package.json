@@ -1,6 +1,6 @@
 {
   "name": "@ctrlk/devextreme",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "DevExtreme DataGrid adapter for CtrlK — the first IOUX for enterprise web apps",
   "main": "devextreme-adapter.js",
   "types": "index.d.ts",

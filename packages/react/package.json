@@ -1,6 +1,6 @@
 {
   "name": "@ctrlk/react",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "React hooks and Provider for CtrlK — the first IOUX for enterprise web apps",
   "main": "index.jsx",
   "types": "index.d.ts",
