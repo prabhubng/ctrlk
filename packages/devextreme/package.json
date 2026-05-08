@@ -10,7 +10,7 @@
   "homepage": "https://ctrlk.dev",
   "repository": {
     "type": "git",
-    "url": "https://github.com/prabhubng/ctrlk",
+    "url": "git+https://github.com/prabhubng/ctrlk.git",
     "directory": "packages/devextreme"
   },
   "keywords": ["ctrlk", "ioux", "devextreme", "dxdatagrid", "grid-adapter", "enterprise-ux", "data-grid"],
