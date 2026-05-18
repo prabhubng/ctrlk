@@ -1,7 +1,7 @@
 {
   "name": "@ctrlk/angular",
-  "version": "2.0.0",
-  "description": "Angular service and directives for CtrlK — the first IOUX for enterprise web apps",
+  "version": "2.1.0",
+  "description": "Angular service and directives for CtrlK \u2014 the first IOUX for enterprise web apps",
   "types": "index.d.ts",
   "type": "module",
   "author": "Prabhu Raja <prabhuswamiji@gmail.com>",
@@ -27,12 +27,6 @@
     "@ctrlk/core": ">=2.0.0",
     "rxjs": ">=7.0.0"
   },
-  "files": [
-    "fesm2022/",
-    "types/",
-    "package.json",
-    "README.md"
-  ],
   "bugs": {
     "url": "https://github.com/prabhubng/ctrlk/issues"
   },

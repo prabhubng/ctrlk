@@ -1,4 +1,4 @@
-import { Directive, Input, ElementRef, OnInit, OnDestroy } from '@angular/core';
+import { Directive, Input, ElementRef, DestroyRef, OnInit, inject } from '@angular/core';
 import { CtrlkService } from './ctrlk.service';
 
 /**
@@ -15,36 +15,36 @@ import { CtrlkService } from './ctrlk.service';
  * ```
  */
 @Directive({ selector: '[ctrlkCommand]', standalone: true })
-export class CtrlkCommandDirective implements OnInit, OnDestroy {
+export class CtrlkCommandDirective implements OnInit {
   @Input('ctrlkCommand') commandId!: string;
   @Input() ctrlkCommandTitle = '';
   @Input() ctrlkCommandShortcut = '';
   @Input() ctrlkCommandCategory = 'Actions';
   @Input() ctrlkCommandIcon = '';
 
-  private teardown: (() => void) | null = null;
-
-  constructor(private el: ElementRef, private ctrlk: CtrlkService) {}
+  private readonly el = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly ctrlk = inject(CtrlkService);
+  private readonly destroyRef = inject(DestroyRef);
 
   ngOnInit(): void {
-    const title = this.ctrlkCommandTitle || this.el.nativeElement.textContent?.trim() || this.commandId;
-    this.teardown = this.ctrlk.registerCommand({
+    const nativeEl = this.el.nativeElement;
+    const title = this.ctrlkCommandTitle || nativeEl.textContent?.trim() || this.commandId;
+
+    const teardown = this.ctrlk.registerCommand({
       id: this.commandId,
       title,
       shortcut: this.ctrlkCommandShortcut || undefined,
       category: this.ctrlkCommandCategory,
       icon: this.ctrlkCommandIcon || undefined,
-      execute: () => this.el.nativeElement.click(),
+      execute: () => nativeEl.click(),
     });
-  }
 
-  ngOnDestroy(): void {
-    this.teardown?.();
+    this.destroyRef.onDestroy(teardown);
   }
 }
 
 /**
- * Register a form field for jump-to navigation.
+ * Register a form field for jump-to navigation (Ctrl+G).
  *
  * @example
  * ```html
@@ -54,29 +54,27 @@ export class CtrlkCommandDirective implements OnInit, OnDestroy {
  * ```
  */
 @Directive({ selector: '[ctrlkField]', standalone: true })
-export class CtrlkFieldDirective implements OnInit, OnDestroy {
+export class CtrlkFieldDirective implements OnInit {
   @Input('ctrlkField') fieldId!: string;
   @Input() ctrlkFieldLabel = '';
   @Input() ctrlkFieldSection = 'General';
   @Input() ctrlkFieldGroup = '';
   @Input() ctrlkFieldRequired = false;
 
-  private teardown: (() => void) | null = null;
-
-  constructor(private el: ElementRef, private ctrlk: CtrlkService) {}
+  private readonly el = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly ctrlk = inject(CtrlkService);
+  private readonly destroyRef = inject(DestroyRef);
 
   ngOnInit(): void {
-    this.teardown = this.ctrlk.registerField({
+    const teardown = this.ctrlk.registerField({
       id: this.fieldId,
       label: this.ctrlkFieldLabel || this.fieldId,
       section: this.ctrlkFieldSection,
       group: this.ctrlkFieldGroup || undefined,
       element: this.el.nativeElement,
     });
-  }
 
-  ngOnDestroy(): void {
-    this.teardown?.();
+    this.destroyRef.onDestroy(teardown);
   }
 }
 
@@ -89,22 +87,18 @@ export class CtrlkFieldDirective implements OnInit, OnDestroy {
  * ```
  */
 @Directive({ selector: '[ctrlkShortcut]', standalone: true })
-export class CtrlkShortcutDirective implements OnInit, OnDestroy {
+export class CtrlkShortcutDirective implements OnInit {
   @Input('ctrlkShortcut') shortcut!: string;
   @Input() ctrlkShortcutCommand = '';
 
-  private teardown: (() => void) | null = null;
-
-  constructor(private ctrlk: CtrlkService) {}
+  private readonly ctrlk = inject(CtrlkService);
+  private readonly destroyRef = inject(DestroyRef);
 
   ngOnInit(): void {
     if (this.shortcut && this.ctrlkShortcutCommand) {
-      this.teardown = this.ctrlk.bindShortcut(this.shortcut, this.ctrlkShortcutCommand);
+      const teardown = this.ctrlk.bindShortcut(this.shortcut, this.ctrlkShortcutCommand);
+      this.destroyRef.onDestroy(teardown);
     }
-  }
-
-  ngOnDestroy(): void {
-    this.teardown?.();
   }
 }
 
@@ -122,7 +116,8 @@ export class CtrlkZoneDirective implements OnInit {
   @Input('ctrlkZone') zoneId!: string;
   @Input() ctrlkZoneLabel = '';
 
-  constructor(private el: ElementRef, private ctrlk: CtrlkService) {}
+  private readonly el = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly ctrlk = inject(CtrlkService);
 
   ngOnInit(): void {
     const focus = this.ctrlk.instance?.focus;

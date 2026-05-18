@@ -1,31 +1,77 @@
-import { Injectable, NgZone, OnDestroy } from '@angular/core';
+import { Injectable, InjectionToken, NgZone, DestroyRef, inject } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subject, Observable } from 'rxjs';
+
+import type {
+  CtrlkInitOptions,
+  CommandDef,
+  PaletteRequest,
+  FieldJumpRequest,
+  DensityChange,
+  ViewSavedEvent,
+  ViewLoadedEvent,
+  CommandExecutedEvent,
+  ShortcutsRequest,
+} from './ctrlk.types';
+
+/**
+ * Injection token for the Window object.
+ * Enables SSR compatibility and unit testing with mock window.
+ */
+export const CTRLK_WINDOW = new InjectionToken<Window>('CTRLK_WINDOW', {
+  providedIn: 'root',
+  factory: () => {
+    const doc = inject(DOCUMENT);
+    const win = doc.defaultView;
+    if (!win) {
+      throw new Error('[CtrlK] Window is not available (SSR environment)');
+    }
+    return win;
+  },
+});
 
 /**
  * CtrlK Runtime Service — headless IOUX engine for Angular.
  *
  * Wraps the @ctrlk/core singleton in Angular's DI system and bridges
- * events into NgZone + RxJS Observables for change detection.
+ * events into NgZone + RxJS Observables for automatic change detection.
+ *
+ * Uses modern Angular patterns:
+ * - `inject()` function over constructor injection
+ * - `DestroyRef` + `takeUntilDestroyed` for automatic cleanup
+ * - `DOCUMENT` / `CTRLK_WINDOW` tokens for SSR safety
+ * - Separated type definitions
  *
  * @example
  * ```typescript
- * constructor(private ctrlk: CtrlkService) {
- *   this.ctrlk.init({ palette: true, density: true });
- *   this.ctrlk.paletteRequested$.subscribe(req => this.showPalette(req));
+ * export class AppComponent {
+ *   private readonly ctrlk = inject(CtrlkService);
+ *
+ *   constructor() {
+ *     this.ctrlk.init({ palette: true, density: true });
+ *     this.ctrlk.paletteRequested$.subscribe(req => this.showPalette(req));
+ *   }
  * }
  * ```
  */
 @Injectable({ providedIn: 'root' })
-export class CtrlkService implements OnDestroy {
+export class CtrlkService {
+  private readonly zone = inject(NgZone);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly window = inject(CTRLK_WINDOW);
+
   private _initialized = false;
-  private _cleanups: (() => void)[] = [];
-
-  // Lazy-load ctrlk to avoid SSR issues
   private _ctrlk: any = null;
+  private _gridDisconnect: (() => void) | null = null;
+  private readonly _cleanups: (() => void)[] = [];
 
-  // RxJS bridges for Angular change detection
+  // ─── Event Streams ───
+  // Each Subject bridges a ctrlk event into Angular's zone + RxJS.
+
   private readonly _paletteRequested = new Subject<PaletteRequest>();
   private readonly _fieldJumpRequested = new Subject<FieldJumpRequest>();
+  private readonly _shortcutsRequested = new Subject<ShortcutsRequest>();
   private readonly _densityChanged = new Subject<DensityChange>();
   private readonly _viewSaved = new Subject<ViewSavedEvent>();
   private readonly _viewLoaded = new Subject<ViewLoadedEvent>();
@@ -33,12 +79,17 @@ export class CtrlkService implements OnDestroy {
 
   readonly paletteRequested$: Observable<PaletteRequest> = this._paletteRequested.asObservable();
   readonly fieldJumpRequested$: Observable<FieldJumpRequest> = this._fieldJumpRequested.asObservable();
+  readonly shortcutsRequested$: Observable<ShortcutsRequest> = this._shortcutsRequested.asObservable();
   readonly densityChanged$: Observable<DensityChange> = this._densityChanged.asObservable();
   readonly viewSaved$: Observable<ViewSavedEvent> = this._viewSaved.asObservable();
   readonly viewLoaded$: Observable<ViewLoadedEvent> = this._viewLoaded.asObservable();
   readonly commandExecuted$: Observable<CommandExecutedEvent> = this._commandExecuted.asObservable();
 
-  constructor(private zone: NgZone) {}
+  constructor() {
+    this.destroyRef.onDestroy(() => this.dispose());
+  }
+
+  // ─── Lifecycle ───
 
   /**
    * Initialize the headless CtrlK engine.
@@ -47,186 +98,173 @@ export class CtrlkService implements OnDestroy {
   init(options: CtrlkInitOptions = {}): void {
     if (this._initialized) return;
 
-    const ctrlk = this.getCtrlk();
+    const ctrlk = this.resolveCtrlk();
     ctrlk.init(options);
-
-    // Bridge events into Angular zone + RxJS
-    this._cleanups.push(
-      ctrlk.onPaletteRequest((data: PaletteRequest) => {
-        this.zone.run(() => this._paletteRequested.next(data));
-      }),
-      ctrlk.onFieldJumpRequest((data: FieldJumpRequest) => {
-        this.zone.run(() => this._fieldJumpRequested.next(data));
-      }),
-      ctrlk.onDensityChange((data: DensityChange) => {
-        this.zone.run(() => this._densityChanged.next(data));
-      }),
-      ctrlk.onViewSaved((data: ViewSavedEvent) => {
-        this.zone.run(() => this._viewSaved.next(data));
-      }),
-      ctrlk.onViewLoaded((data: ViewLoadedEvent) => {
-        this.zone.run(() => this._viewLoaded.next(data));
-      }),
-      ctrlk.onCommandExecuted((data: CommandExecutedEvent) => {
-        this.zone.run(() => this._commandExecuted.next(data));
-      }),
-    );
-
+    this.bridgeEvents(ctrlk);
     this._initialized = true;
   }
 
-  private _gridDisconnect: (() => void) | null = null;
-
   /**
    * Connect a grid adapter (DevExtreme, AG Grid, etc.)
-   * Auto-disconnects when service is destroyed or a new grid is connected.
+   * Auto-disconnects previous adapter. Returns disconnect function.
    */
-  connectGrid(adapter: any): void {
+  connectGrid(adapter: any): () => void {
     this.ensureInit();
-    this._gridDisconnect = this.getCtrlk().connectGrid(adapter);
+    this._gridDisconnect?.();
+    this._gridDisconnect = this.resolveCtrlk().connectGrid(adapter);
+    return () => this.disconnectGrid();
   }
 
-  /**
-   * Disconnect the current grid adapter. Cleans up event subscriptions.
-   * Called automatically on destroy.
-   */
+  /** Disconnect the current grid adapter. Cleans up event subscriptions. */
   disconnectGrid(): void {
     this._gridDisconnect?.();
     this._gridDisconnect = null;
   }
 
-  /**
-   * Register a command.
-   * @returns Unsubscribe function
-   */
+  // ─── Commands ───
+
+  /** Register a command. Returns unsubscribe function. */
   registerCommand(def: CommandDef): () => void {
     this.ensureInit();
-    return this.getCtrlk().commands.register(def);
+    const unsub = this.resolveCtrlk().commands.register(def);
+    this._cleanups.push(unsub);
+    return unsub;
   }
 
-  /**
-   * Execute a command by ID.
-   */
+  /** Execute a command by ID. */
   executeCommand(id: string): any {
-    return this.getCtrlk().commands.execute(id);
+    return this.resolveCtrlk().commands.execute(id);
   }
 
-  /**
-   * Search commands by query.
-   */
+  /** Search commands by query string. */
   searchCommands(query: string): CommandDef[] {
-    return this.getCtrlk().commands.search(query);
+    return this.resolveCtrlk().commands.search(query);
   }
 
-  /**
-   * List all registered commands.
-   */
+  /** List all registered commands, optionally filtered by category. */
   listCommands(category?: string): CommandDef[] {
-    return this.getCtrlk().commands.list(category);
+    return this.resolveCtrlk().commands.list(category);
   }
 
-  /**
-   * Bind a keyboard shortcut to a command.
-   * @returns Unsubscribe function
-   */
+  // ─── Shortcuts ───
+
+  /** Bind a keyboard shortcut to a command. Returns unsubscribe function. */
   bindShortcut(shortcut: string, commandId: string): () => void {
     this.ensureInit();
-    return this.getCtrlk().keys.bind(shortcut, commandId);
+    const unsub = this.resolveCtrlk().keys.bind(shortcut, commandId);
+    this._cleanups.push(unsub);
+    return unsub;
   }
 
-  /**
-   * Save the current view state.
-   */
+  // ─── Views ───
+
+  /** Save the current view state. */
   saveView(name: string): void {
-    this.getCtrlk().views.save(name);
+    this.resolveCtrlk().views.save(name);
   }
 
-  /**
-   * Load a named view.
-   */
+  /** Load a named view. Returns true if found. */
   loadView(name: string): boolean {
-    return this.getCtrlk().views.load(name);
+    return this.resolveCtrlk().views.load(name);
   }
 
-  /**
-   * List all saved views.
-   */
+  /** List all saved views. */
   listViews(): any[] {
-    return this.getCtrlk().views.list();
+    return this.resolveCtrlk().views.list();
   }
 
-  /**
-   * Register a field for jump-to navigation.
-   * @returns Unsubscribe function
-   */
-  registerField(def: { id: string; label: string; section?: string; group?: string; element?: HTMLElement }): () => void {
+  /** Get view slots with shortcut assignments. */
+  getViewSlots(): any[] {
+    return this.resolveCtrlk().views.getSlots();
+  }
+
+  // ─── Fields ───
+
+  /** Register a field for jump-to navigation. Returns unsubscribe function. */
+  registerField(def: {
+    id: string;
+    label: string;
+    section?: string;
+    group?: string;
+    element?: HTMLElement;
+  }): () => void {
     this.ensureInit();
-    return this.getCtrlk().fields.register(def);
+    const unsub = this.resolveCtrlk().fields.register(def);
+    this._cleanups.push(unsub);
+    return unsub;
   }
 
-  /**
-   * Trigger field discovery from DOM [data-ctrlk-field] attributes.
-   */
+  /** Trigger field discovery from DOM [data-ctrlk-field] attributes. */
   discoverFields(): void {
-    this.getCtrlk().fields.discover();
+    this.resolveCtrlk().fields.discover();
   }
 
-  /**
-   * Focus a registered field by ID.
-   */
+  /** Focus a registered field by ID (scroll + highlight). */
   focusField(id: string): void {
-    this.getCtrlk().fields.focus(id);
+    this.resolveCtrlk().fields.focus(id);
   }
 
-  /**
-   * Get field completeness stats.
-   */
-  getFieldCompleteness(): { total: number; filled: number; empty: number; percent: number } {
-    return this.getCtrlk().fields.getCompleteness();
+  /** Set custom section ordering for field jump grouped search. */
+  setFieldSectionOrder(order: string[]): void {
+    const fields = this.resolveCtrlk().fields;
+    if (fields.setSectionOrder) fields.setSectionOrder(order);
   }
+
+  /** Get field completeness stats. */
+  getFieldCompleteness(): { total: number; filled: number; empty: number; percent: number } {
+    return this.resolveCtrlk().fields.getCompleteness();
+  }
+
+  // ─── Observables ───
 
   /**
    * Create an RxJS Observable from any ctrlk event.
+   * Automatically bridges into NgZone and cleans up on destroy.
    */
   fromEvent<T = any>(eventName: string): Observable<T> {
     const subject = new Subject<T>();
-    const unsub = this.getCtrlk().on(eventName, (data: T) => {
+    const unsub = this.resolveCtrlk().on(eventName, (data: T) => {
       this.zone.run(() => subject.next(data));
     });
     this._cleanups.push(unsub);
-    return subject.asObservable();
+
+    return subject.pipe(takeUntilDestroyed(this.destroyRef));
   }
 
-  /**
-   * Direct access to the ctrlk instance (escape hatch).
-   */
-  get instance(): any {
-    return this.getCtrlk();
+  // ─── Direct Access ───
+
+  /** Direct access to the ctrlk singleton (escape hatch for advanced use). */
+  get instance(): any { return this.resolveCtrlk(); }
+  get commands() { return this.resolveCtrlk().commands; }
+  get keys() { return this.resolveCtrlk().keys; }
+  get views() { return this.resolveCtrlk().views; }
+  get fields() { return this.resolveCtrlk().fields; }
+  get density() { return this.resolveCtrlk().density; }
+  get selection() { return this.resolveCtrlk().selection; }
+  get share() { return this.resolveCtrlk().share; }
+
+  // ─── Internal ───
+
+  private bridgeEvents(ctrlk: any): void {
+    const bridge = <T>(hookFn: (cb: (data: T) => void) => () => void, subject: Subject<T>) => {
+      const unsub = hookFn((data: T) => {
+        this.zone.run(() => subject.next(data));
+      });
+      this._cleanups.push(unsub);
+    };
+
+    bridge<PaletteRequest>(ctrlk.onPaletteRequest.bind(ctrlk), this._paletteRequested);
+    bridge<FieldJumpRequest>(ctrlk.onFieldJumpRequest.bind(ctrlk), this._fieldJumpRequested);
+    bridge<ShortcutsRequest>(ctrlk.onShortcutsRequest.bind(ctrlk), this._shortcutsRequested);
+    bridge<DensityChange>(ctrlk.onDensityChange.bind(ctrlk), this._densityChanged);
+    bridge<ViewSavedEvent>(ctrlk.onViewSaved.bind(ctrlk), this._viewSaved);
+    bridge<ViewLoadedEvent>(ctrlk.onViewLoaded.bind(ctrlk), this._viewLoaded);
+    bridge<CommandExecutedEvent>(ctrlk.onCommandExecuted.bind(ctrlk), this._commandExecuted);
   }
 
-  get commands() { return this.getCtrlk().commands; }
-  get keys() { return this.getCtrlk().keys; }
-  get views() { return this.getCtrlk().views; }
-  get fields() { return this.getCtrlk().fields; }
-  get density() { return this.getCtrlk().density; }
-  get selection() { return this.getCtrlk().selection; }
-
-  ngOnDestroy(): void {
-    this.disconnectGrid();
-    this._cleanups.forEach(fn => fn());
-    this._cleanups = [];
-    this._paletteRequested.complete();
-    this._fieldJumpRequested.complete();
-    this._densityChanged.complete();
-    this._viewSaved.complete();
-    this._viewLoaded.complete();
-    this._commandExecuted.complete();
-  }
-
-  private getCtrlk(): any {
+  private resolveCtrlk(): any {
     if (!this._ctrlk) {
-      // CtrlK is loaded via angular.json scripts array or global import
-      const win = (typeof window !== 'undefined' ? window : {}) as any;
+      const win = this.window as any;
       if (win.ctrlk) {
         this._ctrlk = win.ctrlk;
       } else {
@@ -240,72 +278,20 @@ export class CtrlkService implements OnDestroy {
   }
 
   private ensureInit(): void {
-    if (!this._initialized) {
-      this.init();
-    }
+    if (!this._initialized) this.init();
   }
-}
 
-// ═══════════════════════════════════════════════
-// TYPES
-// ═══════════════════════════════════════════════
+  private dispose(): void {
+    this.disconnectGrid();
+    this._cleanups.forEach(fn => fn());
+    this._cleanups.length = 0;
 
-export interface CtrlkInitOptions {
-  autoDiscover?: boolean;
-  palette?: boolean;
-  density?: boolean;
-  macros?: boolean;
-  history?: boolean;
-  session?: boolean;
-  debug?: boolean;
-  paletteShortcut?: string;
-  densityCycleShortcut?: string;
-  fieldJumpShortcut?: string;
-}
-
-export interface CommandDef {
-  id: string;
-  title: string;
-  execute: (...args: any[]) => any;
-  shortcut?: string;
-  category?: string;
-  icon?: string;
-  undo?: (prev: any) => void;
-  when?: () => boolean;
-}
-
-export interface PaletteRequest {
-  commands: CommandDef[];
-  search: (query: string) => CommandDef[];
-  execute: (id: string) => any;
-}
-
-export interface FieldJumpRequest {
-  fields: any[];
-  search: (query: string, opts?: any) => any[];
-  focus: (id: string) => void;
-}
-
-export interface DensityChange {
-  level: 'compact' | 'comfortable' | 'spacious';
-  previous?: string;
-}
-
-export interface ViewSavedEvent {
-  name: string;
-  slot: number;
-  shortcut: string | null;
-  totalSaved: number;
-  maxViews: number;
-  remaining: number;
-  evicted: string | null;
-}
-
-export interface ViewLoadedEvent {
-  name: string;
-}
-
-export interface CommandExecutedEvent {
-  id: string;
-  result: any;
+    this._paletteRequested.complete();
+    this._fieldJumpRequested.complete();
+    this._shortcutsRequested.complete();
+    this._densityChanged.complete();
+    this._viewSaved.complete();
+    this._viewLoaded.complete();
+    this._commandExecuted.complete();
+  }
 }

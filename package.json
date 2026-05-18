@@ -1,6 +1,6 @@
 {
   "name": "@ctrlk/core",
-  "version": "2.0.1",
+  "version": "2.0.3",
   "description": "The first IOUX (Integrated Operational UX) for enterprise web apps",
   "main": "dist/ctrlk.runtime.js",
   "types": "src/index.d.ts",
@@ -22,7 +22,7 @@
   "homepage": "https://ctrlk.dev",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/prabhubng/ctrlk.git"
+    "url": "https://github.com/prabhubng/ctrlk"
   },
   "bugs": {
     "url": "https://github.com/prabhubng/ctrlk/issues"
@@ -46,7 +46,6 @@
   "files": [
     "dist/",
     "src/",
-    "packages/",
     "README.md",
     "LICENSE",
     "CHANGELOG.md"

@@ -1,5 +1,6 @@
 import { NgModule, ModuleWithProviders } from '@angular/core';
-import { CtrlkService, CtrlkInitOptions } from './ctrlk.service';
+import type { CtrlkInitOptions } from './ctrlk.types';
+import { CtrlkService } from './ctrlk.service';
 import {
   CtrlkCommandDirective,
   CtrlkFieldDirective,

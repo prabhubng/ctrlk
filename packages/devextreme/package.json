@@ -1,6 +1,6 @@
 {
   "name": "@ctrlk/devextreme",
-  "version": "2.0.1",
+  "version": "2.0.0",
   "description": "DevExtreme DataGrid adapter for CtrlK — the first IOUX for enterprise web apps",
   "main": "devextreme-adapter.js",
   "types": "index.d.ts",
@@ -10,7 +10,7 @@
   "homepage": "https://ctrlk.dev",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/prabhubng/ctrlk.git",
+    "url": "https://github.com/prabhubng/ctrlk",
     "directory": "packages/devextreme"
   },
   "keywords": ["ctrlk", "ioux", "devextreme", "dxdatagrid", "grid-adapter", "enterprise-ux", "data-grid"],

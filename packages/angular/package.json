@@ -1,6 +1,6 @@
 {
   "name": "@ctrlk/angular",
-  "version": "2.0.1",
+  "version": "2.0.0",
   "description": "Angular service and directives for CtrlK — the first IOUX for enterprise web apps",
   "main": "ctrlk-angular.ts",
   "types": "index.d.ts",
@@ -23,8 +23,8 @@
     "enterprise-ux"
   ],
   "peerDependencies": {
-    "@angular/common": "^21.2.12",
-    "@angular/core": "^21.2.12",
+    "@angular/common": "^21.2.13",
+    "@angular/core": "^21.2.13",
     "@ctrlk/core": ">=2.0.0",
     "rxjs": "^7.8.2"
   },
@@ -40,8 +40,8 @@
     "url": "https://github.com/prabhubng/ctrlk/issues"
   },
   "devDependencies": {
-    "@angular/compiler": "^21.2.12",
-    "@angular/compiler-cli": "^21.2.12",
+    "@angular/compiler": "^21.2.13",
+    "@angular/compiler-cli": "^21.2.13",
     "ng-packagr": "^21.2.3",
     "typescript": "^5.9.3"
   }

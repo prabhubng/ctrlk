@@ -394,4 +394,4 @@ export interface CtrlK {
 
 declare const ctrlk: CtrlK;
 export default ctrlk;
-export { ctrlk, CtrlK };
+export { ctrlk };

@@ -13,18 +13,25 @@
  * ```
  */
 
-// Service
-export { CtrlkService } from './ctrlk.service';
+// Service + Window token
+export { CtrlkService, CTRLK_WINDOW } from './ctrlk.service';
+
+// Types
 export type {
   CtrlkInitOptions,
   CommandDef,
   PaletteRequest,
   FieldJumpRequest,
+  FieldDef,
+  FieldSearchResult,
+  FieldSection,
+  Completeness,
   DensityChange,
   ViewSavedEvent,
   ViewLoadedEvent,
   CommandExecutedEvent,
-} from './ctrlk.service';
+  ShortcutsRequest,
+} from './ctrlk.types';
 
 // Directives
 export {
